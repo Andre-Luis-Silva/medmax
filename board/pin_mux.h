@@ -33,6 +33,18 @@ void BOARD_InitBootPins(void);
  */
 void BOARD_InitPins(void);
 
+/* NXPNCI NFC related declaration */
+#define NXPNCI_I2C_INSTANCE 		I2C0
+#define NXPNCI_I2C_BAUDRATE 		(100000)
+#define NXPNCI_I2C_ADDR             (0x28)
+#define NXPNCI_IRQ_PORTIRQn			PORTC_IRQn
+#define NXPNCI_IRQ_GPIO				(GPIOC)
+#define NXPNCI_IRQ_PORT				(PORTC)
+#define NXPNCI_IRQ_PIN				(12U)
+#define NXPNCI_VEN_GPIO				(GPIOC)
+#define NXPNCI_VEN_PORT				(PORTC)
+#define NXPNCI_VEN_PIN				(3U)
+
 /*! @name PORTC6 (number 78), U8[11]/SW2
   @{ */
 #define BOARD_SW2_GPIO GPIOC /*!<@brief GPIO device name: GPIOC */
