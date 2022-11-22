@@ -165,15 +165,6 @@ void display_run( void ){
 
 	escrita_texto(371, "1 PONTO", sizeof("1 PONTO"));
 
-	for( int i = 0; i < 1024; i++ ){
-		unsigned char result = FLASH_Program(&s_flashDriver, ADDR_FLASH + i*8, &voltageCalA_K, 8);
-		if (kStatus_FLASH_Success != result)
-		{
-			error_trap();
-		}
-	}
-	FLASH_Erase(&s_flashDriver, ADDR_FLASH, 16, kFLASH_ApiEraseKey);
-
 	unsigned char readRxI2c = 0;
 	I2C_READ_PCF8653( &readRxI2c, Control_Status_1 );
 	if( readRxI2c != 0x00 )
@@ -1665,9 +1656,26 @@ unsigned char calibA( unsigned char wash ){
 	unsigned int  temporizador = 1000, contError = 0;
 	unsigned long k = 0, na = 0, cl = 0, ph = 0, ca = 0;
 	unsigned int medidaAnterior_K = 0, medidaAnterior_Cl = 0, medidaAnterior_Na = 0, medidaAnterior_Ca = 0, medidaAnterior_pH = 0;
+	unsigned int medidasCalibSalva[5] = {0,0,0,0,0};
+	unsigned char contAddrMemoria = 51, contadorCalib = 1, hora, minuto;
 	adc16_channel_config_t adc16ChannelConfigStruct;
 	adc16ChannelConfigStruct.enableInterruptOnConversionCompleted = false;
 	adc16ChannelConfigStruct.enableDifferentialConversion = false;
+
+	for( unsigned int i = 0xFC7D0; i >= 0xFC000; i = i - 40 ){	// Faz a verificação de memória apagada
+
+		if( *(volatile unsigned int *)(i) != 0xFFFFFFFF ){	// Se a memória foi escrita
+			// Armazena no vetor os valores de calibração já feitos
+			medidasCalibSalva[0] = *(volatile unsigned int *)(i);
+			medidasCalibSalva[1] = *(volatile unsigned int *)(i + 8);
+			medidasCalibSalva[2] = *(volatile unsigned int *)(i + 16);
+			medidasCalibSalva[3] = *(volatile unsigned int *)(i + 24);
+			medidasCalibSalva[4] = *(volatile unsigned int *)(i + 32);
+			break;
+		}
+		contAddrMemoria--; // Caso não tenha encontrado memória, decrementa contador de endereço
+
+	}
 
 	writeLine(13);	// Escreve o desenho da linha de separação na tela
 
@@ -2008,6 +2016,36 @@ unsigned char calibA( unsigned char wash ){
 					}
 
 					if( erroDiferencaTensoes == 0 && segundos < 27 ){	// Se diferença for menor que 500 e segundo menor que 27
+						hora = bcdtodec( I2C_READ_PCF8653( &hora, Hours ) );
+						minuto = bcdtodec( I2C_READ_PCF8653( &minuto, Minutes ) );
+						medidasCalibSalva[0] = hora << 24 | minuto << 18 | contadorCalib << 16 | voltageCalA_K;
+						medidasCalibSalva[0] = hora << 24 | minuto << 18 | contadorCalib << 16 | voltageCalA_K;
+						medidasCalibSalva[0] = hora << 24 | minuto << 18 | contadorCalib << 16 | voltageCalA_K;
+						medidasCalibSalva[0] = hora << 24 | minuto << 18 | contadorCalib << 16 | voltageCalA_K;
+						medidasCalibSalva[0] = hora << 24 | minuto << 18 | contadorCalib << 16 | voltageCalA_K;
+						if( abs(*(volatile unsigned short *)(ADDR_FLASH + contAddrMemoria * 40) - voltageCalA_K) > 500 ||
+							abs(*(volatile unsigned short *)(ADDR_FLASH + contAddrMemoria * 40 + 8) - voltageCalA_Na) > 500 ||
+							abs(*(volatile unsigned short *)(ADDR_FLASH + contAddrMemoria * 40 + 16) - voltageCalA_Cl) > 500 ||
+							abs(*(volatile unsigned short *)(ADDR_FLASH + contAddrMemoria * 40 + 24)- voltageCalA_Ca) > 500 ||
+							abs(*(volatile unsigned short *)(ADDR_FLASH + contAddrMemoria * 40 + 32) - voltageCalA_pH) > 500 ){
+							estado = 0;
+							contadorCalib++;
+						}
+						else{
+							estado = 3;
+							if( (contError = verifyError(TYPEA, NOABNORMAL)) != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
+								clearLine(3);
+								clearLine(5);
+								clearLine(7);
+								clearLine(9);
+								clearLine(11);
+								escrita_texto(28, "  ", sizeof("  "));
+								stateMachineError(120, contError & 0xFF, 1);	// Escreve mV fora da faixa para os respectivos eletrodos
+								stateMachineError(150, contError >> 8, 2);	// Escreve anormal para os respectivos eletrodos
+								escrita_texto(450, "YES=CALIBRAR NO=SAIR", sizeof("YES=CALIBRAR NO=SAIR"));
+							}
+						}
+				}
 
 
 /*						if( contTestOk < 1 ){		// Se contTestOk menor que 2
@@ -2036,7 +2074,6 @@ unsigned char calibA( unsigned char wash ){
 							}
 							estado = 3;
 						}*/
-					}
 					else if( erroDiferencaTensoes != 0 && segundos == 0 ){	// Senão
 
 						estado = 0;			// Estado recebe 0
