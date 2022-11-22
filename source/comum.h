@@ -32,6 +32,9 @@
 #include "rtc.h"
 #include "fsl_flash.h"
 
-#define ADDR_FLASH	0xFC000
+#define ADDR_FLASH		0xFC000
+#define DADOS_SALVOS	24
+#define CONT_DADOS		32
+#define DADO_MEMORIA	4
 
 #endif /* COMUM_H_ */

@@ -32,6 +32,8 @@ void display_run( void ){
 	for(int i = 0; i < 1000; i++ );
 	rst_on;
 
+	//FLASH_Erase(&s_flashDriver, ADDR_FLASH, 2000, kFLASH_ApiEraseKey);
+
 	uart_config_t config;
 	UART_GetDefaultConfig(&config);
 	config.baudRate_Bps = 19200;
@@ -355,7 +357,7 @@ void display_run( void ){
 			send_command(Display_mode_text | Display_mode_graphic);
 			status(1);
 			estado_display = 0;
-/*			if( controlMenu == 0 ){
+			/*			if( controlMenu == 0 ){
 
 				respCalibA = calibA(0);
 
@@ -547,13 +549,13 @@ unsigned char status( unsigned char tipo ){
 		while(!((reg & 0x03) == 0x03)){
 
 			reg = ( db7_read << 7 )
-																								| ( db6_read << 6 )
-																								| ( db5_read << 5 )
-																								| ( db4_read << 4 )
-																								| ( db3_read << 3 )
-																								| ( db2_read << 2 )
-																								| ( db1_read << 1 )
-																								| db0_read;
+																										| ( db6_read << 6 )
+																										| ( db5_read << 5 )
+																										| ( db4_read << 4 )
+																										| ( db3_read << 3 )
+																										| ( db2_read << 2 )
+																										| ( db1_read << 1 )
+																										| db0_read;
 
 			reg = reg;
 
@@ -565,13 +567,13 @@ unsigned char status( unsigned char tipo ){
 		while(!((reg & 0x80) == 0x80)){
 
 			reg = ( db7_read << 7 )
-																								| ( db6_read << 6 )
-																								| ( db5_read << 5 )
-																								| ( db4_read << 4 )
-																								| ( db3_read << 3 )
-																								| ( db2_read << 2 )
-																								| ( db1_read << 1 )
-																								| db0_read;
+																										| ( db6_read << 6 )
+																										| ( db5_read << 5 )
+																										| ( db4_read << 4 )
+																										| ( db3_read << 3 )
+																										| ( db2_read << 2 )
+																										| ( db1_read << 1 )
+																										| db0_read;
 
 			reg = reg;
 
@@ -609,13 +611,13 @@ unsigned char read_data( void ){
 	ce_off;
 
 	reg = ( db7_read << 7 )
-																						| ( db6_read << 6 )
-																						| ( db5_read << 5 )
-																						| ( db4_read << 4 )
-																						| ( db3_read << 3 )
-																						| ( db2_read << 2 )
-																						| ( db1_read << 1 )
-																						| db0_read;
+																								| ( db6_read << 6 )
+																								| ( db5_read << 5 )
+																								| ( db4_read << 4 )
+																								| ( db3_read << 3 )
+																								| ( db2_read << 2 )
+																								| ( db1_read << 1 )
+																								| db0_read;
 
 	reg = reg;
 
@@ -1656,21 +1658,22 @@ unsigned char calibA( unsigned char wash ){
 	unsigned int  temporizador = 1000, contError = 0;
 	unsigned long k = 0, na = 0, cl = 0, ph = 0, ca = 0;
 	unsigned int medidaAnterior_K = 0, medidaAnterior_Cl = 0, medidaAnterior_Na = 0, medidaAnterior_Ca = 0, medidaAnterior_pH = 0;
-	unsigned int medidasCalibSalva[5] = {0,0,0,0,0};
-	unsigned char contAddrMemoria = 51, contadorCalib = 1, hora, minuto;
+	unsigned int medidaCalAnterior_K = 0, medidaCalAnterior_Cl = 0, medidaCalAnterior_Na = 0, medidaCalAnterior_Ca = 0, medidaCalAnterior_pH = 0;
+	unsigned int medidasCalibSalva[6] = {0,0,0,0,0,0};
+	unsigned char contAddrMemoria = 81, contadorCalib = 1, hora, minuto;
 	adc16_channel_config_t adc16ChannelConfigStruct;
 	adc16ChannelConfigStruct.enableInterruptOnConversionCompleted = false;
 	adc16ChannelConfigStruct.enableDifferentialConversion = false;
 
-	for( unsigned int i = 0xFC7D0; i >= 0xFC000; i = i - 40 ){	// Faz a verificação de memória apagada
+	for( unsigned int i = ADDR_FLASH + 0x780; i >= ADDR_FLASH; i = i - DADOS_SALVOS ){	// Faz a verificação de memória apagada
 
 		if( *(volatile unsigned int *)(i) != 0xFFFFFFFF ){	// Se a memória foi escrita
 			// Armazena no vetor os valores de calibração já feitos
-			medidasCalibSalva[0] = *(volatile unsigned int *)(i);
-			medidasCalibSalva[1] = *(volatile unsigned int *)(i + 8);
-			medidasCalibSalva[2] = *(volatile unsigned int *)(i + 16);
-			medidasCalibSalva[3] = *(volatile unsigned int *)(i + 24);
-			medidasCalibSalva[4] = *(volatile unsigned int *)(i + 32);
+			medidaCalAnterior_K = *(volatile unsigned short *)(i);
+			medidaCalAnterior_Na = *(volatile unsigned short *)(i + DADO_MEMORIA);
+			medidaCalAnterior_Cl = *(volatile unsigned short *)(i + DADO_MEMORIA * 2);
+			medidaCalAnterior_Ca = *(volatile unsigned short *)(i + DADO_MEMORIA * 3);
+			medidaCalAnterior_pH = *(volatile unsigned short *)(i + DADO_MEMORIA * 4);
 			break;
 		}
 		contAddrMemoria--; // Caso não tenha encontrado memória, decrementa contador de endereço
@@ -1901,9 +1904,11 @@ unsigned char calibA( unsigned char wash ){
 				temporizador--;	// Decrementa o temporizador
 				if( temporizador == 0 ){	// Se temporizador chegar a 0
 					temporizador = 1000;	// Reinicia o temporizador
+
 					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve os segundos
+
 					escrita_texto(92, "K  =   4.00 mmol/L  ", sizeof( "K  =   4.00 mmol/L  "));
-					escrita_texto(112, numtolcd(voltageCalA_pH, CAL), 7);
+					escrita_texto(112, numtolcd(voltageCalA_K, CAL), 7);
 					escrita_texto(118, "mV", sizeof( "mV"));
 
 					escrita_texto(151, "Na  = 140.00 mmol/L  ", sizeof("Na  = 140.00 mmol/L  "));
@@ -2016,20 +2021,29 @@ unsigned char calibA( unsigned char wash ){
 					}
 
 					if( erroDiferencaTensoes == 0 && segundos < 27 ){	// Se diferença for menor que 500 e segundo menor que 27
-						hora = bcdtodec( I2C_READ_PCF8653( &hora, Hours ) );
-						minuto = bcdtodec( I2C_READ_PCF8653( &minuto, Minutes ) );
-						medidasCalibSalva[0] = hora << 24 | minuto << 18 | contadorCalib << 16 | voltageCalA_K;
-						medidasCalibSalva[0] = hora << 24 | minuto << 18 | contadorCalib << 16 | voltageCalA_K;
-						medidasCalibSalva[0] = hora << 24 | minuto << 18 | contadorCalib << 16 | voltageCalA_K;
-						medidasCalibSalva[0] = hora << 24 | minuto << 18 | contadorCalib << 16 | voltageCalA_K;
-						medidasCalibSalva[0] = hora << 24 | minuto << 18 | contadorCalib << 16 | voltageCalA_K;
-						if( abs(*(volatile unsigned short *)(ADDR_FLASH + contAddrMemoria * 40) - voltageCalA_K) > 500 ||
-							abs(*(volatile unsigned short *)(ADDR_FLASH + contAddrMemoria * 40 + 8) - voltageCalA_Na) > 500 ||
-							abs(*(volatile unsigned short *)(ADDR_FLASH + contAddrMemoria * 40 + 16) - voltageCalA_Cl) > 500 ||
-							abs(*(volatile unsigned short *)(ADDR_FLASH + contAddrMemoria * 40 + 24)- voltageCalA_Ca) > 500 ||
-							abs(*(volatile unsigned short *)(ADDR_FLASH + contAddrMemoria * 40 + 32) - voltageCalA_pH) > 500 ){
-							estado = 0;
+
+						I2C_READ_PCF8653( &hora, Hours ) ;	// Medida de hora do RTC
+						I2C_READ_PCF8653( &minuto, Minutes );	// Medida de minuto do RTC
+						medidasCalibSalva[0] = voltageCalA_K;	// Salva calibrador K
+						medidasCalibSalva[1] = voltageCalA_Na;	// Salva calibrador Na
+						medidasCalibSalva[2] = voltageCalA_Cl;	// Salva calibrador Cl
+						medidasCalibSalva[3] = voltageCalA_Ca;	// Salva calibrador Ca
+						medidasCalibSalva[4] = voltageCalA_pH;	// Salva calibrador pH
+						medidasCalibSalva[5] = bcdtodec(hora & 0x3F) << 16 | bcdtodec(minuto & 0x7F) << 8 | contadorCalib;	// Salva horário, contador de calibração e 0 para calibrador A
+						FLASH_Program(&s_flashDriver, ADDR_FLASH + contAddrMemoria * DADOS_SALVOS, medidasCalibSalva, DADOS_SALVOS);	// Salva dados de calibração
+
+						contAddrMemoria++;	// Incrementa contador de memória
+
+						if( abs(medidaCalAnterior_K - voltageCalA_K) > 500 ||
+							abs(medidaCalAnterior_Na - voltageCalA_Na) > 500 ||
+							abs(medidaCalAnterior_Cl - voltageCalA_Cl) > 500 ||
+							abs(medidaCalAnterior_Ca - voltageCalA_Ca) > 500 ||
+							abs(medidaCalAnterior_pH - voltageCalA_pH) > 500 ){
 							contadorCalib++;
+							if( contadorCalib > 3 )
+								estado = 3;
+							else
+								estado = 0;
 						}
 						else{
 							estado = 3;
@@ -2045,10 +2059,15 @@ unsigned char calibA( unsigned char wash ){
 								escrita_texto(450, "YES=CALIBRAR NO=SAIR", sizeof("YES=CALIBRAR NO=SAIR"));
 							}
 						}
-				}
+						medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS);
+						medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA);
+						medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*2);
+						medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*3);
+						medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*4);
+					}
 
 
-/*						if( contTestOk < 1 ){		// Se contTestOk menor que 2
+					/*						if( contTestOk < 1 ){		// Se contTestOk menor que 2
 							estado = 0;		// Estado recebe 0
 							contTestOk++; 	// contTesteOk incrementa
 							erroDiferencaTensoes = 0;
@@ -2109,25 +2128,25 @@ unsigned char calibA( unsigned char wash ){
 
 		case 3:		// Estado de verificação de erro
 
-				contError = verifyError(TYPEA, NOABNORMAL);	// Verifica se deu erro de valor fora da faixa
-				if( contTestOk != 1 )	// Se o test não está ok
-					stateMachineError(90, erroDiferencaTensoes, 3);	// Escreve instável e qual dos eletrodos que não está instável
-				if( contError == 0 && contTestOk == 1 ){	// Se não há erro de verificação e se o teste está ok
+			contError = verifyError(TYPEA, NOABNORMAL);	// Verifica se deu erro de valor fora da faixa
+			if( contTestOk != 1 )	// Se o test não está ok
+				stateMachineError(90, erroDiferencaTensoes, 3);	// Escreve instável e qual dos eletrodos que não está instável
+			if( contError == 0 && contTestOk == 1 ){	// Se não há erro de verificação e se o teste está ok
 
-					escrita_texto( 400, "Finalizado!", sizeof("Finalizado!") );
-					vTaskDelay(4000);
-					flagBuz = 1;
-					return 0;	// Retorna 0
+				escrita_texto( 400, "Finalizado!", sizeof("Finalizado!") );
+				vTaskDelay(4000);
+				flagBuz = 1;
+				return 0;	// Retorna 0
+			}
+			else{	// Senão
+				if( verifyKeyBoard() == yes ){	// Se o botão yes foi pressionado
+					estado = 0;	// Estado 0, movimento dos motores
+					contTestOk = 0;	// Zera o contador de teste ok
+					contError = 0;	// Zera o contador de erro
 				}
-				else{	// Senão
-					if( verifyKeyBoard() == yes ){	// Se o botão yes foi pressionado
-						estado = 0;	// Estado 0, movimento dos motores
-						contTestOk = 0;	// Zera o contador de teste ok
-						contError = 0;	// Zera o contador de erro
-					}
-					else if( verifyKeyBoard() == no )	// Se o botão No foi pressionado
-						return erroDiferencaTensoes; 	// Retorna o valor do erro de instabilidade
-				}
+				else if( verifyKeyBoard() == no )	// Se o botão No foi pressionado
+					return erroDiferencaTensoes; 	// Retorna o valor do erro de instabilidade
+			}
 
 			break;
 
@@ -2417,40 +2436,40 @@ unsigned char calibB( void ){
 
 		case 0:	// Estado 0, movimento dos motores
 			// Move motor MUX para posição 3
-				move_mux(POSITION3, SPEEDMUX1);
+			move_mux(POSITION3, SPEEDMUX1);
 
-				// Movimenta anti horário em 910ms
-				sample = move_tripa(WAYAHOUR, SPEEDTRP1, 910);
-				vTaskDelay(TIMERCOM * 8); // Delay de 2 segundos
+			// Movimenta anti horário em 910ms
+			sample = move_tripa(WAYAHOUR, SPEEDTRP1, 910);
+			vTaskDelay(TIMERCOM * 8); // Delay de 2 segundos
 
-				// Move motor MUX para a posição 4
-				move_mux(POSITION4, SPEEDMUX1);
-				vTaskDelay(TIMERCOM);
+			// Move motor MUX para a posição 4
+			move_mux(POSITION4, SPEEDMUX1);
+			vTaskDelay(TIMERCOM);
 
-				// Movimenta anti horário em 2,82 s
-				sample = move_tripa(WAYAHOUR, SPEEDTRP1, 2820);
-				vTaskDelay(TIMERCOM / 2); // Delay 125 ms
+			// Movimenta anti horário em 2,82 s
+			sample = move_tripa(WAYAHOUR, SPEEDTRP1, 2820);
+			vTaskDelay(TIMERCOM / 2); // Delay 125 ms
 
-				// Move motor MUX para a posição 3
-				move_mux(POSITION3, SPEEDMUX1);
-				vTaskDelay(TIMERCOM);
+			// Move motor MUX para a posição 3
+			move_mux(POSITION3, SPEEDMUX1);
+			vTaskDelay(TIMERCOM);
 
-				// Movimenta anti horário em 870ms
-				sample = move_tripa(WAYAHOUR, SPEEDTRP1, 870);
-				vTaskDelay(TIMERCOM + 50);
+			// Movimenta anti horário em 870ms
+			sample = move_tripa(WAYAHOUR, SPEEDTRP1, 870);
+			vTaskDelay(TIMERCOM + 50);
 
-				// Movimenta anti horário em 52ms
-				sample = move_tripa(WAYAHOUR, SPEEDTRP2, 1650);
-				sample = move_tripa(WAYAHOUR, SPEEDTRP1, 3800);
-				vTaskDelay(2250);
+			// Movimenta anti horário em 52ms
+			sample = move_tripa(WAYAHOUR, SPEEDTRP2, 1650);
+			sample = move_tripa(WAYAHOUR, SPEEDTRP1, 3800);
+			vTaskDelay(2250);
 
-				// Move motor MUX para a posição 3
-				move_mux(POSITION4, SPEEDMUX1);
-				vTaskDelay(TIMERCOM);
+			// Move motor MUX para a posição 3
+			move_mux(POSITION4, SPEEDMUX1);
+			vTaskDelay(TIMERCOM);
 
-				// Movimenta anti horário em 52ms
-				sample = move_tripa(WAYAHOUR, SPEEDTRP4, 15000);
-				vTaskDelay(TIMERCOM);
+			// Movimenta anti horário em 52ms
+			sample = move_tripa(WAYAHOUR, SPEEDTRP4, 15000);
+			vTaskDelay(TIMERCOM);
 
 			if( sample == 0 && contError < 2 )	// Se não detectou líquido e a contagem de error menor que 2
 				contError++; // Incrementa contagem de erro
@@ -2710,30 +2729,30 @@ unsigned char calibB( void ){
 
 		case 3:		// Estado de verificação de erro
 
-				if( contError == 0 && contTestOk == 1 ){	// Se não há erro de verificação e se o teste está ok
-					escrita_texto( 400, "Finalizado!", sizeof("Finalizado!") );
-					vTaskDelay(4000);
-					flagBuz = 1;
-					return 0;	// Retorna 0
+			if( contError == 0 && contTestOk == 1 ){	// Se não há erro de verificação e se o teste está ok
+				escrita_texto( 400, "Finalizado!", sizeof("Finalizado!") );
+				vTaskDelay(4000);
+				flagBuz = 1;
+				return 0;	// Retorna 0
+			}
+			else{	// Senão
+				if( contTestOk != 1 )	// Se o test não está ok
+					stateMachineError(90, erroDiferencaTensoes, 3);	// Escreve instável e qual dos eletrodos que não está instável
+				if( verifyKeyBoard() == yes ){	// Se o botão yes foi pressionado
+					estado = 0;	// Estado 0, movimento dos motores
+					contTestOk = 0;	// Zera o contador de teste ok
+					contError = 0;	// Zera o contador de erro
 				}
-				else{	// Senão
-					if( contTestOk != 1 )	// Se o test não está ok
-						stateMachineError(90, erroDiferencaTensoes, 3);	// Escreve instável e qual dos eletrodos que não está instável
-					if( verifyKeyBoard() == yes ){	// Se o botão yes foi pressionado
-						estado = 0;	// Estado 0, movimento dos motores
-						contTestOk = 0;	// Zera o contador de teste ok
-						contError = 0;	// Zera o contador de erro
-					}
-					else if( verifyKeyBoard() == no )	// Se o botão No foi pressionado
-						return erroDiferencaTensoes; 	// Retorna o valor do erro de instabilidade
-				}
+				else if( verifyKeyBoard() == no )	// Se o botão No foi pressionado
+					return erroDiferencaTensoes; 	// Retorna o valor do erro de instabilidade
+			}
 
 			break;
 
 		}
 
 	}
-/*
+	/*
 	// Move motor MUX para posição 3
 	move_mux(POSITION3, SPEEDMUX1);
 
@@ -3299,7 +3318,7 @@ unsigned int verifyError( unsigned char typeAorB, unsigned char abnormal ){
 			contErrorAbnormal &= ~(1 << ErrorpH);
 
 	}
-/*	if( contError != 0 )
+	/*	if( contError != 0 )
 		stateMachineError(120, contError, 1);
 
 	if( contErrorAbnormal != 0 )
@@ -3499,12 +3518,15 @@ void stateMachineError( unsigned int position, unsigned char error, unsigned cha
 		break;
 
 	}
-	if( typeError == 1 )
-		escrita_texto(position + 13, "mV fora da faixa",sizeof("mV fora da faixa"));
-	else if( typeError == 2 )
-		escrita_texto(position + 13, "ANORMAL",sizeof("ANORMAL"));
-	else
-		escrita_texto(position + 13, "VARIANDO",sizeof("VARIANDO"));
+	if( error != 0 ){
+		if( typeError == 1 )
+			escrita_texto(position + 13, "mV fora da faixa",sizeof("mV fora da faixa"));
+		else if( typeError == 2 )
+			escrita_texto(position + 13, "ANORMAL",sizeof("ANORMAL"));
+		else
+			escrita_texto(position + 13, "VARIANDO",sizeof("VARIANDO"));
+	}
+
 }
 
 unsigned char verifyKeyBoard( void ){
