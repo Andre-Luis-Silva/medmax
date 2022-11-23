@@ -549,13 +549,13 @@ unsigned char status( unsigned char tipo ){
 		while(!((reg & 0x03) == 0x03)){
 
 			reg = ( db7_read << 7 )
-																										| ( db6_read << 6 )
-																										| ( db5_read << 5 )
-																										| ( db4_read << 4 )
-																										| ( db3_read << 3 )
-																										| ( db2_read << 2 )
-																										| ( db1_read << 1 )
-																										| db0_read;
+																																		| ( db6_read << 6 )
+																																		| ( db5_read << 5 )
+																																		| ( db4_read << 4 )
+																																		| ( db3_read << 3 )
+																																		| ( db2_read << 2 )
+																																		| ( db1_read << 1 )
+																																		| db0_read;
 
 			reg = reg;
 
@@ -567,13 +567,13 @@ unsigned char status( unsigned char tipo ){
 		while(!((reg & 0x80) == 0x80)){
 
 			reg = ( db7_read << 7 )
-																										| ( db6_read << 6 )
-																										| ( db5_read << 5 )
-																										| ( db4_read << 4 )
-																										| ( db3_read << 3 )
-																										| ( db2_read << 2 )
-																										| ( db1_read << 1 )
-																										| db0_read;
+																																		| ( db6_read << 6 )
+																																		| ( db5_read << 5 )
+																																		| ( db4_read << 4 )
+																																		| ( db3_read << 3 )
+																																		| ( db2_read << 2 )
+																																		| ( db1_read << 1 )
+																																		| db0_read;
 
 			reg = reg;
 
@@ -611,13 +611,13 @@ unsigned char read_data( void ){
 	ce_off;
 
 	reg = ( db7_read << 7 )
-																								| ( db6_read << 6 )
-																								| ( db5_read << 5 )
-																								| ( db4_read << 4 )
-																								| ( db3_read << 3 )
-																								| ( db2_read << 2 )
-																								| ( db1_read << 1 )
-																								| db0_read;
+																																| ( db6_read << 6 )
+																																| ( db5_read << 5 )
+																																| ( db4_read << 4 )
+																																| ( db3_read << 3 )
+																																| ( db2_read << 2 )
+																																| ( db1_read << 1 )
+																																| db0_read;
 
 	reg = reg;
 
@@ -1654,7 +1654,7 @@ void clear_display_text( void ){
 unsigned char calibA( unsigned char wash ){
 
 	// Declaraçõe de variáveis
-	unsigned char sample = 0, contReadAD = 0, contTestOk = 0, estado = 0, texto = 0, segundos = 30, erroDiferencaTensoes = 0;
+	unsigned char sample = 0, contReadAD = 0, estado = 0, texto = 0, segundos = 30, erroDiferencaTensoes = 0;
 	unsigned int  temporizador = 1000, contError = 0;
 	unsigned long k = 0, na = 0, cl = 0, ph = 0, ca = 0;
 	unsigned int medidaAnterior_K = 0, medidaAnterior_Cl = 0, medidaAnterior_Na = 0, medidaAnterior_Ca = 0, medidaAnterior_pH = 0;
@@ -2035,35 +2035,34 @@ unsigned char calibA( unsigned char wash ){
 						contAddrMemoria++;	// Incrementa contador de memória
 
 						if( abs(medidaCalAnterior_K - voltageCalA_K) > 500 ||
-							abs(medidaCalAnterior_Na - voltageCalA_Na) > 500 ||
-							abs(medidaCalAnterior_Cl - voltageCalA_Cl) > 500 ||
-							abs(medidaCalAnterior_Ca - voltageCalA_Ca) > 500 ||
-							abs(medidaCalAnterior_pH - voltageCalA_pH) > 500 ){
+								abs(medidaCalAnterior_Na - voltageCalA_Na) > 500 ||
+								abs(medidaCalAnterior_Cl - voltageCalA_Cl) > 500 ||
+								abs(medidaCalAnterior_Ca - voltageCalA_Ca) > 500 ||
+								abs(medidaCalAnterior_pH - voltageCalA_pH) > 500 ){
 							contadorCalib++;
 							if( contadorCalib > 3 )
 								estado = 3;
-							else
-								estado = 0;
-						}
-						else{
-							estado = 3;
-							if( (contError = verifyError(TYPEA, NOABNORMAL)) != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
+							else{
 								clearLine(3);
 								clearLine(5);
 								clearLine(7);
 								clearLine(9);
 								clearLine(11);
 								escrita_texto(28, "  ", sizeof("  "));
-								stateMachineError(120, contError & 0xFF, 1);	// Escreve mV fora da faixa para os respectivos eletrodos
-								stateMachineError(150, contError >> 8, 2);	// Escreve anormal para os respectivos eletrodos
-								escrita_texto(450, "YES=CALIBRAR NO=SAIR", sizeof("YES=CALIBRAR NO=SAIR"));
+								escrita_texto( 394, "Aspirando Calibrador A", sizeof("Aspirando Calibrador A"));	// Escreve "Aspirando Calibrador A" na posição 394
+								estado = 0;
 							}
 						}
-						medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS);
-						medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA);
-						medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*2);
-						medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*3);
-						medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*4);
+						else{
+							estado = 3;
+						}
+						if( estado != 3 ){
+							medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS);	// Lê o valor de calibração anterior K
+							medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA);	// Lê o valor de calibração anterior Na
+							medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*2);	// Lê o valor de calibração anterior Cl
+							medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*3);	// Lê o valor de calibração anterior Ca
+							medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*4);	// Lê o valor de calibração anterior pH
+						}
 					}
 
 
@@ -2097,12 +2096,6 @@ unsigned char calibA( unsigned char wash ){
 
 						estado = 0;			// Estado recebe 0
 						contError++;				// contErro incrementa
-						clearLine(3);
-						clearLine(5);
-						clearLine(7);
-						clearLine(9);
-						clearLine(11);
-						escrita_texto(28, "  ", sizeof("  "));
 						if( contError == 2 ){	// Se contErro igual a 2
 							estado = 3;			// Estado recebe 3 (Verificação de erros)
 							contError = 0;		// Zera contador de erro
@@ -2122,27 +2115,68 @@ unsigned char calibA( unsigned char wash ){
 
 				}
 			}
-			else // Senão
-				estado = 3;
+			if( estado == 3 ){
+				if( abs(medidaCalAnterior_K - voltageCalA_K) < 500 )
+					erroDiferencaTensoes &= ~(1 << ErrorK);
+				else
+					erroDiferencaTensoes |= 1 << ErrorK;
+
+				if( abs(medidaCalAnterior_Na - voltageCalA_Na) < 500 )
+					erroDiferencaTensoes &= ~(1 << ErrorNa);
+				else
+					erroDiferencaTensoes |= 1 << ErrorNa;
+
+				if( abs(medidaCalAnterior_Cl - voltageCalA_Cl) < 500 )
+					erroDiferencaTensoes &= ~(1 << ErrorCl);
+				else
+					erroDiferencaTensoes |= 1 << ErrorCl;
+
+				if( abs(medidaCalAnterior_Ca - voltageCalA_Ca) < 500 )
+					erroDiferencaTensoes &= ~(1 << ErrorCa);
+				else
+					erroDiferencaTensoes |= 1 << ErrorCa;
+
+				if( abs(medidaCalAnterior_pH - voltageCalA_pH) < 500 )
+					erroDiferencaTensoes &= ~(1 << ErrorpH);
+				else
+					erroDiferencaTensoes |= 1 << ErrorpH;
+
+				if( (contError = verifyError(TYPEA, NOABNORMAL)) != 0 || erroDiferencaTensoes != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
+					clearLine(3);
+					clearLine(5);
+					clearLine(7);
+					clearLine(9);
+					clearLine(11);
+					writeLine(13);
+					escrita_texto(28, "  ", sizeof("  "));
+					stateMachineError(120, contError & 0xFF, 1);	// Escreve mV fora da faixa para os respectivos eletrodos
+					stateMachineError(150, contError >> 8, 2);	// Escreve anormal para os respectivos eletrodos
+					escrita_texto(450, "YES=CALIBRAR NO=SAIR", sizeof("YES=CALIBRAR NO=SAIR"));
+					stateMachineError(90, erroDiferencaTensoes, 3);	// Escreve variandp e qual dos eletrodos que não está instável
+				}
+			}
 			break;
 
 		case 3:		// Estado de verificação de erro
 
-			contError = verifyError(TYPEA, NOABNORMAL);	// Verifica se deu erro de valor fora da faixa
-			if( contTestOk != 1 )	// Se o test não está ok
-				stateMachineError(90, erroDiferencaTensoes, 3);	// Escreve instável e qual dos eletrodos que não está instável
-			if( contError == 0 && contTestOk == 1 ){	// Se não há erro de verificação e se o teste está ok
+			if( contError == 0 ){	// Se não há erro de verificação e se o teste está ok
 
 				escrita_texto( 400, "Finalizado!", sizeof("Finalizado!") );
 				vTaskDelay(4000);
 				flagBuz = 1;
 				return 0;	// Retorna 0
+
 			}
 			else{	// Senão
 				if( verifyKeyBoard() == yes ){	// Se o botão yes foi pressionado
 					estado = 0;	// Estado 0, movimento dos motores
-					contTestOk = 0;	// Zera o contador de teste ok
 					contError = 0;	// Zera o contador de erro
+					contadorCalib = 1; // Reseta o valor do contador de calibração
+					clearLine(3);	// Apaga linha 3
+					clearLine(4);	// Apaga linha 4
+					clearLine(5);	// Apaga linha 5
+					clearLine(15);	// Apaga linha 15
+					escrita_texto( 394, "Aspirando Calibrador A", sizeof("Aspirando Calibrador A"));	// Escreve "Aspirando Calibrador A" na posição 394
 				}
 				else if( verifyKeyBoard() == no )	// Se o botão No foi pressionado
 					return erroDiferencaTensoes; 	// Retorna o valor do erro de instabilidade
@@ -2423,10 +2457,30 @@ unsigned char calibB( void ){
 	unsigned int  temporizador = 1000, contError = 0;
 	unsigned long k = 0, na = 0, cl = 0, ph = 0, ca = 0;
 	long medidaAnterior_K = 0, medidaAnterior_Cl = 0, medidaAnterior_Na = 0, medidaAnterior_Ca = 0, medidaAnterior_pH = 0;
+	unsigned int medidaCalAnterior_K = 0, medidaCalAnterior_Cl = 0, medidaCalAnterior_Na = 0, medidaCalAnterior_Ca = 0, medidaCalAnterior_pH = 0;
+	unsigned int medidasCalibSalva[6] = {0,0,0,0,0,0};
+	unsigned char contAddrMemoria = 81, contadorCalib = 1, hora, minuto;
 	adc16_channel_config_t adc16ChannelConfigStruct;
 	adc16ChannelConfigStruct.enableInterruptOnConversionCompleted = false;
 	adc16ChannelConfigStruct.enableDifferentialConversion = false;
 
+
+	for( unsigned int i = ADDR_FLASH + 0x780; i >= ADDR_FLASH; i = i - DADOS_SALVOS ){	// Faz a verificação de memória apagada
+
+		if( *(volatile unsigned int *)(i) != 0xFFFFFFFF ){	// Se a memória foi escrita
+			// Armazena no vetor os valores de calibração já feitos
+			medidaCalAnterior_K = *(volatile unsigned short *)(i);
+			medidaCalAnterior_Na = *(volatile unsigned short *)(i + DADO_MEMORIA);
+			medidaCalAnterior_Cl = *(volatile unsigned short *)(i + DADO_MEMORIA * 2);
+			medidaCalAnterior_Ca = *(volatile unsigned short *)(i + DADO_MEMORIA * 3);
+			medidaCalAnterior_pH = *(volatile unsigned short *)(i + DADO_MEMORIA * 4);
+			break;
+		}
+		contAddrMemoria--; // Caso não tenha encontrado memória, decrementa contador de endereço
+
+	}
+
+	writeLine(13);
 	escrita_texto( 0x09, "Calibrador B", sizeof("Calibrador B"));
 	escrita_texto( 0x18A, "Aspirando Calibrador B", sizeof("Aspirando Calibrador B"));
 
@@ -2664,7 +2718,52 @@ unsigned char calibB( void ){
 					}
 
 					if( erroDiferencaTensoes == 0 && segundos < 27 ){	// Se diferença for menor que 500 e segundo menor que 27
-						if( contTestOk < 1 ){		// Se contTestOk menor que 2
+
+						I2C_READ_PCF8653( &hora, Hours ) ;	// Medida de hora do RTC
+						I2C_READ_PCF8653( &minuto, Minutes );	// Medida de minuto do RTC
+						medidasCalibSalva[0] = voltageCalB_K;	// Salva calibrador K
+						medidasCalibSalva[1] = voltageCalB_Na;	// Salva calibrador Na
+						medidasCalibSalva[2] = voltageCalB_Cl;	// Salva calibrador Cl
+						medidasCalibSalva[3] = voltageCalB_Ca;	// Salva calibrador Ca
+						medidasCalibSalva[4] = voltageCalB_pH;	// Salva calibrador pH
+						medidasCalibSalva[5] = 0x01 << 24 | bcdtodec(hora & 0x3F) << 16 | bcdtodec(minuto & 0x7F) << 8 | contadorCalib;	// Salva horário, contador de calibração e 0 para calibrador A
+						FLASH_Program(&s_flashDriver, ADDR_FLASH + contAddrMemoria * DADOS_SALVOS, medidasCalibSalva, DADOS_SALVOS);	// Salva dados de calibração
+
+						contAddrMemoria++;	// Incrementa contador de memória
+
+						if( abs(medidaCalAnterior_K - voltageCalB_K) > 500 ||
+								abs(medidaCalAnterior_Na - voltageCalB_Na) > 500 ||
+								abs(medidaCalAnterior_Cl - voltageCalB_Cl) > 500 ||
+								abs(medidaCalAnterior_Ca - voltageCalB_Ca) > 500 ||
+								abs(medidaCalAnterior_pH - voltageCalB_pH) > 500 ){
+							contadorCalib++;
+							if( contadorCalib > 3 )
+								estado = 3;
+							else{
+								clearLine(3);
+								clearLine(5);
+								clearLine(7);
+								clearLine(9);
+								clearLine(11);
+								escrita_texto(28, "  ", sizeof("  "));
+								escrita_texto( 394, "Aspirando Calibrador A", sizeof("Aspirando Calibrador A"));	// Escreve "Aspirando Calibrador A" na posição 394
+								estado = 0;
+							}
+						}
+						else{
+							estado = 3;
+						}
+						if( estado != 3 ){
+							medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS);	// Lê o valor de calibração anterior K
+							medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA);	// Lê o valor de calibração anterior Na
+							medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*2);	// Lê o valor de calibração anterior Cl
+							medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*3);	// Lê o valor de calibração anterior Ca
+							medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*4);	// Lê o valor de calibração anterior pH
+						}
+					}
+
+
+					/*	if( contTestOk < 1 ){		// Se contTestOk menor que 2
 							estado = 0;		// Estado recebe 0
 							contTestOk++; 	// contTesteOk incrementa
 							erroDiferencaTensoes = 0;
@@ -2691,22 +2790,13 @@ unsigned char calibB( void ){
 							estado = 3;	// Estado de verificação de erros
 						}
 					}
+					 */
 					else if( erroDiferencaTensoes != 0 && segundos == 0 ){	// Senão
 
 						estado = 0;			// Estado recebe 0
 						contError++;				// contErro incrementa
-						clearLine(3);
-						clearLine(5);
-						clearLine(7);
-						clearLine(9);
-						clearLine(11);
-						escrita_texto(28, "  ", sizeof("  "));
 						if( contError == 2 ){	// Se contErro igual a 2
 							estado = 3;			// Estado recebe 3 (Verificação de erros)
-							contError = 0;		// Zera contador de erro
-							contError = verifyError(TYPEB, ABNORMAL);	// Verifica se teve mv fora da faixa e anormal
-							stateMachineError(120, contError & 0xFF, 1);	// Escreve mV fora da faixa para os respectivos eletrodos
-							stateMachineError(120, contError >> 8, 2);	// Escreve anormal para os respectivos eletrodos
 							escrita_texto(450, "YES=CALIBRAR NO=SAIR", sizeof("YES=CALIBRAR NO=SAIR"));
 						}
 
@@ -2723,25 +2813,68 @@ unsigned char calibB( void ){
 
 				}
 			}
-			else // Senão
-				estado = 3;
+			if( estado == 3 ){
+				if( abs(medidaCalAnterior_K - voltageCalA_K) < 500 )
+					erroDiferencaTensoes &= ~(1 << ErrorK);
+				else
+					erroDiferencaTensoes |= 1 << ErrorK;
+
+				if( abs(medidaCalAnterior_Na - voltageCalA_Na) < 500 )
+					erroDiferencaTensoes &= ~(1 << ErrorNa);
+				else
+					erroDiferencaTensoes |= 1 << ErrorNa;
+
+				if( abs(medidaCalAnterior_Cl - voltageCalA_Cl) < 500 )
+					erroDiferencaTensoes &= ~(1 << ErrorCl);
+				else
+					erroDiferencaTensoes |= 1 << ErrorCl;
+
+				if( abs(medidaCalAnterior_Ca - voltageCalA_Ca) < 500 )
+					erroDiferencaTensoes &= ~(1 << ErrorCa);
+				else
+					erroDiferencaTensoes |= 1 << ErrorCa;
+
+				if( abs(medidaCalAnterior_pH - voltageCalA_pH) < 500 )
+					erroDiferencaTensoes &= ~(1 << ErrorpH);
+				else
+					erroDiferencaTensoes |= 1 << ErrorpH;
+
+				if( (contError = verifyError(TYPEB, ABNORMAL)) != 0 || erroDiferencaTensoes != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
+					clearLine(3);
+					clearLine(5);
+					clearLine(7);
+					clearLine(9);
+					clearLine(11);
+					writeLine(13);
+					escrita_texto(28, "  ", sizeof("  "));
+					stateMachineError(120, contError & 0xFF, 1);	// Escreve mV fora da faixa para os respectivos eletrodos
+					stateMachineError(150, contError >> 8, 2);	// Escreve anormal para os respectivos eletrodos
+					escrita_texto(450, "YES=CALIBRAR NO=SAIR", sizeof("YES=CALIBRAR NO=SAIR"));
+					stateMachineError(90, erroDiferencaTensoes, 3);	// Escreve variandp e qual dos eletrodos que não está instável
+				}
+			}
 			break;
 
 		case 3:		// Estado de verificação de erro
 
-			if( contError == 0 && contTestOk == 1 ){	// Se não há erro de verificação e se o teste está ok
+			if( contError == 0 ){	// Se não há erro de verificação e se o teste está ok
+
 				escrita_texto( 400, "Finalizado!", sizeof("Finalizado!") );
 				vTaskDelay(4000);
 				flagBuz = 1;
 				return 0;	// Retorna 0
+
 			}
 			else{	// Senão
-				if( contTestOk != 1 )	// Se o test não está ok
-					stateMachineError(90, erroDiferencaTensoes, 3);	// Escreve instável e qual dos eletrodos que não está instável
 				if( verifyKeyBoard() == yes ){	// Se o botão yes foi pressionado
 					estado = 0;	// Estado 0, movimento dos motores
-					contTestOk = 0;	// Zera o contador de teste ok
 					contError = 0;	// Zera o contador de erro
+					contadorCalib = 1; // Reseta o valor do contador de calibração
+					clearLine(3);	// Apaga linha 3
+					clearLine(4);	// Apaga linha 4
+					clearLine(5);	// Apaga linha 5
+					clearLine(15);	// Apaga linha 15
+					escrita_texto( 394, "Aspirando Calibrador A", sizeof("Aspirando Calibrador A"));	// Escreve "Aspirando Calibrador A" na posição 394
 				}
 				else if( verifyKeyBoard() == no )	// Se o botão No foi pressionado
 					return erroDiferencaTensoes; 	// Retorna o valor do erro de instabilidade
