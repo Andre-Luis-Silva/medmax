@@ -90,6 +90,8 @@
 #define ABNORMAL				1
 #define CAL						0
 #define NUM						1
+#define OK						0
+#define ERRO					2
 
 #define TIMERCOM	250
 

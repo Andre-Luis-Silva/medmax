@@ -5,16 +5,19 @@
  *      Author: andre
  */
 #include "comum.h"
+
+/* Structs externas */
 extern QueueHandle_t fila_display;
 extern QueueHandle_t fila_teclado;
 extern TaskHandle_t xHandle;
-/*! @brief Flash driver Structure */
 extern flash_config_t s_flashDriver;
 
+/* Variáveis externas */
 extern unsigned int timerRTC;
 extern volatile unsigned char flag_timer;
 extern volatile unsigned char flagBuz;
 
+/* Variáveis globais */
 char data[6];
 unsigned int voltageCalA_K = 0, voltageCalA_Ca = 0, voltageCalA_Cl = 0, voltageCalA_pH = 0, voltageCalA_Na = 0;
 unsigned int voltageCalB_K = 0, voltageCalB_Ca = 0, voltageCalB_Cl = 0, voltageCalB_pH = 0, voltageCalB_Na = 0;
@@ -337,12 +340,7 @@ void display_run( void ){
 
 			respCalibA = calibA(0);
 			if( respCalibA == 0 ){
-				clearLine(3);
-				clearLine(5);
-				clearLine(7);
-				clearLine(9);
-				clearLine(11);
-				escrita_texto(28, "  ", sizeof("  "));
+				clear_display_text();
 				respCalibB = calibB();
 				if( respCalibB == 0 ){
 					calibValues();
@@ -549,13 +547,13 @@ unsigned char status( unsigned char tipo ){
 		while(!((reg & 0x03) == 0x03)){
 
 			reg = ( db7_read << 7 )
-																																		| ( db6_read << 6 )
-																																		| ( db5_read << 5 )
-																																		| ( db4_read << 4 )
-																																		| ( db3_read << 3 )
-																																		| ( db2_read << 2 )
-																																		| ( db1_read << 1 )
-																																		| db0_read;
+																																								| ( db6_read << 6 )
+																																								| ( db5_read << 5 )
+																																								| ( db4_read << 4 )
+																																								| ( db3_read << 3 )
+																																								| ( db2_read << 2 )
+																																								| ( db1_read << 1 )
+																																								| db0_read;
 
 			reg = reg;
 
@@ -567,13 +565,13 @@ unsigned char status( unsigned char tipo ){
 		while(!((reg & 0x80) == 0x80)){
 
 			reg = ( db7_read << 7 )
-																																		| ( db6_read << 6 )
-																																		| ( db5_read << 5 )
-																																		| ( db4_read << 4 )
-																																		| ( db3_read << 3 )
-																																		| ( db2_read << 2 )
-																																		| ( db1_read << 1 )
-																																		| db0_read;
+																																								| ( db6_read << 6 )
+																																								| ( db5_read << 5 )
+																																								| ( db4_read << 4 )
+																																								| ( db3_read << 3 )
+																																								| ( db2_read << 2 )
+																																								| ( db1_read << 1 )
+																																								| db0_read;
 
 			reg = reg;
 
@@ -611,13 +609,13 @@ unsigned char read_data( void ){
 	ce_off;
 
 	reg = ( db7_read << 7 )
-																																| ( db6_read << 6 )
-																																| ( db5_read << 5 )
-																																| ( db4_read << 4 )
-																																| ( db3_read << 3 )
-																																| ( db2_read << 2 )
-																																| ( db1_read << 1 )
-																																| db0_read;
+																																						| ( db6_read << 6 )
+																																						| ( db5_read << 5 )
+																																						| ( db4_read << 4 )
+																																						| ( db3_read << 3 )
+																																						| ( db2_read << 2 )
+																																						| ( db1_read << 1 )
+																																						| db0_read;
 
 	reg = reg;
 
@@ -1654,18 +1652,18 @@ void clear_display_text( void ){
 unsigned char calibA( unsigned char wash ){
 
 	// Declaraçõe de variáveis
-	unsigned char sample = 0, contReadAD = 0, estado = 0, texto = 0, segundos = 30, erroDiferencaTensoes = 0;
-	unsigned int  temporizador = 1000, contError = 0;
+	unsigned char sample = 0, estado = 0, texto = 0, segundos = 30, erroDiferencaTensoes = 0, flagSegundo = 0;
+	unsigned int  temporizador = 1000, contError = 0, contReadAD = 0;
 	unsigned long k = 0, na = 0, cl = 0, ph = 0, ca = 0;
 	unsigned int medidaAnterior_K = 0, medidaAnterior_Cl = 0, medidaAnterior_Na = 0, medidaAnterior_Ca = 0, medidaAnterior_pH = 0;
 	unsigned int medidaCalAnterior_K = 0, medidaCalAnterior_Cl = 0, medidaCalAnterior_Na = 0, medidaCalAnterior_Ca = 0, medidaCalAnterior_pH = 0;
 	unsigned int medidasCalibSalva[6] = {0,0,0,0,0,0};
-	unsigned char contAddrMemoria = 81, contadorCalib = 1, hora, minuto;
+	unsigned char contAddrMemoria = 80, contadorCalib = 1, hora, minuto;
 	adc16_channel_config_t adc16ChannelConfigStruct;
 	adc16ChannelConfigStruct.enableInterruptOnConversionCompleted = false;
 	adc16ChannelConfigStruct.enableDifferentialConversion = false;
 
-	for( unsigned int i = ADDR_FLASH + 0x780; i >= ADDR_FLASH; i = i - DADOS_SALVOS ){	// Faz a verificação de memória apagada
+	for( unsigned int i = ADDR_FLASH + 0x768; i >= ADDR_FLASH; i = i - DADOS_SALVOS ){	// Faz a verificação de memória apagada
 
 		if( *(volatile unsigned int *)(i) != 0xFFFFFFFF ){	// Se a memória foi escrita
 			// Armazena no vetor os valores de calibração já feitos
@@ -1864,7 +1862,7 @@ unsigned char calibA( unsigned char wash ){
 					escrita_texto( 400, "Lavando...", sizeof("Lavando..."));	// Escreve "Lavando..." na posição 400
 			}
 			else if( verifyKeyBoard() == no )	// Senão se teclado igual a No
-				return 2;	// Retorna 2
+				return ERRO;	// Retorna 2
 
 			else if( verifyKeyBoard() == um ){	// Senão se teclado igual a 1
 
@@ -1905,8 +1903,6 @@ unsigned char calibA( unsigned char wash ){
 				if( temporizador == 0 ){	// Se temporizador chegar a 0
 					temporizador = 1000;	// Reinicia o temporizador
 
-					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve os segundos
-
 					escrita_texto(92, "K  =   4.00 mmol/L  ", sizeof( "K  =   4.00 mmol/L  "));
 					escrita_texto(112, numtolcd(voltageCalA_K, CAL), 7);
 					escrita_texto(118, "mV", sizeof( "mV"));
@@ -1926,6 +1922,8 @@ unsigned char calibA( unsigned char wash ){
 					escrita_texto(331, "pH  =   7.40         ", sizeof("pH  =   7.40         "));
 					escrita_texto(352, numtolcd(voltageCalA_pH, CAL), 7);
 					escrita_texto(358, "mV", sizeof( "mV"));
+
+					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve os segundos
 					segundos--; // Decrementa segundos
 					if( segundos == 0 ){	// Se segundos for igual a 0
 						estado = 3;
@@ -1934,7 +1932,7 @@ unsigned char calibA( unsigned char wash ){
 			}
 
 			if( segundos > 0 ){	// Se segundos maior que 0
-				if( contReadAD < 250 ){	// Se contAD menor que 50
+				if( contReadAD < 1750 ){	// Se contAD menor que 50
 					adc16ChannelConfigStruct.channelNumber                        = 8;
 					ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);
 					while (0U == (kADC16_ChannelConversionDoneFlag &
@@ -2064,34 +2062,6 @@ unsigned char calibA( unsigned char wash ){
 							medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*4);	// Lê o valor de calibração anterior pH
 						}
 					}
-
-
-					/*						if( contTestOk < 1 ){		// Se contTestOk menor que 2
-							estado = 0;		// Estado recebe 0
-							contTestOk++; 	// contTesteOk incrementa
-							erroDiferencaTensoes = 0;
-							clearLine(3);
-							clearLine(5);
-							clearLine(7);
-							clearLine(9);
-							clearLine(11);
-							escrita_texto(28, "  ", sizeof("  "));
-							escrita_texto( 394, "Aspirando Calibrador A", sizeof("Aspirando Calibrador A"));	// Escreve "Aspirando Calibrador A" na posição 394
-						}
-						else{// Senão
-							if( (contError = verifyError(TYPEA, NOABNORMAL)) != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
-								clearLine(3);
-								clearLine(5);
-								clearLine(7);
-								clearLine(9);
-								clearLine(11);
-								escrita_texto(28, "  ", sizeof("  "));
-								stateMachineError(120, contError & 0xFF, 1);	// Escreve mV fora da faixa para os respectivos eletrodos
-								stateMachineError(150, contError >> 8, 2);	// Escreve anormal para os respectivos eletrodos
-								escrita_texto(450, "YES=CALIBRAR NO=SAIR", sizeof("YES=CALIBRAR NO=SAIR"));
-							}
-							estado = 3;
-						}*/
 					else if( erroDiferencaTensoes != 0 && segundos == 0 ){	// Senão
 
 						estado = 0;			// Estado recebe 0
@@ -2116,32 +2086,8 @@ unsigned char calibA( unsigned char wash ){
 				}
 			}
 			if( estado == 3 ){
-				if( abs(medidaCalAnterior_K - voltageCalA_K) < 500 )
-					erroDiferencaTensoes &= ~(1 << ErrorK);
-				else
-					erroDiferencaTensoes |= 1 << ErrorK;
 
-				if( abs(medidaCalAnterior_Na - voltageCalA_Na) < 500 )
-					erroDiferencaTensoes &= ~(1 << ErrorNa);
-				else
-					erroDiferencaTensoes |= 1 << ErrorNa;
-
-				if( abs(medidaCalAnterior_Cl - voltageCalA_Cl) < 500 )
-					erroDiferencaTensoes &= ~(1 << ErrorCl);
-				else
-					erroDiferencaTensoes |= 1 << ErrorCl;
-
-				if( abs(medidaCalAnterior_Ca - voltageCalA_Ca) < 500 )
-					erroDiferencaTensoes &= ~(1 << ErrorCa);
-				else
-					erroDiferencaTensoes |= 1 << ErrorCa;
-
-				if( abs(medidaCalAnterior_pH - voltageCalA_pH) < 500 )
-					erroDiferencaTensoes &= ~(1 << ErrorpH);
-				else
-					erroDiferencaTensoes |= 1 << ErrorpH;
-
-				if( (contError = verifyError(TYPEA, NOABNORMAL)) != 0 || erroDiferencaTensoes != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
+				if( (contError = verifyError(TYPEA, NOABNORMAL)) != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
 					clearLine(3);
 					clearLine(5);
 					clearLine(7);
@@ -2151,8 +2097,8 @@ unsigned char calibA( unsigned char wash ){
 					escrita_texto(28, "  ", sizeof("  "));
 					stateMachineError(120, contError & 0xFF, 1);	// Escreve mV fora da faixa para os respectivos eletrodos
 					stateMachineError(150, contError >> 8, 2);	// Escreve anormal para os respectivos eletrodos
+					stateMachineError(90, contError >> 16, 3);
 					escrita_texto(450, "YES=CALIBRAR NO=SAIR", sizeof("YES=CALIBRAR NO=SAIR"));
-					stateMachineError(90, erroDiferencaTensoes, 3);	// Escreve variandp e qual dos eletrodos que não está instável
 				}
 			}
 			break;
@@ -2164,7 +2110,7 @@ unsigned char calibA( unsigned char wash ){
 				escrita_texto( 400, "Finalizado!", sizeof("Finalizado!") );
 				vTaskDelay(4000);
 				flagBuz = 1;
-				return 0;	// Retorna 0
+				return OK;	// Retorna 0
 
 			}
 			else{	// Senão
@@ -2179,7 +2125,7 @@ unsigned char calibA( unsigned char wash ){
 					escrita_texto( 394, "Aspirando Calibrador A", sizeof("Aspirando Calibrador A"));	// Escreve "Aspirando Calibrador A" na posição 394
 				}
 				else if( verifyKeyBoard() == no )	// Se o botão No foi pressionado
-					return erroDiferencaTensoes; 	// Retorna o valor do erro de instabilidade
+					return ERRO; 	// Retorna o valor do erro de instabilidade
 			}
 
 			break;
@@ -2187,274 +2133,13 @@ unsigned char calibA( unsigned char wash ){
 		}
 
 	}
-	/*
-	// Move motor MUX para posição 2
-	move_mux(POSITION2, SPEEDMUX1);
-	vTaskDelay(TIMERCOM);
 
-	// Movimenta anti horário em 250ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP1, TIMER1);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 838ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP2, TIMER2);
-	vTaskDelay(TIMERCOM);
-
-	// Move motor MUX para a posição 3
-	move_mux(POSITION3, SPEEDMUX1);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 52ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP1, PULSE_TM);
-	vTaskDelay(TIMERCOM);
-
-	// Move motor MUX para posição 2
-	move_mux(POSITION2, SPEEDMUX1);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 52ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP1, PULSE_TM);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 838ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP2, TIMER2);
-	vTaskDelay(TIMERCOM);
-
-	// Move motor MUX para a posição 3
-	move_mux(POSITION3, SPEEDMUX1);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 52ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP1, PULSE_TM);
-	vTaskDelay(TIMERCOM);
-
-	// Move motor MUX para a posição 2
-	move_mux(POSITION2, SPEEDMUX1);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 52ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP1, PULSE_TM);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 838ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP2, TIMER2);
-	vTaskDelay(TIMERCOM);
-
-	// Move motor MUX para a posição 3
-	move_mux(POSITION3, SPEEDMUX1);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 52ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP1, PULSE_TM);
-	vTaskDelay(TIMERCOM);
-
-	// Move motor MUX para a posição 2
-	move_mux(POSITION2, SPEEDMUX1);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 52ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP1, PULSE_TM);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 838ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP2, TIMER2);
-	vTaskDelay(TIMERCOM);
-
-	// Move motor MUX para a posição 3
-	move_mux(POSITION3, SPEEDMUX1);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 52ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP1, PULSE_TM);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 250ms movimento rápido
-	sample = move_tripa(WAYHOUR, SPEEDTRP3, TIMER1);
-
-	// Movimenta anti horário em 250ms movimento rápido
-	sample = move_tripa(WAYAHOUR, SPEEDTRP3, TIMER1);
-
-	// Movimenta anti horário em 250ms movimento rápido
-	sample = move_tripa(WAYHOUR, SPEEDTRP3, TIMER1);
-
-	// Movimenta anti horário em 250ms movimento rápido
-	sample = move_tripa(WAYAHOUR, SPEEDTRP3, TIMER1);
-
-	// Movimenta anti horário em 250ms movimento rápido
-	sample = move_tripa(WAYHOUR, SPEEDTRP3, TIMER1);
-
-	// Movimenta anti horário em 250ms movimento rápido
-	sample = move_tripa(WAYAHOUR, SPEEDTRP3, TIMER1);
-
-	// Movimenta anti horário em 250ms movimento rápido
-	sample = move_tripa(WAYHOUR, SPEEDTRP3, TIMER1);
-
-	// Movimenta anti horário em 250ms movimento rápido
-	sample = move_tripa(WAYAHOUR, SPEEDTRP3, TIMER1);
-
-	// Movimenta anti horário em 250ms movimento rápido
-	sample = move_tripa(WAYHOUR, SPEEDTRP3, TIMER1);
-
-	// Movimenta anti horário em 2500ms movimento rápido
-	sample = move_tripa(WAYAHOUR, SPEEDTRP3, TIMER3);
-	vTaskDelay(TIMERCOM);
-
-	// Move motor MUX para posição 2
-	move_mux(POSITION2, SPEEDMUX1);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 838ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP2, 1500);
-	vTaskDelay(TIMERCOM);
-
-	// Move motor MUX para posição 1
-	move_mux(POSITION1, SPEEDMUX1);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 15 segundos
-	sample = move_tripa(WAYAHOUR, SPEEDTRP4, END_TM2);
-
-	if( sample == 0 && contError < 2 ){
-		contError++;
-		if( wash == 1 )
-			calibA(1);
-		else
-			calibA(0);
-	}
-	else if( contError == 2 ){
-		clearLine(13);
-		contError = 0;
-		return 2;
-	}
-	else{
-
-		clearLine(13);
-		escrita_texto( 401, "Testando", sizeof("Testando") );
-		while( contReadAD < 25 ){
-			while( contAD < 1000 ){
-
-				adc16ChannelConfigStruct.channelNumber                        = 8;
-				ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);
-				while (0U == (kADC16_ChannelConversionDoneFlag &
-						ADC16_GetChannelStatusFlags(ADC0, 0)))
-				{
-				}
-				ph += ADC16_GetChannelConversionValue(ADC0, 0);
-
-				adc16ChannelConfigStruct.channelNumber                        = 9;
-				ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);
-				while (0U == (kADC16_ChannelConversionDoneFlag &
-						ADC16_GetChannelStatusFlags(ADC0, 0)))
-				{
-				}
-				ca += ADC16_GetChannelConversionValue(ADC0, 0);
-
-				adc16ChannelConfigStruct.channelNumber                        = 12;
-				ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);
-				while (0U == (kADC16_ChannelConversionDoneFlag &
-						ADC16_GetChannelStatusFlags(ADC0, 0)))
-				{
-				}
-				cl += ADC16_GetChannelConversionValue(ADC0, 0);
-
-				adc16ChannelConfigStruct.channelNumber                        = 13;
-				ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);
-				while (0U == (kADC16_ChannelConversionDoneFlag &
-						ADC16_GetChannelStatusFlags(ADC0, 0)))
-				{
-				}
-				na += ADC16_GetChannelConversionValue(ADC0, 0);
-
-				adc16ChannelConfigStruct.channelNumber                        = 14;
-				ADC16_SetChannelConfig(ADC1, 1, &adc16ChannelConfigStruct);
-				while (0U == (kADC16_ChannelConversionDoneFlag &
-						ADC16_GetChannelStatusFlags(ADC1, 1)))
-				{
-				}
-				k += ADC16_GetChannelConversionValue(ADC1, 1);
-
-				contAD++;
-			}
-			escrita_texto(92, "K  =   4.00 mmol/L  ", sizeof( "K  =   4.00 mmol/L  "));
-			escrita_texto(112, numtolcd(k * 8.0325 / contAD, CAL), 7);
-			escrita_texto(118, "mV", sizeof( "mV"));
-
-			escrita_texto(151, "Na  = 140.00 mmol/L  ", sizeof("Na  = 140.00 mmol/L  "));
-			escrita_texto(172, numtolcd(na * 8.0325 / contAD, CAL), 7);
-			escrita_texto(178, "mV", sizeof( "mV"));
-
-			escrita_texto(211, "Cl  = 100.00 mmol/L  ", sizeof("Cl  = 100.00 mmol/L  "));
-			escrita_texto(232, numtolcd(cl * 8.0325 / contAD, CAL), 7);
-			escrita_texto(238, "mV", sizeof( "mV"));
-
-			escrita_texto(271, "Ca  =   1.25 mmol/L  ", sizeof("Ca  =   1.25 mmol/L  "));
-			escrita_texto(292, numtolcd(ca * 8.0325 / contAD, CAL), 7);
-			escrita_texto(298, "mV", sizeof( "mV"));
-
-			escrita_texto(331, "pH  =   7.40         ", sizeof("pH  =   7.40         "));
-			escrita_texto(352, numtolcd(ph * 8.0325 / contAD, CAL), 7);
-			escrita_texto(358, "mV", sizeof( "mV"));
-			averageK += (k * 8.0325 / contAD);
-			averagepH += (ph * 8.0325 / contAD);
-			averageCa += (ca * 8.0325 / contAD);
-			averageCl += (cl * 8.0325 / contAD);
-			averageNa += (na * 8.0325 / contAD);
-			k = 0;
-			na = 0;
-			ca = 0;
-			ph = 0;
-			cl = 0;
-			contAD = 0;
-			contReadAD++;
-		}
-		voltageCalA_K = averageK / contReadAD;
-		voltageCalA_pH = averagepH / contReadAD;
-		voltageCalA_Ca = averageCa / contReadAD;
-		voltageCalA_Cl = averageCl / contReadAD;
-		voltageCalA_Na = averageNa / contReadAD;
-		escrita_texto(92, "K  =   4.00 mmol/L  ", sizeof( "K  =   4.00 mmol/L  "));
-		escrita_texto(112, numtolcd(voltageCalA_K, CAL), 7);
-		escrita_texto(118, "mV", sizeof( "mV"));
-
-		escrita_texto(151, "Na  = 140.00 mmol/L  ", sizeof("Na  = 140.00 mmol/L  "));
-		escrita_texto(172, numtolcd(voltageCalA_Na, CAL), 7);
-		escrita_texto(178, "mV", sizeof( "mV"));
-
-		escrita_texto(211, "Cl  = 100.00 mmol/L  ", sizeof("Cl  = 100.00 mmol/L  "));
-		escrita_texto(232, numtolcd(voltageCalA_Cl, CAL), 7);
-		escrita_texto(238, "mV", sizeof( "mV"));
-
-		escrita_texto(271, "Ca  =   1.25 mmol/L  ", sizeof("Ca  =   1.25 mmol/L  "));
-		escrita_texto(292, numtolcd(voltageCalA_Ca, CAL), 7);
-		escrita_texto(298, "mV", sizeof( "mV"));
-
-		escrita_texto(331, "pH  =   7.40         ", sizeof("pH  =   7.40         "));
-		escrita_texto(352, numtolcd(voltageCalA_pH, CAL), 7);
-		escrita_texto(358, "mV", sizeof( "mV"));
-
-		vTaskDelay(2000);
-		contTestOk++;
-		contReadAD = 0;
-		if(contTestOk == 2){
-
-			clearLine(13);
-			escrita_texto( 0x190, "Finalizado", sizeof("Finalizado"));
-			vTaskDelay(4000);
-			contTestOk = 0;
-			contError = 0;
-			return contError;
-
-		}
-		else{
-			calibA(0);
-		}
-	}*/
 }
 
 unsigned char calibB( void ){
 
-	unsigned char sample = 0, contReadAD = 0, contTestOk = 0, segundos = 30, estado = 0, erroDiferencaTensoes = 0, texto = 0;
-	unsigned int  temporizador = 1000, contError = 0;
+	unsigned char sample = 0, segundos = 30, estado = 0, erroDiferencaTensoes = 0, texto = 0;
+	unsigned int  temporizador = 1000, contError = 0, contReadAD = 0;
 	unsigned long k = 0, na = 0, cl = 0, ph = 0, ca = 0;
 	long medidaAnterior_K = 0, medidaAnterior_Cl = 0, medidaAnterior_Na = 0, medidaAnterior_Ca = 0, medidaAnterior_pH = 0;
 	unsigned int medidaCalAnterior_K = 0, medidaCalAnterior_Cl = 0, medidaCalAnterior_Na = 0, medidaCalAnterior_Ca = 0, medidaCalAnterior_pH = 0;
@@ -2464,8 +2149,12 @@ unsigned char calibB( void ){
 	adc16ChannelConfigStruct.enableInterruptOnConversionCompleted = false;
 	adc16ChannelConfigStruct.enableDifferentialConversion = false;
 
+	writeLine(13);	// Escreve o desenho da linha de separação na tela
 
-	for( unsigned int i = ADDR_FLASH + 0x780; i >= ADDR_FLASH; i = i - DADOS_SALVOS ){	// Faz a verificação de memória apagada
+	escrita_texto( 9, "Calibrador B", sizeof("Calibrador B"));	// Escreve Calibrador A na posição 9
+	escrita_texto( 394, "Aspirando Calibrador B", sizeof("Aspirando Calibrador B"));	// Escreve "Aspirando Calibrador A" na posição 394
+
+	for( unsigned int i = ADDR_FLASH + 0xF00; i >= ADDR_FLASH + 0x780; i = i - DADOS_SALVOS ){	// Faz a verificação de memória apagada
 
 		if( *(volatile unsigned int *)(i) != 0xFFFFFFFF ){	// Se a memória foi escrita
 			// Armazena no vetor os valores de calibração já feitos
@@ -2562,7 +2251,7 @@ unsigned char calibB( void ){
 
 			}
 			else if( verifyKeyBoard() == no )	// Senão se teclado igual a No
-				return 2;	// Retorna 2
+				return ERRO;	// Retorna 2
 
 			else if( verifyKeyBoard() == um ){	// Senão se teclado igual a 1
 
@@ -2632,7 +2321,7 @@ unsigned char calibB( void ){
 			}
 
 			if( segundos > 0 ){	// Se segundos maior que 0
-				if( contReadAD < 250 ){	// Se contAD menor que 50
+				if( contReadAD < 1750 ){	// Se contAD menor que 50
 					adc16ChannelConfigStruct.channelNumber                        = 8;
 					ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);
 					while (0U == (kADC16_ChannelConversionDoneFlag &
@@ -2727,7 +2416,7 @@ unsigned char calibB( void ){
 						medidasCalibSalva[3] = voltageCalB_Ca;	// Salva calibrador Ca
 						medidasCalibSalva[4] = voltageCalB_pH;	// Salva calibrador pH
 						medidasCalibSalva[5] = 0x01 << 24 | bcdtodec(hora & 0x3F) << 16 | bcdtodec(minuto & 0x7F) << 8 | contadorCalib;	// Salva horário, contador de calibração e 0 para calibrador A
-						FLASH_Program(&s_flashDriver, ADDR_FLASH + contAddrMemoria * DADOS_SALVOS, medidasCalibSalva, DADOS_SALVOS);	// Salva dados de calibração
+						FLASH_Program(&s_flashDriver, ADDR_FLASH + 0x780 + contAddrMemoria * DADOS_SALVOS, medidasCalibSalva, DADOS_SALVOS);	// Salva dados de calibração
 
 						contAddrMemoria++;	// Incrementa contador de memória
 
@@ -2746,7 +2435,7 @@ unsigned char calibB( void ){
 								clearLine(9);
 								clearLine(11);
 								escrita_texto(28, "  ", sizeof("  "));
-								escrita_texto( 394, "Aspirando Calibrador A", sizeof("Aspirando Calibrador A"));	// Escreve "Aspirando Calibrador A" na posição 394
+								escrita_texto( 394, "Aspirando Calibrador B", sizeof("Aspirando Calibrador B"));	// Escreve "Aspirando Calibrador A" na posição 394
 								estado = 0;
 							}
 						}
@@ -2754,43 +2443,13 @@ unsigned char calibB( void ){
 							estado = 3;
 						}
 						if( estado != 3 ){
-							medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS);	// Lê o valor de calibração anterior K
-							medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA);	// Lê o valor de calibração anterior Na
-							medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*2);	// Lê o valor de calibração anterior Cl
-							medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*3);	// Lê o valor de calibração anterior Ca
-							medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*4);	// Lê o valor de calibração anterior pH
+							medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS);	// Lê o valor de calibração anterior K
+							medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA);	// Lê o valor de calibração anterior Na
+							medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*2);	// Lê o valor de calibração anterior Cl
+							medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*3);	// Lê o valor de calibração anterior Ca
+							medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*4);	// Lê o valor de calibração anterior pH
 						}
 					}
-
-
-					/*	if( contTestOk < 1 ){		// Se contTestOk menor que 2
-							estado = 0;		// Estado recebe 0
-							contTestOk++; 	// contTesteOk incrementa
-							erroDiferencaTensoes = 0;
-							clearLine(3);
-							clearLine(5);
-							clearLine(7);
-							clearLine(9);
-							clearLine(11);
-							escrita_texto(28, "  ", sizeof("  "));
-							escrita_texto( 394, "Aspirando Calibrador B", sizeof("Aspirando Calibrador B"));	// Escreve "Aspirando Calibrador A" na posição 394
-						}
-						else{// Senão
-							if( (contError = verifyError(TYPEB, ABNORMAL)) != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
-								clearLine(3);
-								clearLine(5);
-								clearLine(7);
-								clearLine(9);
-								clearLine(11);
-								escrita_texto(28, "  ", sizeof("  "));
-								stateMachineError(120, contError & 0xFF, 1);	// Escreve mV fora da faixa para os respectivos eletrodos
-								stateMachineError(150, contError >> 8, 2);	// Escreve anormal para os respectivos eletrodos
-								escrita_texto(450, "YES=CALIBRAR NO=SAIR", sizeof("YES=CALIBRAR NO=SAIR"));
-							}
-							estado = 3;	// Estado de verificação de erros
-						}
-					}
-					 */
 					else if( erroDiferencaTensoes != 0 && segundos == 0 ){	// Senão
 
 						estado = 0;			// Estado recebe 0
@@ -2814,32 +2473,8 @@ unsigned char calibB( void ){
 				}
 			}
 			if( estado == 3 ){
-				if( abs(medidaCalAnterior_K - voltageCalA_K) < 500 )
-					erroDiferencaTensoes &= ~(1 << ErrorK);
-				else
-					erroDiferencaTensoes |= 1 << ErrorK;
 
-				if( abs(medidaCalAnterior_Na - voltageCalA_Na) < 500 )
-					erroDiferencaTensoes &= ~(1 << ErrorNa);
-				else
-					erroDiferencaTensoes |= 1 << ErrorNa;
-
-				if( abs(medidaCalAnterior_Cl - voltageCalA_Cl) < 500 )
-					erroDiferencaTensoes &= ~(1 << ErrorCl);
-				else
-					erroDiferencaTensoes |= 1 << ErrorCl;
-
-				if( abs(medidaCalAnterior_Ca - voltageCalA_Ca) < 500 )
-					erroDiferencaTensoes &= ~(1 << ErrorCa);
-				else
-					erroDiferencaTensoes |= 1 << ErrorCa;
-
-				if( abs(medidaCalAnterior_pH - voltageCalA_pH) < 500 )
-					erroDiferencaTensoes &= ~(1 << ErrorpH);
-				else
-					erroDiferencaTensoes |= 1 << ErrorpH;
-
-				if( (contError = verifyError(TYPEB, ABNORMAL)) != 0 || erroDiferencaTensoes != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
+				if( (contError = verifyError(TYPEB, ABNORMAL)) != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
 					clearLine(3);
 					clearLine(5);
 					clearLine(7);
@@ -2849,8 +2484,9 @@ unsigned char calibB( void ){
 					escrita_texto(28, "  ", sizeof("  "));
 					stateMachineError(120, contError & 0xFF, 1);	// Escreve mV fora da faixa para os respectivos eletrodos
 					stateMachineError(150, contError >> 8, 2);	// Escreve anormal para os respectivos eletrodos
+					stateMachineError(90, contError >> 16, 3);	// Escreve variandp e qual dos eletrodos que não está instável
 					escrita_texto(450, "YES=CALIBRAR NO=SAIR", sizeof("YES=CALIBRAR NO=SAIR"));
-					stateMachineError(90, erroDiferencaTensoes, 3);	// Escreve variandp e qual dos eletrodos que não está instável
+
 				}
 			}
 			break;
@@ -2862,7 +2498,7 @@ unsigned char calibB( void ){
 				escrita_texto( 400, "Finalizado!", sizeof("Finalizado!") );
 				vTaskDelay(4000);
 				flagBuz = 1;
-				return 0;	// Retorna 0
+				return OK;	// Retorna 0
 
 			}
 			else{	// Senão
@@ -2874,10 +2510,10 @@ unsigned char calibB( void ){
 					clearLine(4);	// Apaga linha 4
 					clearLine(5);	// Apaga linha 5
 					clearLine(15);	// Apaga linha 15
-					escrita_texto( 394, "Aspirando Calibrador A", sizeof("Aspirando Calibrador A"));	// Escreve "Aspirando Calibrador A" na posição 394
+					escrita_texto( 394, "Aspirando Calibrador B", sizeof("Aspirando Calibrador B"));	// Escreve "Aspirando Calibrador A" na posição 394
 				}
 				else if( verifyKeyBoard() == no )	// Se o botão No foi pressionado
-					return erroDiferencaTensoes; 	// Retorna o valor do erro de instabilidade
+					return ERRO; 	// Retorna o valor do erro de instabilidade
 			}
 
 			break;
@@ -2885,218 +2521,332 @@ unsigned char calibB( void ){
 		}
 
 	}
-	/*
-	// Move motor MUX para posição 3
-	move_mux(POSITION3, SPEEDMUX1);
-
-	// Movimenta anti horário em 910ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP1, 910);
-	vTaskDelay(TIMERCOM * 8); // Delay de 2 segundos
-
-	// Move motor MUX para a posição 4
-	move_mux(POSITION4, SPEEDMUX1);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 2,82 s
-	sample = move_tripa(WAYAHOUR, SPEEDTRP1, 2820);
-	vTaskDelay(TIMERCOM / 2); // Delay 125 ms
-
-	// Move motor MUX para a posição 3
-	move_mux(POSITION3, SPEEDMUX1);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 870ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP1, 870);
-	vTaskDelay(TIMERCOM + 50);
-
-	// Movimenta anti horário em 52ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP2, 1650);
-	sample = move_tripa(WAYAHOUR, SPEEDTRP1, 3800);
-	vTaskDelay(2250);
-
-	// Move motor MUX para a posição 3
-	move_mux(POSITION4, SPEEDMUX1);
-	vTaskDelay(TIMERCOM);
-
-	// Movimenta anti horário em 52ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP4, 15000);
-	vTaskDelay(TIMERCOM);
-
-	if( sample == 0 && contError < 2 ){
-		contError++;
-		calibB();
-	}
-	else if( contError == 2 ){
-		return contError;
-	}
-	else{
-
-		clearLine(13);
-		escrita_texto( 0x191, "Testando", sizeof("Testando"));
-		while( contReadAD < 25 ){
-			while( contAD < 1000 ){
-
-				adc16ChannelConfigStruct.channelNumber                        = 8;
-				ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);
-				while (0U == (kADC16_ChannelConversionDoneFlag &
-						ADC16_GetChannelStatusFlags(ADC0, 0)))
-				{
-				}
-				ph += ADC16_GetChannelConversionValue(ADC0, 0);
-
-				adc16ChannelConfigStruct.channelNumber                        = 9;
-				ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);
-				while (0U == (kADC16_ChannelConversionDoneFlag &
-						ADC16_GetChannelStatusFlags(ADC0, 0)))
-				{
-				}
-				ca += ADC16_GetChannelConversionValue(ADC0, 0);
-
-				adc16ChannelConfigStruct.channelNumber                        = 12;
-				ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);
-				while (0U == (kADC16_ChannelConversionDoneFlag &
-						ADC16_GetChannelStatusFlags(ADC0, 0)))
-				{
-				}
-				cl += ADC16_GetChannelConversionValue(ADC0, 0);
-
-				adc16ChannelConfigStruct.channelNumber                        = 13;
-				ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);
-				while (0U == (kADC16_ChannelConversionDoneFlag &
-						ADC16_GetChannelStatusFlags(ADC0, 0)))
-				{
-				}
-				na += ADC16_GetChannelConversionValue(ADC0, 0);
-
-				adc16ChannelConfigStruct.channelNumber                        = 14;
-				ADC16_SetChannelConfig(ADC1, 1, &adc16ChannelConfigStruct);
-				while (0U == (kADC16_ChannelConversionDoneFlag &
-						ADC16_GetChannelStatusFlags(ADC1, 1)))
-				{
-				}
-				k += ADC16_GetChannelConversionValue(ADC1, 1);
-
-				contAD++;
-			}
-			escrita_texto(92, "K  =   8.00 mmol/L  ", sizeof( "K  =   8.00 mmol/L  "));
-			escrita_texto(112, numtolcd(k * 8.0325 / contAD, CAL), 7);
-			escrita_texto(118, "mV", sizeof( "mV"));
-
-			escrita_texto(151, "Na  = 110.00 mmol/L  ", sizeof("Na  = 110.00 mmol/L  "));
-			escrita_texto(172, numtolcd(na * 8.0325 / contAD, CAL), 7);
-			escrita_texto(178, "mV", sizeof( "mV"));
-
-			escrita_texto(211, "Cl  =  70.00 mmol/L  ", sizeof("Cl  =  70.00 mmol/L  "));
-			escrita_texto(232, numtolcd(cl * 8.0325 / contAD, CAL), 7);
-			escrita_texto(238, "mV", sizeof( "mV"));
-
-			escrita_texto(271, "Ca  =   2.50 mmol/L  ", sizeof("Ca  =   2.50 mmol/L  "));
-			escrita_texto(292, numtolcd(ca * 8.0325 / contAD, CAL), 7);
-			escrita_texto(298, "mV", sizeof( "mV"));
-
-			escrita_texto(331, "pH  =   7.00         ", sizeof("pH  =   7.00        "));
-			escrita_texto(352, numtolcd(ph * 8.0325 / contAD, CAL), 7);
-			escrita_texto(358, "mV", sizeof( "mV"));
-			averageK += (k * 8.0325 / contAD);
-			averagepH += (ph * 8.0325 / contAD);
-			averageCa += (ca * 8.0325 / contAD);
-			averageCl += (cl * 8.0325 / contAD);
-			averageNa += (na * 8.0325 / contAD);
-			k = 0;
-			na = 0;
-			ca = 0;
-			ph = 0;
-			cl = 0;
-			contAD = 0;
-			contReadAD++;
-		}
-		voltageCalB_K = averageK / contReadAD;
-		voltageCalB_pH = averagepH / contReadAD;
-		voltageCalB_Ca = averageCa / contReadAD;
-		voltageCalB_Cl = averageCl / contReadAD;
-		voltageCalB_Na = averageNa / contReadAD;
-		escrita_texto(92, "K  =   8.00 mmol/L  ", sizeof( "K  =   8.00 mmol/L  "));
-		escrita_texto(112, numtolcd(voltageCalB_K, CAL), 7);
-		escrita_texto(118, "mV", sizeof( "mV"));
-
-		escrita_texto(151, "Na  = 110.00 mmol/L  ", sizeof("Na  = 110.00 mmol/L  "));
-		escrita_texto(172, numtolcd(voltageCalB_Na, CAL), 7);
-		escrita_texto(178, "mV", sizeof( "mV"));
-
-		escrita_texto(211, "Cl  =  70.00 mmol/L  ", sizeof("Cl  =  70.00 mmol/L  "));
-		escrita_texto(232, numtolcd(voltageCalB_Cl, CAL), 7);
-		escrita_texto(238, "mV", sizeof( "mV"));
-
-		escrita_texto(271, "Ca  =   2.50 mmol/L  ", sizeof("Ca  =   2.50 mmol/L  "));
-		escrita_texto(292, numtolcd(voltageCalB_Ca, CAL), 7);
-		escrita_texto(298, "mV", sizeof( "mV"));
-
-		escrita_texto(331, "pH  =   7.00         ", sizeof("pH  =   7.00         "));
-		escrita_texto(352, numtolcd(voltageCalB_pH, CAL), 7);
-		escrita_texto(358, "mV", sizeof( "mV"));
-
-		vTaskDelay(2000);
-
-		contTestOk++;
-		contReadAD = 0;
-		if(contTestOk == 2){
-			clearLine(13);
-			escrita_texto( 0x190, "Finalizado", sizeof("Finalizado"));
-			vTaskDelay(4000);
-			contTestOk = 0;
-			contError = 0;
-			return contError;
-		}
-		else{
-			clear_display_text();
-			calibB();
-		}
-	}*/
-
 }
 
 unsigned char testeSoro( void ){
 
-	unsigned char sample, readQueueKeyboard, contReadAd = 0;
-	static unsigned int contAD = 0;
+	unsigned char sample, contReadAd = 0, estado = 0, segundos = 0, respMotor = 0,  erroDiferencaTensoes = 0;
+	unsigned int contReadAD = 0, timeout = 0, temporizador, contError;
+	unsigned int medidaAnterior_K = 0, medidaAnterior_Cl = 0, medidaAnterior_Na = 0, medidaAnterior_Ca = 0, medidaAnterior_pH = 0;
 	static unsigned long k = 0, na = 0, cl = 0, ph = 0, ca = 0;
 	adc16_channel_config_t adc16ChannelConfigStruct;
 	adc16ChannelConfigStruct.enableInterruptOnConversionCompleted = false;
 	adc16ChannelConfigStruct.enableDifferentialConversion = false;
 
-	// Movimenta anti horário em 910ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP1, 950);
-	vTaskDelay(TIMERCOM + 50); // Delay de 2 segundos
 
-	// Move motor MUX para posição 3
-	move_mux(POSITION3, SPEEDMUX1);
 
-	// Movimenta anti horário em 2,82 s
-	sample = move_tripa(WAYAHOUR, SPEEDTRP2, 1000);
+	while( 1 ){
 
-	// Movimenta anti horário em 870ms
-	sample = move_tripa(WAYAHOUR, SPEEDTRP3, 1000);
-	vTaskDelay(TIMERCOM + 50);
+		switch(estado){
+		case 0:	//Início movimento dos motores
 
-	// Move motor MUX para a posição 1
-	move_mux(POSITION1, SPEEDMUX1);
-	vTaskDelay(TIMERCOM);
+			// Movimenta anti horário em 910ms
+			sample = move_tripa(WAYAHOUR, SPEEDTRP1, 950);
+			vTaskDelay(TIMERCOM + 50); // Delay de 2 segundos
 
-	escrita_texto( 271, "Levante a Sonda para Aspirar", sizeof("Levante a Sonda para Aspirar"));
-	escrita_texto( 450, "YES=Asp", sizeof("YES=Asp"));
-	escrita_texto( 459, "NO=Sair", sizeof("NO=Sair"));
-	escrita_texto( 473, "<=Serie", sizeof("<=Serie"));
+			// Move motor MUX para posição 3
+			move_mux(POSITION3, SPEEDMUX1);
 
-	while( readQueueKeyboard != no ){
+			// Movimenta anti horário em 2,82 s
+			sample = move_tripa(WAYAHOUR, SPEEDTRP2, 1000);
 
-		readQueueKeyboard = verifyKeyBoard();
+			// Movimenta anti horário em 870ms
+			sample = move_tripa(WAYAHOUR, SPEEDTRP3, 1000);
+			vTaskDelay(TIMERCOM + 50);
+
+			// Move motor MUX para a posição 1
+			move_mux(POSITION1, SPEEDMUX1);
+			vTaskDelay(TIMERCOM);
+
+			writeLine(13);
+			escrita_texto( 271, "Levante a Sonda para Aspirar", sizeof("Levante a Sonda para Aspirar"));
+			escrita_texto( 450, "YES=Asp", sizeof("YES=Asp"));
+			escrita_texto( 459, "NO=Sair", sizeof("NO=Sair"));
+			escrita_texto( 473, "<=Serie", sizeof("<=Serie"));
+
+			estado = 1;
+			break;
+
+		case 1:	// Estado 1. Verificação da agulha
+
+			if( agulhaFechada ){	// Se sonda fechada
+				if( flag_timer ){	// Se flag timer igual a 1
+					flag_timer = 0;	// Flag timer recebe 0
+					timeout++;	// Incrementa timeout de 1
+					if( timeout >= 60000 || verifyKeyBoard() == no  ){	// Se timeout é maior ou igual a 60000 (1 minuto) ou teclado igual a No
+
+						move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
+						clear_display_text();	// Limpa a tela
+						calibA(1);
+						return OK;
+
+					}
+				}
+			}
+			else if( agulhaAberta ){		// Se Sonda está aberta
+				estado = 2;		// Estado recebe 1
+				timeout = 0;	// Timeout recebe 0
+
+			}
+
+
+			break;
+
+		case 2:	// Estado 2. Leitura da sonda e verificação de timeout
+			if( flag_timer ){	// Se flag timer igual a 1
+				flag_timer = 0;	// Flag timer recebe 0
+				timeout++;	// Incrementa timeout de 1
+				if( timeout >= 60000  ){	// Se timeout é maior ou igual a 60000 (1 minuto) ou teclado igual a No
+
+					move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
+					clear_display_text();	// Limpa a tela
+					calibA(1);
+					return OK;
+
+				}
+			}
+			else if( verifyKeyBoard() == yes ){ 	//
+				escrita_texto(401, "Aspirando", sizeof("Aspirando"));		// Escreve “Aspirando“ na linha 390
+				move_tripa(WAYAHOUR,SPEEDTRP1,1800);	// Aciona tripa por 2,4 segundos na velocidade 1
+				clearLine(7);	// Apaga a linha 7
+				clearLine(9);
+				escrita_texto(215, "Favor abaixar a Sonda", sizeof("Favor abaixar a Sonda"));	// Escreve “Favor abaixar a Sonda” na posição 210
+				while( agulhaAberta );	// Enquanto a sonda está aberta
+				clearLine(7);
+				respMotor = move_tripa(WAYAHOUR,SPEEDTRP4,15000);	// Aciona tripa por 15 segundos
+				if( respMotor == 1 && agulhaFechada ){	// Se detectou líquido
+					estado = 3;
+					temporizador = 1000;	// Temporizador recebe 1000 para contagem de 1 segundo
+					segundos = 30;	// Segundo recebe 59
+					writeLine(13);
+					escrita_texto( 401, "Testando", sizeof("Testando") );
+					vTaskDelay(10000);	// Delay de 10 segundos
+					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve segundo
+				}
+				else{
+
+					estado = 5;	// Estado de erro de detecção de líqudo
+					if( agulhaAberta ){	// Se a agulha está aberta
+						escrita_texto(395, "Favor baixar a agulha", sizeof("Favor baixar a agulha"));	// Escreve "Favor baixar a agulha"
+						while( agulhaAberta );	// Aguarda até a agulha ser abaixada
+					}
+
+				}
+			}
+			else if( verifyKeyBoard() == no ){	// Se teclado igual a No
+				move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
+				clear_display_text();	// Limpa a tela
+				return OK;
+			}
+
+			break;
+
+		case 3:	// Se detectou líquido começa a contagem de tempo
+
+			// Inicia contador de 30 segundos
+			if( flag_timer ){	// Se flag timer ativar
+				flag_timer = 0;	// Zera o flag timer
+				temporizador--;	// Decrementa o temporizador
+				if( temporizador == 0 ){	// Se temporizador chegar a 0
+					temporizador = 1000;	// Reinicia o temporizador
+
+					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve os segundos
+
+					escrita_texto(91, "K    ", sizeof("K   "));
+					escrita_texto(97, numtolcd(Ck, CAL), 7);
+					escrita_texto(104, "mmol/L", sizeof("mmol/L"));
+					escrita_texto(112, numtolcd(k * 8.0325 / contReadAD, CAL), 7);
+					escrita_texto(118, "mV", sizeof( "mV"));
+
+					escrita_texto(151, "Na    ", sizeof("K   "));
+					escrita_texto(157, numtolcd(Cna, CAL), 7);
+					escrita_texto(164, "mmol/L", sizeof("mmol/L"));
+					escrita_texto(172, numtolcd(na * 8.0325 / contReadAD, CAL), 7);
+					escrita_texto(178, "mV", sizeof( "mV"));
+
+					escrita_texto(211, "Cl    ", sizeof("Cl   "));
+					escrita_texto(217, numtolcd(Ccl, CAL), 7);
+					escrita_texto(224, "mmol/L", sizeof("mmol/L"));
+					escrita_texto(232, numtolcd(cl * 8.0325 / contReadAD, CAL), 7);
+					escrita_texto(238, "mV", sizeof( "mV"));
+
+					escrita_texto(271, "Ca    ", sizeof("Ca    "));
+					escrita_texto(277, numtolcd(Cca, CAL), 7);
+					escrita_texto(284, "mmol/L", sizeof("mmol/L"));
+					escrita_texto(292, numtolcd(ca * 8.0325 / contReadAD, CAL), 7);
+					escrita_texto(298, "mV", sizeof( "mV"));
+
+					escrita_texto(331, "pH    ", sizeof("pH    "));
+					escrita_texto(337, numtolcd(CpH, CAL), 7);
+					escrita_texto(344, "      ", sizeof("      "));
+					escrita_texto(352, numtolcd(ph * 8.0325 / contReadAD, CAL), 7);
+					escrita_texto(358, "mV", sizeof( "mV"));
+
+					segundos--; // Decrementa segundos
+					if( segundos == 0 ){	// Se segundos for igual a 0
+						estado = 4;
+					}
+				}
+			}
+
+			if( segundos > 0 ){	// Se segundos maior que 0
+				if( contReadAD < 250 ){	// Se contAD menor que 50
+					adc16ChannelConfigStruct.channelNumber                        = 8;
+					ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);
+					while (0U == (kADC16_ChannelConversionDoneFlag &
+							ADC16_GetChannelStatusFlags(ADC0, 0)))
+					{
+					}
+					ph += ADC16_GetChannelConversionValue(ADC0, 0);	// Faz leitura ph e incrementa
+
+					adc16ChannelConfigStruct.channelNumber                        = 9;
+					ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);
+					while (0U == (kADC16_ChannelConversionDoneFlag &
+							ADC16_GetChannelStatusFlags(ADC0, 0)))
+					{
+					}
+					ca += ADC16_GetChannelConversionValue(ADC0, 0);	// Faz leitura ca e incrementa
+
+					adc16ChannelConfigStruct.channelNumber                        = 12;
+					ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);
+					while (0U == (kADC16_ChannelConversionDoneFlag &
+							ADC16_GetChannelStatusFlags(ADC0, 0)))
+					{
+					}
+					cl += ADC16_GetChannelConversionValue(ADC0, 0);	// Faz leitura cl e incrementa
+
+					adc16ChannelConfigStruct.channelNumber                        = 13;
+					ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);
+					while (0U == (kADC16_ChannelConversionDoneFlag &
+							ADC16_GetChannelStatusFlags(ADC0, 0)))
+					{
+					}
+					na += ADC16_GetChannelConversionValue(ADC0, 0);	// Faz leitura na e incrementa
+
+					adc16ChannelConfigStruct.channelNumber                        = 14;
+					ADC16_SetChannelConfig(ADC1, 1, &adc16ChannelConfigStruct);
+					while (0U == (kADC16_ChannelConversionDoneFlag &
+							ADC16_GetChannelStatusFlags(ADC1, 1)))
+					{
+					}
+					k += ADC16_GetChannelConversionValue(ADC1, 1);	// Faz leitura k e incrementa
+
+					contReadAD++;	// Incrementa contAD
+
+				}
+				else{
+					Ck = Ck_standard * pow( 10, (k * 8.0325 / contReadAD) / ( ( voltageCalB_K - voltageCalA_K ) * 3.32 ) );
+					CpH = CpH_standard * pow( 10, (ph * 8.0325 / contReadAD) / ( ( voltageCalB_pH - voltageCalA_pH ) * 47.19 ) );
+					Cca = Cca_standard * pow( 10, (ca * 8.0325 / contReadAD) / ( ( voltageCalB_Ca - voltageCalA_Ca ) * 3.31 ) ) * 100;
+					Ccl = Ccl_standard * pow( 10, (cl * 8.0325 / contReadAD) / ( ( voltageCalA_Cl - voltageCalB_Cl ) * 5.105) ) * 100;
+					Cna = Cna_standard * pow( 10, (na * 8.0325 / contReadAD) / ( ( voltageCalB_Na - voltageCalA_Na ) * 9.633) );
+
+					// Faz a verificação da diferença e armazena o erro em uma flag
+					if( medidaAnterior_K != 0 && medidaAnterior_Ca != 0 && medidaAnterior_Na != 0 && medidaAnterior_Cl != 0 && medidaAnterior_pH != 0 ){
+
+						if( abs(medidaAnterior_K - k * 8.0325 / contReadAD) < 500 )
+							erroDiferencaTensoes &= ~(1 << ErrorK);
+						else
+							erroDiferencaTensoes |= 1 << ErrorK;
+
+						if( abs(medidaAnterior_Na - na * 8.0325 / contReadAD) < 500 )
+							erroDiferencaTensoes &= ~(1 << ErrorNa);
+						else
+							erroDiferencaTensoes |= 1 << ErrorNa;
+
+						if( abs(medidaAnterior_Cl - cl * 8.0325 / contReadAD) < 500 )
+							erroDiferencaTensoes &= ~(1 << ErrorCl);
+						else
+							erroDiferencaTensoes |= 1 << ErrorCl;
+
+						if( abs(medidaAnterior_Ca - ca * 8.0325 / contReadAD) < 500 )
+							erroDiferencaTensoes &= ~(1 << ErrorCa);
+						else
+							erroDiferencaTensoes |= 1 << ErrorCa;
+
+						if( abs(medidaAnterior_pH - ph * 8.0325 / contReadAD) < 500 )
+							erroDiferencaTensoes &= ~(1 << ErrorpH);
+						else
+							erroDiferencaTensoes |= 1 << ErrorpH;
+					}
+
+					k = 0;
+					ph = 0;
+					ca = 0;
+					cl = 0;
+					na = 0;
+					contReadAD = 0;
+					if( erroDiferencaTensoes == 0 && segundos < 27 )
+						estado = 4;
+					else if(erroDiferencaTensoes == 0 && segundos < 27){
+
+						clearLine(3);
+						clearLine(5);
+						clearLine(7);
+						clearLine(9);
+						clearLine(11);
+						escrita_texto(28, "  ", sizeof("  "));
+						escrita_texto(210, "Eletrodos instaveis, aspirar novamente?", sizeof("Eletrodos instaveis, aspirar novamente?"));	// Escreve "Aspirando Calibrador A" na posição 394
+						estado = 7;
+
+					}
+
+				}
+
+				break;
+
+		case 4:	// Estado 4. Temporizador terminou ou teclado No foi pressionado
+
+			respMotor = calibA(1);	// Lavando (calib(1)).Faz verificação de líquido. Passa 3 vezes
+			if( respMotor == OK || respMotor == ERRO ){	// Se identificou líquido na lavagem
+				clear_display_text();
+				move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
+				estado = 0;
+			}
+
+			break;
+
+		case 5:	// Estado 5. Falta de detecção de líquido
+
+			respMotor = calibA(1);	// Lavando (calib(1)).Faz verificação de líquido. Passa 3 vezes
+			if( respMotor == OK || respMotor == ERRO ){	// Se não identificou líquido na lavagem
+				move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
+				writeLine(13);	// Desenha na linha 13
+				clearLine(8);
+				escrita_texto(210, "Sem amostra. Aspirar novamente?", sizeof("Sem amostra. Aspirar novamente?"));	// Escreve “Sem amostra. Aspirar novamente?”
+				estado = 7;	// Estado de verificação de botão para retornar ao início
+			}
+
+
+			break;
+
+		case 7:	// Estado 7. Verificação de botão para retornar ao estado inicial
+
+			verifyKeyBoard();
+			if( verifyKeyBoard() == yes ){
+				clearLine(7);
+				clearLine(8);
+				escrita_texto(210, "Levante a sonda para aspirar", sizeof("Levante a sonda para aspirar"));		// Escreve “Levante a sonda para aspirar” na linha 210
+				estado = 1;	// Verificação de sonda aberta
+			}
+			else if( verifyKeyBoard() == no ){
+
+				clear_display_text();	// Limpa a tela
+				return ERRO;
+
+			}
+			break;
+
+
+
+			/*readQueueKeyboard = verifyKeyBoard();
 
 		if( readQueueKeyboard == yes ){
 
 			// Movimenta anti horário em 870ms
 			clearLine(9);
 			sample = move_tripa(WAYAHOUR, SPEEDTRP2, 1250);
-			while( GPIO_PinRead(GPIOA, 17) == 1 ){}
+			while( agulhaAberta );
 			sample = move_tripa(WAYAHOUR, SPEEDTRP4, 15000);
 
 			if( sample == 0 )
@@ -3180,6 +2930,8 @@ unsigned char testeSoro( void ){
 				vTaskDelay( 5000 );
 				clearLine(7);
 				clearLine(9);
+			}
+		}*/
 			}
 		}
 	}
@@ -3360,7 +3112,7 @@ void writeMenuName( unsigned char menu ){
 void calibValues( void ){
 
 	Ck_standard = 4 / ( pow( 10, ( voltageCalA_K  / (float)( ( voltageCalB_K - voltageCalA_K ) * 3.32 ) ) ) );
-	Cna_standard = 140 / ( pow( 10, voltageCalA_Na / (float)( ( voltageCalB_Na - voltageCalA_Na ) * 9.633) ) );
+	Cna_standard = 140 / ( pow( 10, voltageCalA_Na / (float)( ( voltageCalA_Na - voltageCalB_Na ) * 9.633) ) );
 	Ccl_standard = 110 / ( pow( 10, voltageCalA_Cl / (float)( ( voltageCalA_Cl - voltageCalB_Cl ) * 5.105 ) ) );
 	Cca_standard = 1.25 / ( pow( 10, voltageCalA_Ca / (float)( ( voltageCalB_Ca - voltageCalA_Ca ) * 3.31 ) ) );
 	CpH_standard = 7.4 / ( pow( 10, voltageCalA_pH / (float)( ( voltageCalB_pH - voltageCalA_pH ) * 47.19 ) ) );
@@ -3370,6 +3122,8 @@ void calibValues( void ){
 unsigned int verifyError( unsigned char typeAorB, unsigned char abnormal ){
 
 	unsigned char contError = 0, contErrorAbnormal = 0;
+	unsigned int medidaCalAnterior_K = 0, medidaCalAnterior_Cl = 0, medidaCalAnterior_Na = 0, medidaCalAnterior_Ca = 0, medidaCalAnterior_pH = 0;
+	unsigned char contAddrMemoria = 80, erroDiferencaTensoes = 0;
 
 	if( typeAorB == 1 ){
 		if( voltageCalA_K < 4500 || voltageCalA_K > 14000 )
@@ -3396,6 +3150,47 @@ unsigned int verifyError( unsigned char typeAorB, unsigned char abnormal ){
 			contError |= 1 << ErrorpH;
 		else
 			contError &= ~(1 << ErrorpH);
+
+		for( unsigned int i = ADDR_FLASH + 0x768; i >= ADDR_FLASH; i = i - DADOS_SALVOS ){	// Faz a verificação de memória apagada
+
+			if( *(volatile unsigned int *)(i) != 0xFFFFFFFF ){	// Se a memória foi escrita
+				// Armazena no vetor os valores de calibração já feitos
+				break;
+			}
+			contAddrMemoria--;
+
+		}
+		medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS);	// Lê o valor de calibração anterior K
+		medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA);	// Lê o valor de calibração anterior Na
+		medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*2);	// Lê o valor de calibração anterior Cl
+		medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*3);	// Lê o valor de calibração anterior Ca
+		medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*4);	// Lê o valor de calibração anterior pH
+
+		if( abs(medidaCalAnterior_K - voltageCalA_K) < 500 )	// Se a variação entre duas calibrações é menor que 0,5, ok, senão, erro
+			erroDiferencaTensoes &= ~(1 << ErrorK);
+		else
+			erroDiferencaTensoes |= 1 << ErrorK;
+
+		if( abs(medidaCalAnterior_Na - voltageCalA_Na) < 500 )	// Se a variação entre duas calibrações é menor que 0,5, ok, senão, erro
+			erroDiferencaTensoes &= ~(1 << ErrorNa);
+		else
+			erroDiferencaTensoes |= 1 << ErrorNa;
+
+		if( abs(medidaCalAnterior_Cl - voltageCalA_Cl) < 500 )	// Se a variação entre duas calibrações é menor que 0,5, ok, senão, erro
+			erroDiferencaTensoes &= ~(1 << ErrorCl);
+		else
+			erroDiferencaTensoes |= 1 << ErrorCl;
+
+		if( abs(medidaCalAnterior_Ca - voltageCalA_Ca) < 500 )	// Se a variação entre duas calibrações é menor que 0,5, ok, senão, erro
+			erroDiferencaTensoes &= ~(1 << ErrorCa);
+		else
+			erroDiferencaTensoes |= 1 << ErrorCa;
+
+		if( abs(medidaCalAnterior_pH - voltageCalA_pH) < 500 )	// Se a variação entre duas calibrações é menor que 0,5, ok, senão, erro
+			erroDiferencaTensoes &= ~(1 << ErrorpH);
+		else
+			erroDiferencaTensoes |= 1 << ErrorpH;
+
 	}
 	else{
 		if( voltageCalB_K < 4500 || voltageCalB_K > 14000 )
@@ -3422,8 +3217,50 @@ unsigned int verifyError( unsigned char typeAorB, unsigned char abnormal ){
 			contError |= 1 << ErrorpH;
 		else
 			contError &= ~(1 << ErrorpH);
+
+
+		for( unsigned int i = ADDR_FLASH + 0xEE8; i >= ADDR_FLASH + 0x780; i = i - DADOS_SALVOS ){	// Faz a verificação de memória apagada
+
+			if( *(volatile unsigned int *)(i) != 0xFFFFFFFF ){	// Se a memória foi escrita
+				// Armazena no vetor os valores de calibração já feitos
+				break;
+			}
+			contAddrMemoria--; // Caso não tenha encontrado memória, decrementa contador de endereço
+
+		}
+		medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS);	// Lê o valor de calibração anterior K
+		medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA);	// Lê o valor de calibração anterior Na
+		medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*2);	// Lê o valor de calibração anterior Cl
+		medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*3);	// Lê o valor de calibração anterior Ca
+		medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*4);	// Lê o valor de calibração anterior pH
+
+		if( abs(medidaCalAnterior_K - voltageCalB_K) < 500 )	// Se a variação entre duas calibrações é menor que 0,5, ok, senão, erro
+			erroDiferencaTensoes &= ~(1 << ErrorK);
+		else
+			erroDiferencaTensoes |= 1 << ErrorK;
+
+		if( abs(medidaCalAnterior_Na - voltageCalB_Na) < 500 )	// Se a variação entre duas calibrações é menor que 0,5, ok, senão, erro
+			erroDiferencaTensoes &= ~(1 << ErrorNa);
+		else
+			erroDiferencaTensoes |= 1 << ErrorNa;
+
+		if( abs(medidaCalAnterior_Cl - voltageCalB_Cl) < 500 )	// Se a variação entre duas calibrações é menor que 0,5, ok, senão, erro
+			erroDiferencaTensoes &= ~(1 << ErrorCl);
+		else
+			erroDiferencaTensoes |= 1 << ErrorCl;
+
+		if( abs(medidaCalAnterior_Ca - voltageCalB_Ca) < 500 )	// Se a variação entre duas calibrações é menor que 0,5, ok, senão, erro
+			erroDiferencaTensoes &= ~(1 << ErrorCa);
+		else
+			erroDiferencaTensoes |= 1 << ErrorCa;
+
+		if( abs(medidaCalAnterior_pH - voltageCalB_pH) < 500 )	// Se a variação entre duas calibrações é menor que 0,5, ok, senão, erro
+			erroDiferencaTensoes &= ~(1 << ErrorpH);
+		else
+			erroDiferencaTensoes |= 1 << ErrorpH;
+
 	}
-	if( abnormal ){
+	if( abnormal ){	// Erro anormal, variação entre calibração A e B
 
 		if( (voltageCalB_K - voltageCalA_K) < 1200 ||  (voltageCalB_K - voltageCalA_K) > 2100 )
 			contErrorAbnormal |= 1 << ErrorK;
@@ -3451,13 +3288,8 @@ unsigned int verifyError( unsigned char typeAorB, unsigned char abnormal ){
 			contErrorAbnormal &= ~(1 << ErrorpH);
 
 	}
-	/*	if( contError != 0 )
-		stateMachineError(120, contError, 1);
 
-	if( contErrorAbnormal != 0 )
-		stateMachineError(150, contErrorAbnormal, 2);*/
-
-	return contErrorAbnormal << 8 | contError;
+	return erroDiferencaTensoes << 16 | contErrorAbnormal << 8 | contError;
 }
 
 void stateMachineError( unsigned int position, unsigned char error, unsigned char typeError ){
@@ -3951,39 +3783,15 @@ void condicionamento( void ){
 	escrita_texto(211, "Levante a sonda para aspirar", sizeof("Levante a sonda para aspirar"));		// Escreve “Levante a sonda para aspirar” na linha 210
 
 	escrita_texto( 450, "YES=Asp NO=Sair", sizeof("YES=Asp NO=Sair"));	// Escreve Comandos na tela
-	while( 1 ){
+	while( 1 ){		switch(estado){
 
-		switch(estado){
+	case 0:	// Estado 0. Início movimento dos motores
 
-		case 0:	// Estado 0. Início movimento dos motores
-
-			if( agulhaFechada ){	// Se sonda fechada
-				if( flag_timer ){	// Se flag timer igual a 1
-					flag_timer = 0;	// Flag timer recebe 0
-					timeout++;	// Incrementa timeout de 1
-					if( timeout >= 60000 || (readKeyboard = verifyKeyBoard()) == no  ){	// Se timeout é maior ou igual a 60000 (1 minuto) ou teclado igual a No
-
-						move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
-						clear_display_text();	// Limpa a tela
-						telaManutencao();	// Escreve tela de Manutenção
-						return;
-
-					}
-				}
-			}
-			else if( agulhaAberta ){		// Se Sonda está aberta
-				estado = 1;		// Estado recebe 1
-				timeout = 0;	// Timeout recebe 0
-			}
-
-
-			break;
-
-		case 1:	// Estado 1. Leitura da sonda e verificação de timeout
+		if( agulhaFechada ){	// Se sonda fechada
 			if( flag_timer ){	// Se flag timer igual a 1
 				flag_timer = 0;	// Flag timer recebe 0
 				timeout++;	// Incrementa timeout de 1
-				if( timeout >= 60000  ){	// Se timeout é maior ou igual a 60000 (1 minuto) ou teclado igual a No
+				if( timeout >= 60000 || (readKeyboard = verifyKeyBoard()) == no  ){	// Se timeout é maior ou igual a 60000 (1 minuto) ou teclado igual a No
 
 					move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
 					clear_display_text();	// Limpa a tela
@@ -3992,117 +3800,139 @@ void condicionamento( void ){
 
 				}
 			}
-			else if( (readKeyboard = verifyKeyBoard()) == yes ){ 	//
-				escrita_texto(401, "Aspirando", sizeof("Aspirando"));		// Escreve “Aspirando“ na linha 390
-				move_tripa(WAYAHOUR,SPEEDTRP1,2400);	// Aciona tripa por 2,4 segundos na velocidade 1
-				clearLine(7);	// Apaga a linha 7
-				escrita_texto(215, "Favor abaixar a Sonda", sizeof("Favor abaixar a Sonda"));	// Escreve “Favor abaixar a Sonda” na posição 210
-				while( agulhaAberta );	// Enquanto a sonda está aberta
-				clearLine(7);
-				respMotor = move_tripa(WAYAHOUR,SPEEDTRP4,15000);	// Aciona tripa por 15 segundos
-				if( respMotor == 1 && agulhaFechada ){	// Se detectou líquido
-					estado = 3;
-					temporizador = 1000;	// Temporizador recebe 1000 para contagem de 1 segundo
-					minuto = 5;	// Minuto recebe 5
-					segundo = 59;	// Segundo recebe 59
-					escrita_texto(28, numtolcd(segundo,NUM), 3);	// Escreve segundo
-					escrita_texto(27, ":", sizeof(":"));	// Escreve :
-					escrita_texto(25, numtolcd(minuto-1,NUM),3);	// Escreve minutos - 1
-				}
-				else{
+		}
+		else if( agulhaAberta ){		// Se Sonda está aberta
+			estado = 1;		// Estado recebe 1
+			timeout = 0;	// Timeout recebe 0
+		}
 
-					estado = 5;	// Estado de erro de detecção de líqudo
-					if( agulhaAberta ){	// Se a agulha está aberta
-						escrita_texto(395, "Favor baixar a agulha", sizeof("Favor baixar a agulha"));	// Escreve "Favor baixar a agulha"
-						while( agulhaAberta );	// Aguarda até a agulha ser abaixada
-					}
 
-				}
-			}
-			else if( (readKeyboard = verifyKeyBoard()) == no ){	// Se teclado igual a No
+		break;
+
+	case 1:	// Estado 1. Leitura da sonda e verificação de timeout
+		if( flag_timer ){	// Se flag timer igual a 1
+			flag_timer = 0;	// Flag timer recebe 0
+			timeout++;	// Incrementa timeout de 1
+			if( timeout >= 60000  ){	// Se timeout é maior ou igual a 60000 (1 minuto) ou teclado igual a No
+
 				move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
 				clear_display_text();	// Limpa a tela
 				telaManutencao();	// Escreve tela de Manutenção
 				return;
+
 			}
-
-			break;
-
-		case 3:	// Se detectou líquido começa a contagem de tempo
-
-			if( minuto > 0 && (readKeyboard = verifyKeyBoard()) != no ){// Enquanto minuto for maior que 0 e teclado diferente de No
-				if( flag_timer ){	// Se flag timer ativar
-					flag_timer = 0;	// Zera o flag timer
-					temporizador--;	// Decrementa o temporizador
-					if( temporizador == 0 ){	// Se temporizador chegar a 0
-						temporizador = 1000;	// Reinicia o temporizador
-						segundo--;
-						escrita_texto(28, numtolcd(segundo,NUM), 3);	// Escreve os segundos
-						if( segundo == 0 ){	// Se segundos for igual a 0
-							segundo = 59;	// Reinicia o valor do segundo
-							minuto--;	// Minuto decrementa
-							if( minuto == 0 ){	// Se temporizador igual a 0 e deu 10 minutos
-								estado = 4;
-							}
-							escrita_texto(25, numtolcd(minuto-1,NUM),3);	// Escreve o minuto
-							escrita_texto(28, numtolcd(segundo,NUM), 3);	// Escreve os segundos
-						}
-					}
-				}
+		}
+		else if( (readKeyboard = verifyKeyBoard()) == yes ){ 	//
+			escrita_texto(401, "Aspirando", sizeof("Aspirando"));		// Escreve “Aspirando“ na linha 390
+			move_tripa(WAYAHOUR,SPEEDTRP1,2400);	// Aciona tripa por 2,4 segundos na velocidade 1
+			clearLine(7);	// Apaga a linha 7
+			escrita_texto(215, "Favor abaixar a Sonda", sizeof("Favor abaixar a Sonda"));	// Escreve “Favor abaixar a Sonda” na posição 210
+			while( agulhaAberta );	// Enquanto a sonda está aberta
+			clearLine(7);
+			respMotor = move_tripa(WAYAHOUR,SPEEDTRP4,15000);	// Aciona tripa por 15 segundos
+			if( respMotor == 1 && agulhaFechada ){	// Se detectou líquido
+				estado = 3;
+				temporizador = 1000;	// Temporizador recebe 1000 para contagem de 1 segundo
+				minuto = 5;	// Minuto recebe 5
+				segundo = 59;	// Segundo recebe 59
+				escrita_texto(28, numtolcd(segundo,NUM), 3);	// Escreve segundo
+				escrita_texto(27, ":", sizeof(":"));	// Escreve :
+				escrita_texto(25, numtolcd(minuto-1,NUM),3);	// Escreve minutos - 1
 			}
 			else{
-				estado = 4;	// Estado para funcionamento correto
-			}
 
-			break;
-
-		case 4:	// Estado 4. Temporizador terminou ou teclado No foi pressionado
-
-			respMotor = calibA(1);	// Lavando (calib(1)).Faz verificação de líquido. Passa 3 vezes
-			if( respMotor == 0 || respMotor == 2 ){	// Se identificou líquido na lavagem
-				move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
-				clear_display_text();	// Limpa a tela
-				telaManutencao();	// Escreve tela de Manutenção
-				return;
-			}
-
-			break;
-
-		case 5:	// Estado 5. Falta de detecção de líquido
-
-			respMotor = calibA(1);	// Lavando (calib(1)).Faz verificação de líquido. Passa 3 vezes
-			if( respMotor == 2 || respMotor == 0 ){	// Se não identificou líquido na lavagem
-				move_tripa(WAYAHOUR, SPEEDTRP1, 920);	// Move tripa por 920ms velocidade 1
-				move_mux(POSITION3,SPEEDMUX1);	// Move mux para a posição 3
-				move_tripa(WAYAHOUR, SPEEDTRP4, 5000);	// Move tripa por 5 segundos na velocidade 4
-				move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
-				writeLine(13);	// Desenha na linha 13
-				clearLine(8);
-				escrita_texto(210, "Sem amostra. Aspirar novamente?", sizeof("Sem amostra. Aspirar novamente?"));	// Escreve “Sem amostra. Aspirar novamente?”
-				estado = 7;	// Estado de verificação de botão para retornar ao início
-			}
-
-
-			break;
-
-		case 7:	// Estado 7. Verificação de botão para retornar ao estado inicial
-
-			readKeyboard = verifyKeyBoard();
-			if( readKeyboard == yes ){
-				clearLine(7);
-				clearLine(8);
-				escrita_texto(210, "Levante a sonda para aspirar", sizeof("Levante a sonda para aspirar"));		// Escreve “Levante a sonda para aspirar” na linha 210
-				estado = 1;	// Verificação de sonda aberta
-			}
-			else if( readKeyboard == no ){
-
-				clear_display_text();	// Limpa a tela
-				telaManutencao();	// Escreve tela de Manutenção
-				return;
+				estado = 5;	// Estado de erro de detecção de líqudo
+				if( agulhaAberta ){	// Se a agulha está aberta
+					escrita_texto(395, "Favor baixar a agulha", sizeof("Favor baixar a agulha"));	// Escreve "Favor baixar a agulha"
+					while( agulhaAberta );	// Aguarda até a agulha ser abaixada
+				}
 
 			}
-			break;
 		}
+		else if( (readKeyboard = verifyKeyBoard()) == no ){	// Se teclado igual a No
+			move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
+			clear_display_text();	// Limpa a tela
+			telaManutencao();	// Escreve tela de Manutenção
+			return;
+		}
+
+		break;
+
+	case 3:	// Se detectou líquido começa a contagem de tempo
+
+		if( minuto > 0 && (readKeyboard = verifyKeyBoard()) != no ){// Enquanto minuto for maior que 0 e teclado diferente de No
+			if( flag_timer ){	// Se flag timer ativar
+				flag_timer = 0;	// Zera o flag timer
+				temporizador--;	// Decrementa o temporizador
+				if( temporizador == 0 ){	// Se temporizador chegar a 0
+					temporizador = 1000;	// Reinicia o temporizador
+					segundo--;
+					escrita_texto(28, numtolcd(segundo,NUM), 3);	// Escreve os segundos
+					if( segundo == 0 ){	// Se segundos for igual a 0
+						segundo = 59;	// Reinicia o valor do segundo
+						minuto--;	// Minuto decrementa
+						if( minuto == 0 ){	// Se temporizador igual a 0 e deu 10 minutos
+							estado = 4;
+						}
+						escrita_texto(25, numtolcd(minuto-1,NUM),3);	// Escreve o minuto
+						escrita_texto(28, numtolcd(segundo,NUM), 3);	// Escreve os segundos
+					}
+				}
+			}
+		}
+		else{
+			estado = 4;	// Estado para funcionamento correto
+		}
+
+		break;
+
+	case 4:	// Estado 4. Temporizador terminou ou teclado No foi pressionado
+
+		respMotor = calibA(1);	// Lavando (calib(1)).Faz verificação de líquido. Passa 3 vezes
+		if( respMotor == 0 || respMotor == 2 ){	// Se identificou líquido na lavagem
+			move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
+			clear_display_text();	// Limpa a tela
+			telaManutencao();	// Escreve tela de Manutenção
+			return;
+		}
+
+		break;
+
+	case 5:	// Estado 5. Falta de detecção de líquido
+
+		respMotor = calibA(1);	// Lavando (calib(1)).Faz verificação de líquido. Passa 3 vezes
+		if( respMotor == 2 || respMotor == 0 ){	// Se não identificou líquido na lavagem
+			move_tripa(WAYAHOUR, SPEEDTRP1, 920);	// Move tripa por 920ms velocidade 1
+			move_mux(POSITION3,SPEEDMUX1);	// Move mux para a posição 3
+			move_tripa(WAYAHOUR, SPEEDTRP4, 5000);	// Move tripa por 5 segundos na velocidade 4
+			move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
+			writeLine(13);	// Desenha na linha 13
+			clearLine(8);
+			escrita_texto(210, "Sem amostra. Aspirar novamente?", sizeof("Sem amostra. Aspirar novamente?"));	// Escreve “Sem amostra. Aspirar novamente?”
+			estado = 7;	// Estado de verificação de botão para retornar ao início
+		}
+
+
+		break;
+
+	case 7:	// Estado 7. Verificação de botão para retornar ao estado inicial
+
+		readKeyboard = verifyKeyBoard();
+		if( readKeyboard == yes ){
+			clearLine(7);
+			clearLine(8);
+			escrita_texto(210, "Levante a sonda para aspirar", sizeof("Levante a sonda para aspirar"));		// Escreve “Levante a sonda para aspirar” na linha 210
+			estado = 1;	// Verificação de sonda aberta
+		}
+		else if( readKeyboard == no ){
+
+			clear_display_text();	// Limpa a tela
+			telaManutencao();	// Escreve tela de Manutenção
+			return;
+
+		}
+		break;
+	}
 
 	}
 
