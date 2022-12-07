@@ -110,8 +110,10 @@ int main(void) {
 	adc16_config_t adc16ConfigStruct;
 	adc16_channel_config_t adc16ChannelConfigStruct;
 	ADC16_GetDefaultConfig(&adc16ConfigStruct);
+	//adc16ConfigStruct.hardwareAverageMode = kADC16_HardwareAverageCount8;
 	ADC16_Init(DEMO_ADC16_BASE, &adc16ConfigStruct);
 	ADC16_EnableHardwareTrigger(DEMO_ADC16_BASE, 0); /* Make sure the software trigger is used. */
+	//ADC16_SetHardwareAverage(DEMO_ADC16_BASE, kADC16_HardwareAverageCount8);
 	//ADC16_DoAutoCalibration(ADC0);
 
 	pdb_config_t pdbConfigStruct;
@@ -136,9 +138,11 @@ int main(void) {
 	adc16_channel_config_t adc16ChannelConfigStruct2;
 
 	ADC16_GetDefaultConfig(&adc16ConfigStruct2);
+	//adc16ConfigStruct2.hardwareAverageMode = kADC16_HardwareAverageCount8;
 	ADC16_Init(ADC1, &adc16ConfigStruct2);
 	ADC16_SetChannelMuxMode(ADC1, 1);
 	ADC16_EnableHardwareTrigger(ADC1, 1); /* Make sure the software trigger is used. */
+	//ADC16_SetHardwareAverage(ADC1, kADC16_HardwareAverageCount8);
 	//ADC16_DoAutoCalibration(ADC1);
 	uint32_t medida_ad = 0;
 

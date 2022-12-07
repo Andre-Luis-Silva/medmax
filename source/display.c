@@ -245,7 +245,6 @@ void display_run( void ){
 				menu = 3;
 				menu_anterior = 3;
 				clear_display_text();
-				escrita_texto( 0x08, "TESTE DE SORO", sizeof("TESTE DE SORO"));
 			}
 
 			readQueueKeyboard = 0;
@@ -1693,6 +1692,9 @@ unsigned char calibA( unsigned char wash ){
 
 		case 0:	// Estado 0, movimento dos motores
 
+			GPIO_PortSet(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
+			Keep_Configuration();
+
 			// Move motor MUX para posição 2
 			move_mux(POSITION2, SPEEDMUX1);
 			vTaskDelay(TIMERCOM);
@@ -1842,7 +1844,9 @@ unsigned char calibA( unsigned char wash ){
 					escrita_texto( 401, "Testando", sizeof("Testando") );
 					vTaskDelay(10000);	// Delay de 10 segundos
 					segundos = 30;
-					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve os segundos
+					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve os segundos4
+
+					GPIO_PortClear(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 				}
 			}
 			break;
@@ -1926,13 +1930,13 @@ unsigned char calibA( unsigned char wash ){
 					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve os segundos
 					segundos--; // Decrementa segundos
 					if( segundos == 0 ){	// Se segundos for igual a 0
-						estado = 3;
+						//estado = 3;
 					}
 				}
 			}
 
 			if( segundos > 0 ){	// Se segundos maior que 0
-				if( contReadAD < 1750 ){	// Se contAD menor que 50
+				if( contReadAD < 1000 ){	// Se contAD menor que 50
 					adc16ChannelConfigStruct.channelNumber                        = 8;
 					ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);
 					while (0U == (kADC16_ChannelConversionDoneFlag &
@@ -2082,10 +2086,12 @@ unsigned char calibA( unsigned char wash ){
 					medidaAnterior_Cl = voltageCalA_Cl;
 					medidaAnterior_pH = voltageCalA_pH;
 
-
 				}
 			}
 			if( estado == 3 ){
+
+				GPIO_PortSet(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
+				Keep_Configuration();
 
 				if( (contError = verifyError(TYPEA, NOABNORMAL)) != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
 					clearLine(3);
@@ -2144,7 +2150,7 @@ unsigned char calibB( void ){
 	long medidaAnterior_K = 0, medidaAnterior_Cl = 0, medidaAnterior_Na = 0, medidaAnterior_Ca = 0, medidaAnterior_pH = 0;
 	unsigned int medidaCalAnterior_K = 0, medidaCalAnterior_Cl = 0, medidaCalAnterior_Na = 0, medidaCalAnterior_Ca = 0, medidaCalAnterior_pH = 0;
 	unsigned int medidasCalibSalva[6] = {0,0,0,0,0,0};
-	unsigned char contAddrMemoria = 81, contadorCalib = 1, hora, minuto;
+	unsigned char contAddrMemoria = 80, contadorCalib = 1, hora, minuto;
 	adc16_channel_config_t adc16ChannelConfigStruct;
 	adc16ChannelConfigStruct.enableInterruptOnConversionCompleted = false;
 	adc16ChannelConfigStruct.enableDifferentialConversion = false;
@@ -2154,7 +2160,7 @@ unsigned char calibB( void ){
 	escrita_texto( 9, "Calibrador B", sizeof("Calibrador B"));	// Escreve Calibrador A na posição 9
 	escrita_texto( 394, "Aspirando Calibrador B", sizeof("Aspirando Calibrador B"));	// Escreve "Aspirando Calibrador A" na posição 394
 
-	for( unsigned int i = ADDR_FLASH + 0xF00; i >= ADDR_FLASH + 0x780; i = i - DADOS_SALVOS ){	// Faz a verificação de memória apagada
+	for( unsigned int i = ADDR_FLASH + 0xEE8; i >= ADDR_FLASH + 0x780; i = i - DADOS_SALVOS ){	// Faz a verificação de memória apagada
 
 		if( *(volatile unsigned int *)(i) != 0xFFFFFFFF ){	// Se a memória foi escrita
 			// Armazena no vetor os valores de calibração já feitos
@@ -2178,6 +2184,10 @@ unsigned char calibB( void ){
 		switch( estado ){
 
 		case 0:	// Estado 0, movimento dos motores
+
+			GPIO_PortSet(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
+			Keep_Configuration();
+
 			// Move motor MUX para posição 3
 			move_mux(POSITION3, SPEEDMUX1);
 
@@ -2235,6 +2245,7 @@ unsigned char calibB( void ){
 				vTaskDelay(10000);	// Delay de 10 segundos
 				segundos = 30;
 				escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve os segundos
+				GPIO_PortClear(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 
 			}
 			break;
@@ -2474,6 +2485,9 @@ unsigned char calibB( void ){
 			}
 			if( estado == 3 ){
 
+				GPIO_PortSet(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
+				Keep_Configuration();
+
 				if( (contError = verifyError(TYPEB, ABNORMAL)) != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
 					clearLine(3);
 					clearLine(5);
@@ -2540,6 +2554,9 @@ unsigned char testeSoro( void ){
 		switch(estado){
 		case 0:	//Início movimento dos motores
 
+			GPIO_PortSet(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
+			Keep_Configuration();
+
 			// Movimenta anti horário em 910ms
 			sample = move_tripa(WAYAHOUR, SPEEDTRP1, 950);
 			vTaskDelay(TIMERCOM + 50); // Delay de 2 segundos
@@ -2559,6 +2576,7 @@ unsigned char testeSoro( void ){
 			vTaskDelay(TIMERCOM);
 
 			writeLine(13);
+			escrita_texto( 0x08, "TESTE DE SORO", sizeof("TESTE DE SORO"));
 			escrita_texto( 271, "Levante a Sonda para Aspirar", sizeof("Levante a Sonda para Aspirar"));
 			escrita_texto( 450, "YES=Asp", sizeof("YES=Asp"));
 			escrita_texto( 459, "NO=Sair", sizeof("NO=Sair"));
@@ -2622,6 +2640,7 @@ unsigned char testeSoro( void ){
 					escrita_texto( 401, "Testando", sizeof("Testando") );
 					vTaskDelay(10000);	// Delay de 10 segundos
 					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve segundo
+					GPIO_PortClear(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 				}
 				else{
 
@@ -2776,8 +2795,11 @@ unsigned char testeSoro( void ){
 					cl = 0;
 					na = 0;
 					contReadAD = 0;
-					if( erroDiferencaTensoes == 0 && segundos < 27 )
+					if( erroDiferencaTensoes == 0 && segundos < 27 ){
+						GPIO_PortSet(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
+						Keep_Configuration();
 						estado = 4;
+					}
 					else if(erroDiferencaTensoes == 0 && segundos < 27){
 
 						clearLine(3);

@@ -241,6 +241,17 @@ void NdefPush_Cb(unsigned char *pNdefRecord, unsigned short NdefRecordSize) {
 
 #if defined RW_SUPPORT
 #ifdef RW_RAW_EXCHANGE
+void Keep_Configuration( void ){
+	tml_Connect ();
+	NxpNci_KeepConfiguration();
+	if (NxpNci_StartDiscovery(DiscoveryTechnologies,sizeof(DiscoveryTechnologies)) != NFC_SUCCESS)
+	{
+		printf("Error: cannot start discovery\n");
+		return;
+	}
+
+}
+
 void MIFARE_scenario (void)
 {
 	bool status;

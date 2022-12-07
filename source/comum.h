@@ -31,6 +31,8 @@
 #include "nfc_task.h"
 #include "rtc.h"
 #include "fsl_flash.h"
+#include <Nfc.h>
+#include <ndef_helper.h>
 
 #define ADDR_FLASH		0xFC000
 #define DADOS_SALVOS	24

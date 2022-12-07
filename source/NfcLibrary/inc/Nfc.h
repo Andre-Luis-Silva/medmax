@@ -256,6 +256,8 @@ bool NxpNci_ReaderActivateNext(NxpNci_RfIntf_t *pRfIntf);
  * return NFC_SUCCESS or NFC_ERROR
  */
 bool NxpNci_ReaderReActivate(NxpNci_RfIntf_t *pRfIntf);
+
+void Keep_Configuration( void );
 #endif
 /**********************************************************************/
 
