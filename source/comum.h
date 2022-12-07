@@ -35,6 +35,7 @@
 #include <ndef_helper.h>
 
 #define ADDR_FLASH		0xFC000
+#define ADDR_EXAME		0xFD000
 #define DADOS_SALVOS	24
 #define CONT_DADOS		32
 #define DADO_MEMORIA	4

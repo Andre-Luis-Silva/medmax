@@ -92,6 +92,10 @@
 #define NUM						1
 #define OK						0
 #define ERRO					2
+#define SORO					0
+#define SANGUE					1
+#define URINA					2
+
 
 #define TIMERCOM	250
 
@@ -119,7 +123,7 @@ void escrita_texto( unsigned int posicao, char *texto, unsigned char tamanho );
 void clear_display_text( void );
 unsigned char calibA( unsigned char wash );
 unsigned char calibB( void );
-unsigned char testeSoro( void );
+unsigned char TesteAmostras( unsigned char tipoTeste );
 unsigned char clearLine( unsigned int line );
 void writeMenuName( unsigned char menu );
 void calibValues( void );
@@ -132,4 +136,5 @@ void condicionamento( void );
 void desproteinizacao( void );
 void limpezaTubulacao( void );
 unsigned char writeLine( unsigned int line );
+void EscreveCedilhaAOTil( void );
 #endif /* DISPLAY_H_ */

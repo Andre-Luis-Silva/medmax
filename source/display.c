@@ -21,8 +21,8 @@ extern volatile unsigned char flagBuz;
 char data[6];
 unsigned int voltageCalA_K = 0, voltageCalA_Ca = 0, voltageCalA_Cl = 0, voltageCalA_pH = 0, voltageCalA_Na = 0;
 unsigned int voltageCalB_K = 0, voltageCalB_Ca = 0, voltageCalB_Cl = 0, voltageCalB_pH = 0, voltageCalB_Na = 0;
-double Ck = 0, Cca = 0, Ccl = 0, CpH = 0, Cna = 0;
-double Ck_standard = 0, Cca_standard = 0, Ccl_standard = 0, CpH_standard = 0, Cna_standard = 0;
+float Ck = 0, Cca = 0, Ccl = 0, CpH = 0, Cna = 0;
+float Ck_standard = 0, Cca_standard = 0, Ccl_standard = 0, CpH_standard = 0, Cna_standard = 0;
 
 
 void display_run( void ){
@@ -491,7 +491,7 @@ void display_run( void ){
 
 			if( flagCalibOk ){
 
-				testeSoro();
+				TesteAmostras(0);
 				clear_display_text();
 				desenho_menu1();
 				desenha_fundo_menu( menu, 1 );
@@ -546,13 +546,13 @@ unsigned char status( unsigned char tipo ){
 		while(!((reg & 0x03) == 0x03)){
 
 			reg = ( db7_read << 7 )
-																																								| ( db6_read << 6 )
-																																								| ( db5_read << 5 )
-																																								| ( db4_read << 4 )
-																																								| ( db3_read << 3 )
-																																								| ( db2_read << 2 )
-																																								| ( db1_read << 1 )
-																																								| db0_read;
+				| ( db6_read << 6 )
+				| ( db5_read << 5 )
+				| ( db4_read << 4 )
+				| ( db3_read << 3 )
+				| ( db2_read << 2 )
+				| ( db1_read << 1 )
+				| db0_read;
 
 			reg = reg;
 
@@ -564,13 +564,13 @@ unsigned char status( unsigned char tipo ){
 		while(!((reg & 0x80) == 0x80)){
 
 			reg = ( db7_read << 7 )
-																																								| ( db6_read << 6 )
-																																								| ( db5_read << 5 )
-																																								| ( db4_read << 4 )
-																																								| ( db3_read << 3 )
-																																								| ( db2_read << 2 )
-																																								| ( db1_read << 1 )
-																																								| db0_read;
+				| ( db6_read << 6 )
+				| ( db5_read << 5 )
+				| ( db4_read << 4 )
+				| ( db3_read << 3 )
+				| ( db2_read << 2 )
+				| ( db1_read << 1 )
+				| db0_read;
 
 			reg = reg;
 
@@ -608,13 +608,13 @@ unsigned char read_data( void ){
 	ce_off;
 
 	reg = ( db7_read << 7 )
-																																						| ( db6_read << 6 )
-																																						| ( db5_read << 5 )
-																																						| ( db4_read << 4 )
-																																						| ( db3_read << 3 )
-																																						| ( db2_read << 2 )
-																																						| ( db1_read << 1 )
-																																						| db0_read;
+		| ( db6_read << 6 )
+		| ( db5_read << 5 )
+		| ( db4_read << 4 )
+		| ( db3_read << 3 )
+		| ( db2_read << 2 )
+		| ( db1_read << 1 )
+		| db0_read;
 
 	reg = reg;
 
@@ -1161,15 +1161,7 @@ void desenho_configuracao1( void ){
 	status(2);
 
 	escrita_texto(0x9, "CONFIGURA", sizeof("CONFIGURA"));
-	send_data(0x60);
-	send_command(0xC0);
-	status(1);
-	send_data(0x81);
-	send_command(0xC0);
-	status(1);
-	send_data(0x2F);
-	send_command(0xC0);
-	status(1);
+	EscreveCedilhaAOTil();
 
 }
 
@@ -1249,15 +1241,7 @@ void desenho_configuracao2( void ){
 	status(2);
 
 	escrita_texto(0x9, "CONFIGURA", sizeof("CONFIGURA"));
-	send_data(0x60);
-	send_command(0xC0);
-	status(1);
-	send_data(0x81);
-	send_command(0xC0);
-	status(1);
-	send_data(0x2F);
-	send_command(0xC0);
-	status(1);
+	EscreveCedilhaAOTil();
 
 }
 
@@ -1338,15 +1322,7 @@ void desenho_configuracao3( void ){
 	status(2);
 
 	escrita_texto(0x9, "CONFIGURA", sizeof("CONFIGURA"));
-	send_data(0x60);
-	send_command(0xC0);
-	status(1);
-	send_data(0x81);
-	send_command(0xC0);
-	status(1);
-	send_data(0x2F);
-	send_command(0xC0);
-	status(1);
+	EscreveCedilhaAOTil();
 
 }
 
@@ -1656,7 +1632,7 @@ unsigned char calibA( unsigned char wash ){
 	unsigned long k = 0, na = 0, cl = 0, ph = 0, ca = 0;
 	unsigned int medidaAnterior_K = 0, medidaAnterior_Cl = 0, medidaAnterior_Na = 0, medidaAnterior_Ca = 0, medidaAnterior_pH = 0;
 	unsigned int medidaCalAnterior_K = 0, medidaCalAnterior_Cl = 0, medidaCalAnterior_Na = 0, medidaCalAnterior_Ca = 0, medidaCalAnterior_pH = 0;
-	unsigned int medidasCalibSalva[6] = {0,0,0,0,0,0};
+	unsigned int medidasCalibSalva[6] = {1,1,1,1,1,1};
 	unsigned char contAddrMemoria = 80, contadorCalib = 1, hora, minuto;
 	adc16_channel_config_t adc16ChannelConfigStruct;
 	adc16ChannelConfigStruct.enableInterruptOnConversionCompleted = false;
@@ -1692,7 +1668,6 @@ unsigned char calibA( unsigned char wash ){
 
 		case 0:	// Estado 0, movimento dos motores
 
-			GPIO_PortSet(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 			Keep_Configuration();
 
 			// Move motor MUX para posição 2
@@ -2090,7 +2065,6 @@ unsigned char calibA( unsigned char wash ){
 			}
 			if( estado == 3 ){
 
-				GPIO_PortSet(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 				Keep_Configuration();
 
 				if( (contError = verifyError(TYPEA, NOABNORMAL)) != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
@@ -2185,7 +2159,6 @@ unsigned char calibB( void ){
 
 		case 0:	// Estado 0, movimento dos motores
 
-			GPIO_PortSet(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 			Keep_Configuration();
 
 			// Move motor MUX para posição 3
@@ -2485,7 +2458,6 @@ unsigned char calibB( void ){
 			}
 			if( estado == 3 ){
 
-				GPIO_PortSet(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 				Keep_Configuration();
 
 				if( (contError = verifyError(TYPEB, ABNORMAL)) != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
@@ -2537,24 +2509,32 @@ unsigned char calibB( void ){
 	}
 }
 
-unsigned char testeSoro( void ){
+unsigned char TesteAmostras( unsigned char tipoTeste ){
 
 	unsigned char sample, contReadAd = 0, estado = 0, segundos = 0, respMotor = 0,  erroDiferencaTensoes = 0;
 	unsigned int contReadAD = 0, timeout = 0, temporizador, contError;
 	unsigned int medidaAnterior_K = 0, medidaAnterior_Cl = 0, medidaAnterior_Na = 0, medidaAnterior_Ca = 0, medidaAnterior_pH = 0;
 	static unsigned long k = 0, na = 0, cl = 0, ph = 0, ca = 0;
+	unsigned short contAddrMemoria = 384, examesFeitos = 1;
 	adc16_channel_config_t adc16ChannelConfigStruct;
 	adc16ChannelConfigStruct.enableInterruptOnConversionCompleted = false;
 	adc16ChannelConfigStruct.enableDifferentialConversion = false;
 
+	for( unsigned int i = 0x100000; i >= ADDR_EXAME; i = i - CONT_DADOS ){	// Faz a verificação de memória apagada
 
+		if( *(volatile unsigned int *)(i) != 0xFFFFFFFF ){	// Se a memória foi escrita
+			examesFeitos = ( i - ADDR_EXAME ) / CONT_DADOS;
+			break;
+		}
+		contAddrMemoria--; // Caso não tenha encontrado memória, decrementa contador de endereço
+
+	}
 
 	while( 1 ){
 
 		switch(estado){
 		case 0:	//Início movimento dos motores
 
-			GPIO_PortSet(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 			Keep_Configuration();
 
 			// Movimenta anti horário em 910ms
@@ -2575,8 +2555,23 @@ unsigned char testeSoro( void ){
 			move_mux(POSITION1, SPEEDMUX1);
 			vTaskDelay(TIMERCOM);
 
+			writeLine(0);
 			writeLine(13);
-			escrita_texto( 0x08, "TESTE DE SORO", sizeof("TESTE DE SORO"));
+			if( tipoTeste == SORO )	// Se tipoTeste igual a SORO
+				escrita_texto( 0x08, "TESTE DE SORO", sizeof("TESTE DE SORO"));	// Escreve "Teste de Soro"
+			else if( tipoTeste == SANGUE )	// Senão se tipoTeste igual a SANGUE
+				escrita_texto( 0x06, "TESTE DE SANGUE", sizeof("TESTE DE SANGUE"));	// Escreve "Teste de Sangue"
+			else if( tipoTeste == URINA ){	// Senão se tipoTeste igual a URINA
+				escrita_texto( 0x07, "TESTE DE URINA", sizeof("TESTE DE URINA"));	// Escreve "Teste de Urina"
+				escrita_texto( 331, "Favor diluir a urina no calibrador A na propor",
+						sizeof( "Favor diluir a urina no calibrador A na propor" ));	// Escreve "Favor diluir a urina no calibrador A na propor"
+				EscreveCedilhaAOTil();
+				escrita_texto(381, " 1:9", sizeof(" 1:9"));	// Escreve "1:9"
+
+			}
+			escrita_texto( 30, examesFeitos, sizeof(5));	// Escreve a quantidade de exames na posição 30
+			escrita_texto( 34, ":", sizeof(":"));	// Escreve : na posição 34
+			escrita_texto( 35, "0000000000001", sizeof("0000000000001"));	// Escreve o n° de série 0000000000001 na posição 35
 			escrita_texto( 271, "Levante a Sonda para Aspirar", sizeof("Levante a Sonda para Aspirar"));
 			escrita_texto( 450, "YES=Asp", sizeof("YES=Asp"));
 			escrita_texto( 459, "NO=Sair", sizeof("NO=Sair"));
@@ -2796,7 +2791,6 @@ unsigned char testeSoro( void ){
 					na = 0;
 					contReadAD = 0;
 					if( erroDiferencaTensoes == 0 && segundos < 27 ){
-						GPIO_PortSet(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 						Keep_Configuration();
 						estado = 4;
 					}
@@ -3078,15 +3072,7 @@ void writeMenuName( unsigned char menu ){
 		escrita_texto(371, "2 PONTOS", sizeof("2 PONTOS"));
 	if( menu == 2 ){
 		escrita_texto(370, "MANUTEN", sizeof("MANUTEN"));
-		send_data(0x60);
-		send_command(0xC0);
-		status(1);
-		send_data(0x81);
-		send_command(0xC0);
-		status(1);
-		send_data(0x2F);
-		send_command(0xC0);
-		status(1);
+		EscreveCedilhaAOTil();
 	}
 	if( menu == 3 )
 		escrita_texto(368, "TESTE DE SORO", sizeof("TESTE DE SORO"));
@@ -3098,15 +3084,7 @@ void writeMenuName( unsigned char menu ){
 		escrita_texto(368, "TESTE DE C.Q.", sizeof("TESTE DE C.Q."));
 	if( menu == 7 ){
 		escrita_texto(368, "CONFIGURA", sizeof("CONFIGURA"));
-		send_data(0x60);
-		send_command(0xC0);
-		status(1);
-		send_data(0x81);
-		send_command(0xC0);
-		status(1);
-		send_data(0x2F);
-		send_command(0xC0);
-		status(1);
+		EscreveCedilhaAOTil();
 	}
 	if( menu == 8 ){
 		escrita_texto(372, "SERVI", sizeof("SERVI"));
@@ -3574,22 +3552,12 @@ void initEquip( void ){
 			escrita_texto(120, "2.Nivel do detector de amostra", sizeof("2.Nivel do detector de amostra"));	// Escreve "2. Nível do detector de amostra"
 
 			escrita_texto(180, "3.Tubula", sizeof("3.Tubula"));	// Escreve "3. Tubulação do Calibrador A"
-			send_data(0x60);		// Comando para Ç
-			send_command(0xC0);
-			status(1);
-			send_data(0x81);		// Comando para Ã
-			send_command(0xC4);
-			status(1);
-			escrita_texto(190, "o do Calibrador A", sizeof("o do Calibrador A"));	// Escreve "3. Tubulação do Calibrador A"
+			EscreveCedilhaAOTil();
+			escrita_texto(190, " do Calibrador A", sizeof("o do Calibrador A"));	// Escreve "3. Tubulação do Calibrador A"
 
 			escrita_texto(240, "4.Tubula", sizeof("4.Tubula"));	// Escreve "4. Tubulação do Calibrador B"
-			send_data(0x60);		// Comando para Ç
-			send_command(0xC0);
-			status(1);
-			send_data(0x81);		// Comando para Ã
-			send_command(0xC4);
-			status(1);
-			escrita_texto(250, "o do Calibrador B", sizeof("o do Calibrador B"));	// Escreve "3. Tubulação do Calibrador A"
+			EscreveCedilhaAOTil();
+			escrita_texto(250, " do Calibrador B", sizeof("o do Calibrador B"));	// Escreve "3. Tubulação do Calibrador A"
 
 			/* Verificação da tensão da bateria */
 
@@ -3723,15 +3691,7 @@ void limpezaTubulacao( void ){
 	clear_display_text();	// Limpa a tela
 	// Escreve "limpeza de tubulação" na posição 215
 	escrita_texto(215, "Limpeza de tubula", sizeof("Limpeza de tubula"));
-	send_data(0x60);	// Comando para ç
-	send_command(0xC0);
-	status(1);
-	send_data(0x81);	// Comando para Ã
-	send_command(0xC0);
-	status(1);
-	send_data(0x2F);	// Comando para O
-	send_command(0xC0);
-	status(1);
+	EscreveCedilhaAOTil();
 	// Escreve "NO=Sair" na posição 460
 	escrita_texto(460, "NO=Sair", sizeof("NO=Sair"));
 	move_mux(POSITION5, SPEEDMUX1);		// Move MUX para posição 5
@@ -3964,15 +3924,7 @@ void desproteinizacao( void ){
 
 	clear_display_text();	// Apaga a tela
 	escrita_texto(7, "DESPROTEINIZA", sizeof("DESPROTEINIZA"));	// Escreve "Desproteinização em andamento"
-	send_data(0x60);	// Comando para ç
-	send_command(0xC0);
-	status(1);
-	send_data(0x81);	// Comando para Ã
-	send_command(0xC0);
-	status(1);
-	send_data(0x2F);	// Comando para O
-	send_command(0xC0);
-	status(1);
+	EscreveCedilhaAOTil();
 	writeLine(13);	// Escreve desenho na tela
 	// Escreve "Dissolva completamente a enzima e abra a agulha para aspirar
 	escrita_texto(210,"Dissolva completamente a enzima e abra a agulha para aspirar", sizeof("Dissolva completamente a enzima e abra a agulha para aspirar"));
@@ -4005,15 +3957,7 @@ void desproteinizacao( void ){
 				clearLine(8);	// Apaga a linha 8
 				escrita_texto(210, "Aspirando solu", sizeof("Aspirando solu"));
 				// Comandos para escrita de ção
-				send_data(0x60);	// Comando para ç
-				send_command(0xC0);
-				status(1);
-				send_data(0x81);	// Comando para Ã
-				send_command(0xC0);
-				status(1);
-				send_data(0x2F);	// Comando para O
-				send_command(0xC0);
-				status(1);
+				EscreveCedilhaAOTil();
 				escrita_texto(228, "desproteinizante", sizeof("desproteinizante"));
 				move_tripa(WAYAHOUR, SPEEDTRP1, 4000);	// Aciona tripa por 4 segundos na velocidade 1
 				vTaskDelay(500);	// Delay de 500ms
@@ -4027,15 +3971,7 @@ void desproteinizacao( void ){
 
 						// Escreve "Desproteinização em andamento"
 						escrita_texto(210, "Desproteiniza", sizeof("Desproteiniza"));
-						send_data(0x60);	// Comando para ç
-						send_command(0xC0);
-						status(1);
-						send_data(0x81);	// Comando para Ã
-						send_command(0xC0);
-						status(1);
-						send_data(0x2F);	// Comando para O
-						send_command(0xC0);
-						status(1);
+						EscreveCedilhaAOTil();
 						escrita_texto(232, " em andamento", sizeof(" em andamento"));
 						escrita_texto(28, numtolcd(segundo,NUM), 3);	// Escreve segundo
 						escrita_texto(27, ":", sizeof(":"));	// Escreve :
@@ -4124,40 +4060,29 @@ void telaManutencao( void ){
 
 	escrita_texto(11, "MANUTEN", sizeof("MANUTEN"));	// Escreve "MANUTENÇÃO" na posição 11
 	// Comandos para escrita de ção
-	send_data(0x60);	// Comando para ç
-	send_command(0xC0);
-	status(1);
-	send_data(0x81);	// Comando para Ã
-	send_command(0xC0);
-	status(1);
-	send_data(0x2F);	// Comando para O
-	send_command(0xC0);
-	status(1);
+	EscreveCedilhaAOTil();
 	escrita_texto(60, "1 CONDICIONAMENTO", sizeof("1 CONDICIONAMENTO"));	// Escreve "1 CONDICIONAMENTO"
 	escrita_texto(120, "2 DESPROTEINIZA", sizeof("2 DESPROTEINIZA"));	// Escreve "2 DESPROTEINIZAÇÃO"
 	// Comandos para escrita de ção
-	send_data(0x60);	// Comando para ç
-	send_command(0xC0);
-	status(1);
-	send_data(0x81);	// Comando para Ã
-	send_command(0xC0);
-	status(1);
-	send_data(0x2F);	// Comando para O
-	send_command(0xC0);
-	status(1);
+	EscreveCedilhaAOTil();
 	escrita_texto(180, "3 LAVAGEM INTERNA", sizeof("3 LAVAGEM INTERNA"));	// Escreve "3 LAVAGEM INTERNA"
 	escrita_texto(240, "4 LIMPEZA DA TUBULA", sizeof("4 LIMPEZA DA TUBULA"));	// Escreve "4 LIMPEZA DA TUBULAÇÃO"
 	// Comandos para escrita de ção
-	send_data(0x60);	// Comando para ç
-	send_command(0xC0);
-	status(1);
-	send_data(0x81);	// Comando para Ã
-	send_command(0xC0);
-	status(1);
-	send_data(0x2F);	// Comando para O
-	send_command(0xC0);
-	status(1);
+	EscreveCedilhaAOTil();
 	escrita_texto(450, "1-4=Selecionar NO=Sair", sizeof("1-4=Selecionar NO=Sair"));	// Escreve "1-4=Selecionar NO=Sair"
 
 }
 
+void EscreveCedilhaAOTil( void ){
+
+	send_data(0x60);	// Comando para ç
+	send_command(0xC0);
+	status(1);
+	send_data(0x81);	// Comando para Ã
+	send_command(0xC0);
+	status(1);
+	send_data(0x2F);	// Comando para O
+	send_command(0xC0);
+	status(1);
+
+}
