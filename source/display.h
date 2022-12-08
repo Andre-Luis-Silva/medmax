@@ -137,4 +137,6 @@ void desproteinizacao( void );
 void limpezaTubulacao( void );
 unsigned char writeLine( unsigned int line );
 void EscreveCedilhaAOTil( void );
+char *ConverteNumParaLcd( unsigned char qtdDigitos, unsigned char qtdCasasDecimais, unsigned int num );
+char ContaCaracteres( void );
 #endif /* DISPLAY_H_ */

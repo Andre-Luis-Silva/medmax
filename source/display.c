@@ -175,6 +175,9 @@ void display_run( void ){
 	if( readRxI2c != 0x00 )
 		configRTC();
 
+
+
+
 	while(1){
 
 		readQueueKeyboard = verifyKeyBoard(); // Leitura do teclado
@@ -1627,7 +1630,7 @@ void clear_display_text( void ){
 unsigned char calibA( unsigned char wash ){
 
 	// Declaraçõe de variáveis
-	unsigned char sample = 0, estado = 0, texto = 0, segundos = 30, erroDiferencaTensoes = 0, flagSegundo = 0;
+	unsigned char sample = 0, estado = 0, texto = 0, segundos = 30, erroDiferencaTensoes = 0;
 	unsigned int  temporizador = 1000, contError = 0, contReadAD = 0;
 	unsigned long k = 0, na = 0, cl = 0, ph = 0, ca = 0;
 	unsigned int medidaAnterior_K = 0, medidaAnterior_Cl = 0, medidaAnterior_Na = 0, medidaAnterior_Ca = 0, medidaAnterior_pH = 0;
@@ -2512,7 +2515,7 @@ unsigned char calibB( void ){
 unsigned char TesteAmostras( unsigned char tipoTeste ){
 
 	unsigned char sample, contReadAd = 0, estado = 0, segundos = 0, respMotor = 0,  erroDiferencaTensoes = 0;
-	unsigned int contReadAD = 0, timeout = 0, temporizador, contError;
+	unsigned int contReadAD = 0, timeout = 0, temporizador;
 	unsigned int medidaAnterior_K = 0, medidaAnterior_Cl = 0, medidaAnterior_Na = 0, medidaAnterior_Ca = 0, medidaAnterior_pH = 0;
 	static unsigned long k = 0, na = 0, cl = 0, ph = 0, ca = 0;
 	unsigned short contAddrMemoria = 384, examesFeitos = 1;
@@ -2569,7 +2572,7 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 				escrita_texto(381, " 1:9", sizeof(" 1:9"));	// Escreve "1:9"
 
 			}
-			escrita_texto( 30, examesFeitos, sizeof(5));	// Escreve a quantidade de exames na posição 30
+			escrita_texto( 30, ConverteNumParaLcd(5, 0, examesFeitos), sizeof(5));	// Escreve a quantidade de exames na posição 30
 			escrita_texto( 34, ":", sizeof(":"));	// Escreve : na posição 34
 			escrita_texto( 35, "0000000000001", sizeof("0000000000001"));	// Escreve o n° de série 0000000000001 na posição 35
 			escrita_texto( 271, "Levante a Sonda para Aspirar", sizeof("Levante a Sonda para Aspirar"));
@@ -4084,5 +4087,149 @@ void EscreveCedilhaAOTil( void ){
 	send_data(0x2F);	// Comando para O
 	send_command(0xC0);
 	status(1);
+
+}
+
+char *ConverteNumParaLcd( unsigned char qtdDigitos, unsigned char qtdCasasDecimais, unsigned int num ){
+	/*
+	 * Faz a conversão de um número qualquer para o código usado no LCD. É possível definir até 5
+	 * dígitos e a quantidade de casas decimais que serão mostrados no LCD.
+	 * A soma com 0x30 é para converter o número para o código ASCII
+	 */
+
+	switch(qtdDigitos){
+
+	case 1:	// 1 Dígito
+
+		data[0] = num + 0x30;// data[0] recebe num
+		// data[1 - 5] recebe 0
+		data[1] = 0;
+		data[2] = 0;
+		data[3] = 0;
+		data[4] = 0;
+		data[5] = 0;
+
+		break;
+
+	case 2:	// 2 Dígitos
+
+		data[0] = num / 10 + 0x30;	// data[0] recebe num dividido por 10 mais 0x30
+		if( qtdCasasDecimais == 1 ){	// Se quantidade de casas decimais for diferente de 0
+			data[1] = 0x2E;	// data[1] recebe 0x2E, . em código ASCII
+			data[2] = num % 10 + 0x30;	// data[2] recebe num percent 10 (resto da divisão) mais 0x30
+		}
+		else{	// Senão se não tem casa decimal
+			data[1] = num % 10 + 0x30;	// data[2] recebe num percent 10 (resto da divisão) mais 0x30
+			data[2] = 0;
+		}
+		data[3] = 0;
+		data[4] = 0;
+		data[5] = 0;
+		break;
+
+	case 3:	// 3 Dígitos
+
+		data[0] = num / 100 + 0x30;	// data[0] recebe num dividido por 100 mais 0x30
+		if( qtdCasasDecimais == 1 ){	// Se quantidade de casas decimais for igual a 1
+			data[1] = num % 100 / 10 + 0x30;	// data[1] recebe num percent 100 dividido por 10 mais 0x30
+			data[2] = 0x2E;	// data[2] recebe 0x2E, . em código ASCII
+			data[3] = num % 100 % 10 + 0x30;	// data[3] recebe num percent 100 percent 10 mais 0x30
+		}
+		else if( qtdCasasDecimais == 2 ){	// Senão se quantidade de casas decimais igual a 2
+			data[1] = 0x2E;	// data[2] recebe 0x2E, . em código ASCII
+			data[2] = num % 100 / 10 + 0x30;	// data[1] recebe num percent 100 dividido por 10 mais 0x30
+			data[3] = num % 100 % 10 + 0x30;	// data[3] recebe num percent 100 percent 10 mais 0x30
+		}
+		else{	// Senão se não tem casa decimal
+			data[1] = num % 100 / 10 + 0x30;	// data[1] recebe num percent 100 dividido por 10 mais 0x30
+			data[2] = num % 100 % 10 + 0x30;	// data[3] recebe num percent 100 percent 10 mais 0x30
+			data[3] = 0;
+		}
+		data[4] = 0;
+		data[5] = 0;
+
+		break;
+
+	case 4:	// 4 Dígitos
+
+		data[0] = num / 1000 + 0x30;	// data[0] recebe num dividido por 1000 mais 0x30
+		if( qtdCasasDecimais == 1 ){	// Se quantidade de casas decimais for igual a 1
+			data[1] = num % 1000 / 100 + 0x30;	// data[1] recebe num percent 1000 percent 100 mais 0x30
+			data[2] = num % 1000 % 100 / 10 + 0x30;	// data[2] recebe num percent 1000 percent 100 dividido por 10 mais 0x30
+			data[3] = 0x2E;	// data[3] recebe 0x2E, . em código ASCII
+			data[4] = num % 1000 % 100 % 10 + 0x30;	// data[4] recebe num percent 1000 percent 100 percent 10 mais 0x30
+		}
+		else if( qtdCasasDecimais == 2 ){	// Senão se quantidade de casas decimais igual a 2
+			data[1] = num % 1000 / 100 + 0x30;	// data[1] recebe num percent 1000 percent 100 mais 0x30
+			data[2] = 0x2E;	// data[2] recebe 0x2E, . em código ASCII
+			data[3] = num % 1000 % 100 / 10 + 0x30;	// data[3] recebe num percent 1000 percent 100 dividido por 10 mais 0x30
+			data[4] = num % 1000 % 100 % 10 + 0x30;	// data[4] recebe num percent 1000 percent 100 percent 10 mais 0x30
+		}
+		else if( qtdCasasDecimais == 3 ){	// Senão se quantidade de casas decimais igual a 3
+			data[1] = 0x2E;	// data[1] recebe 0x2E, . em código ASCII
+			data[2] = num % 1000 / 100 + 0x30;	// data[2] recebe num percent 1000 percent 100 mais 0x30
+			data[3] = num % 1000 % 100 / 10 + 0x30;	// data[3] recebe num percent 1000 percent 100 dividido por 10 mais 0x30
+			data[4] = num % 1000 % 100 % 10 + 0x30;	// data[4] recebe num percent 1000 percent 100 percent 10 mais 0x30
+		}
+		else{	// Senão se não tem casa decimal
+			data[1] = num % 1000 / 100 + 0x30;	// data[1] recebe num percent 1000 percent 100 mais 0x30
+			data[2] = num % 1000 % 100 / 10 + 0x30;	// data[2] recebe num percent 1000 percent 100 dividido por 10 mais 0x30
+			data[3] = num % 1000 % 100 % 10 + 0x30;	// data[4] recebe num percent 1000 percent 100 percent 10 mais 0x30
+			data[4] = 0;
+		}
+		data[5] = 0;
+
+		break;
+
+	case 5:	// 5 Dígitos
+
+		data[0] = num / 10000 + 0x30;	// data[0] recebe num dividido por 10000 mais 0x30
+		if( qtdCasasDecimais == 1 ){	// Se quantidade de casas decimais for igual a 1
+			data[1] = num % 10000 / 1000 + 0x30;	// data[1] recebe num percent 10000 percent 1000 mais 0x30
+			data[2] = num % 10000 % 1000 / 100 + 0x30;	// data[2] recebe num percent 10000 percent 1000 dividido por 100 mais 0x30
+			data[3] = num % 10000 % 1000 % 100 / 10 + 0x30;	// data[3] recebe num percent 10000 percent 1000 percent 100 dividido por 10 mais 0x30
+			data[4] = 0x2E;	// data[4] recebe 0x2E, . em código ASCII
+			data[5] = num % 10000 % 1000 % 100 % 10 + 0x30;	// data[5] recebe num percent 10000 percent 1000 percent 100 percent 10 mais 0x30
+		}
+		else if( qtdCasasDecimais == 2 ){	// Senão se quantidade de casas decimais igual a 2
+			data[1] = num % 10000 / 1000 + 0x30;	// data[1] recebe num percent 10000 percent 1000 mais 0x30
+			data[2] = num % 10000 % 1000 / 100 + 0x30;	// data[2] recebe num percent 10000 percent 1000 dividido por 100 mais 0x30
+			data[3] = 0x2E;	// data[3] recebe 0x2E, . em código ASCII
+			data[4] = num % 10000 % 1000 % 100 / 10 + 0x30;	// data[4] recebe num percent 10000 percent 1000 percent 100 dividido por 10 mais 0x30
+			data[5] = num % 10000 % 1000 % 100 % 10 + 0x30;	// data[5] recebe num percent 10000 percent 1000 percent 100 percent 10 mais 0x30
+		}
+		else if( qtdCasasDecimais == 3 ){	// Senão se quantidade de casas decimais igual a 3
+			data[1] = num % 10000 / 1000 + 0x30;	// data[1] recebe num percent 10000 percent 1000 mais 0x30
+			data[2] = 0x2E;	// data[2] recebe 0x2E, . em código ASCII
+			data[3] = num % 10000 % 1000 / 100 + 0x30;	// data[3] recebe num percent 10000 percent 1000 dividido por 100 mais 0x30
+			data[4] = num % 10000 % 1000 % 100 / 10 + 0x30;	// data[4] recebe num percent 10000 percent 1000 percent 100 dividido por 10 mais 0x30
+			data[5] = num % 10000 % 1000 % 100 % 10 + 0x30;	// data[5] recebe num percent 10000 percent 1000 percent 100 percent 10 mais 0x30
+		}
+		else if( qtdCasasDecimais == 4 ){	// Senão se quantidade de casas decimais igual a 4
+			data[1] = 0x2E;	// data[1] recebe 0x2E, . em código ASCII
+			data[2] = num % 10000 / 1000 + 0x30;	// data[2] recebe num percent 10000 percent 1000 mais 0x30
+			data[3] = num % 10000 % 1000 / 100 + 0x30;	// data[3] recebe num percent 10000 percent 1000 dividido por 100 mais 0x30
+			data[4] = num % 10000 % 1000 % 100 / 10 + 0x30;	// data[4] recebe num percent 10000 percent 1000 percent 100 dividido por 10 mais 0x30
+			data[5] = num % 10000 % 1000 % 100 % 10 + 0x30;	// data[5] recebe num percent 10000 percent 1000 percent 100 percent 10 mais 0x30
+		}
+		else{	// Senão se não tem casa decimal
+			data[1] = num % 10000 / 1000 + 0x30;	// data[2] recebe num percent 10000 percent 1000 mais 0x30
+			data[2] = num % 10000 % 1000 / 100 + 0x30;	// data[3] recebe num percent 10000 percent 1000 dividido por 100 mais 0x30
+			data[3] = num % 10000 % 1000 % 100 / 10 + 0x30;	// data[4] recebe num percent 10000 percent 1000 percent 100 dividido por 10 mais 0x30
+			data[4] = num % 10000 % 1000 % 100 % 10 + 0x30;	// data[5] recebe num percent 10000 percent 1000 percent 100 percent 10 mais 0x30
+			data[5] = 0;
+		}
+
+		break;
+	}
+	return data;
+}
+
+char ContaCaracteres( void ){
+
+	for( unsigned char i = 0; i < 6; i ++ )
+		if( data[i] == 0 )
+			return i;
+	return 0;
 
 }
