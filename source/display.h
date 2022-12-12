@@ -79,23 +79,32 @@
 #define Display_mode_graphic   	0x98
 #define Set_data_auto_write   	0xB0
 #define Auto_reset			   	0xB2
+
 #define ErrorK					0
 #define ErrorNa					1
 #define ErrorCl					2
 #define ErrorCa					3
 #define ErrorpH					4
+
 #define TYPEA					1
 #define TYPEB					2
+
 #define NOABNORMAL				0
 #define ABNORMAL				1
+
 #define CAL						0
 #define NUM						1
+
 #define OK						0
 #define ERRO					2
+
 #define SORO					0
 #define SANGUE					1
 #define URINA					2
 
+#define PRINCIPAL				0
+#define CONFIGURACAO			1
+#define SERVICO					2
 
 #define TIMERCOM	250
 
@@ -125,7 +134,7 @@ unsigned char calibA( unsigned char wash );
 unsigned char calibB( void );
 unsigned char TesteAmostras( unsigned char tipoTeste );
 unsigned char clearLine( unsigned int line );
-void writeMenuName( unsigned char menu );
+void WriteMenuName( unsigned char menu, unsigned char tipoMenu );
 void calibValues( void );
 char *numtolcd( unsigned int num, unsigned char typeCalOrNum );
 unsigned int verifyError(  unsigned char typeAorB, unsigned char abnormal );

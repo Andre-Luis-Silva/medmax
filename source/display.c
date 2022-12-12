@@ -27,9 +27,8 @@ float Ck_standard = 0, Cca_standard = 0, Ccl_standard = 0, CpH_standard = 0, Cna
 
 void display_run( void ){
 
-	unsigned char estado_display = 0, flagError = 0, flagCalibOk = 0;
+	unsigned char estado_display = 0, flagError = 0, flagCalibOk = 0, menuConfig = 0, menuConfigAnterior = 0;
 	unsigned char menu = 0, menu_anterior = 0, respCalibA, respCalibB, readQueueKeyboard;
-	unsigned int contError = 0;
 
 	rst_off;
 	for(int i = 0; i < 1000; i++ );
@@ -249,10 +248,19 @@ void display_run( void ){
 				menu_anterior = 3;
 				clear_display_text();
 			}
+			// Se tecla igual a 8 ou menu igual a 7 e tecla igual a yes
+			else if( readQueueKeyboard == oito || ( readQueueKeyboard == yes && menu == 7 ) ){
+				estado_display = 8;	// Estado vai para a posição 3
+				menu = 7;	// Salva a posição do menu
+				menu_anterior = 7;	// Salva a posição do menu anterior
+				menuConfig = 0;	// menuConfig recebe 0
+				clear_display_text();	// Limpa a tela
+				desenho_configuracao1(); // Escreve tela de Manutenção
+			}
 
 			readQueueKeyboard = 0;
 			if( menu_anterior != menu ){
-				writeMenuName(menu);
+				WriteMenuName(menu, PRINCIPAL);
 			}
 			menu_anterior = menu;
 			break;
@@ -263,7 +271,7 @@ void display_run( void ){
 			clear_display_text();
 			desenho_menu1();
 			desenha_fundo_menu( menu, 1 );
-			writeMenuName(menu);
+			WriteMenuName(menu, PRINCIPAL);
 			send_command(Display_mode_text | Display_mode_graphic);
 			status(1);
 			estado_display = 0;
@@ -353,7 +361,7 @@ void display_run( void ){
 			clear_display_text();
 			desenho_menu1();
 			desenha_fundo_menu( menu, 1 );
-			writeMenuName(menu);
+			WriteMenuName(menu, PRINCIPAL);
 			send_command(Display_mode_text | Display_mode_graphic);
 			status(1);
 			estado_display = 0;
@@ -481,7 +489,7 @@ void display_run( void ){
 				clear_display_text();	// Limpa a tela
 				desenho_menu1();	// Desenha Menu 1
 				desenha_fundo_menu( menu, 1 );	// Desenha o fundo do display
-				writeMenuName(menu);	// Desenha o nome do menu anterior
+				WriteMenuName(menu, PRINCIPAL);	// Desenha o nome do menu anterior
 				send_command(Display_mode_text | Display_mode_graphic);
 				status(1);
 				estado_display = 0;// Estado display recebe 0
@@ -498,7 +506,7 @@ void display_run( void ){
 				clear_display_text();
 				desenho_menu1();
 				desenha_fundo_menu( menu, 1 );
-				writeMenuName(menu);
+				WriteMenuName(menu, PRINCIPAL);
 				send_command(Display_mode_text | Display_mode_graphic);
 				status(1);
 				estado_display = 0;
@@ -513,12 +521,39 @@ void display_run( void ){
 				clear_display_text();
 				desenho_menu1();
 				desenha_fundo_menu( menu, 1 );
-				writeMenuName(menu);
+				WriteMenuName(menu, PRINCIPAL);
 				send_command(Display_mode_text | Display_mode_graphic);
 				status(1);
 				estado_display = 0;
 
 			}
+			break;
+
+		case 8:
+
+			// Se tecla igual a left
+				// Se menuConfig igual a 0
+					// menuConfig recebe 10
+				// Senão
+					// menuConfig decrementa 1
+
+			// Se tecla igual a right
+				// Se menuConfig igual a 10
+					// menuConfig recebe 0
+				// Senão
+					// menuConfig incrementa 1
+
+			// Se tecla igual a 1 ou menuConfig igual a 0 e tecla igual a yes
+				// menuConfig recebe 2
+				// Chama a função AjustaHora();
+			// Senão se tecla igual a 6 ou menuConfig igual a 5 e tecla igual a yes
+				// menuConfig recebe 6
+				// Chama a função AjustaCorrelação();
+
+			// Se menuConfigAnterior for diferente de menuConfig
+				// Chama função WriteMenuName
+
+			// menuConfigAnterior recebe menuConfig
 			break;
 		}
 	}
@@ -3065,7 +3100,7 @@ unsigned char clearLine( unsigned int line ){
 
 }
 
-void writeMenuName( unsigned char menu ){
+void WriteMenuName( unsigned char menu, unsigned char tipoMenu ){
 
 	static unsigned char menu_anterior;
 	clearLine(12);
@@ -3091,11 +3126,11 @@ void writeMenuName( unsigned char menu ){
 	}
 	if( menu == 8 ){
 		escrita_texto(372, "SERVI", sizeof("SERVI"));
-		send_data(0x60);
-		send_command(0xC0);
+		send_data(0x60);	// Comando para escrever Ç
+		send_command(0xC0);	 // Escreve com incremente de um passo no endereço do display
 		status(1);
-		send_data(0x2F);
-		send_command(0xC0);
+		send_data(0x2F);	// Comando para escrever O
+		send_command(0xC0);	// Escreve com incremente de um passo no endereço do display
 		status(1);
 	}
 	desenha_fundo_menu( menu_anterior % 4, 0 );
