@@ -34,8 +34,6 @@ void display_run( void ){
 	for(int i = 0; i < 1000; i++ );
 	rst_on;
 
-	//FLASH_Erase(&s_flashDriver, ADDR_FLASH, 2000, kFLASH_ApiEraseKey);
-
 	uart_config_t config;
 	UART_GetDefaultConfig(&config);
 	config.baudRate_Bps = 19200;
@@ -162,20 +160,15 @@ void display_run( void ){
 	//initEquip();
 
 	desenho_menu1();
-	desenha_fundo_menu( menu, 1 );
+	WriteMenuName(menu, PRINCIPAL);
 
 	send_command(Display_mode_text | Display_mode_graphic);
 	status(1);
-
-	escrita_texto(371, "1 PONTO", sizeof("1 PONTO"));
 
 	unsigned char readRxI2c = 0;
 	I2C_READ_PCF8653( &readRxI2c, Control_Status_1 );
 	if( readRxI2c != 0x00 )
 		configRTC();
-
-
-
 
 	while(1){
 
@@ -255,7 +248,9 @@ void display_run( void ){
 				menu_anterior = 7;	// Salva a posição do menu anterior
 				menuConfig = 0;	// menuConfig recebe 0
 				clear_display_text();	// Limpa a tela
+				send_command(Display_mode_text | Display_mode_graphic);
 				desenho_configuracao1(); // Escreve tela de Manutenção
+				WriteMenuName(menuConfig, CONFIGURACAO);	// Escreve o título do comando
 			}
 
 			readQueueKeyboard = 0;
@@ -270,7 +265,6 @@ void display_run( void ){
 			flagError = calibA(0);
 			clear_display_text();
 			desenho_menu1();
-			desenha_fundo_menu( menu, 1 );
 			WriteMenuName(menu, PRINCIPAL);
 			send_command(Display_mode_text | Display_mode_graphic);
 			status(1);
@@ -360,7 +354,6 @@ void display_run( void ){
 				flagCalibOk = 0;
 			clear_display_text();
 			desenho_menu1();
-			desenha_fundo_menu( menu, 1 );
 			WriteMenuName(menu, PRINCIPAL);
 			send_command(Display_mode_text | Display_mode_graphic);
 			status(1);
@@ -488,7 +481,6 @@ void display_run( void ){
 
 				clear_display_text();	// Limpa a tela
 				desenho_menu1();	// Desenha Menu 1
-				desenha_fundo_menu( menu, 1 );	// Desenha o fundo do display
 				WriteMenuName(menu, PRINCIPAL);	// Desenha o nome do menu anterior
 				send_command(Display_mode_text | Display_mode_graphic);
 				status(1);
@@ -505,7 +497,6 @@ void display_run( void ){
 				TesteAmostras(0);
 				clear_display_text();
 				desenho_menu1();
-				desenha_fundo_menu( menu, 1 );
 				WriteMenuName(menu, PRINCIPAL);
 				send_command(Display_mode_text | Display_mode_graphic);
 				status(1);
@@ -520,7 +511,6 @@ void display_run( void ){
 				vTaskDelay(2000);
 				clear_display_text();
 				desenho_menu1();
-				desenha_fundo_menu( menu, 1 );
 				WriteMenuName(menu, PRINCIPAL);
 				send_command(Display_mode_text | Display_mode_graphic);
 				status(1);
@@ -531,29 +521,46 @@ void display_run( void ){
 
 		case 8:
 
-			// Se tecla igual a left
-				// Se menuConfig igual a 0
-					// menuConfig recebe 10
-				// Senão
-					// menuConfig decrementa 1
+			if( readQueueKeyboard == left ){	// Se tecla igual a left
+				if( menuConfig == 0 )	// Se menuConfig igual a 0
+					menuConfig = 9;	// menuConfig recebe 9
+				else	// Senão
+					menuConfig--;	// menuConfig decrementa 1
+			}
+			else if( readQueueKeyboard == right ){	// Senão se tecla igual a right
+				if( menuConfig == 9 )	// Se menuConfig igual a 9
+					menuConfig = 0;	// menuConfig recebe 0
+				else	// Senão
+					menuConfig++;	// menuConfig incrementa 1
+			}
 
-			// Se tecla igual a right
-				// Se menuConfig igual a 10
-					// menuConfig recebe 0
-				// Senão
-					// menuConfig incrementa 1
+			// Senão se tecla igual a 1 ou menuConfig igual a 0 e tecla igual a yes
+			else if(readQueueKeyboard == 1 || ( menuConfig == 0 && readQueueKeyboard == yes ) ){
+				menuConfig = 2;	// menuConfig recebe 2
+				AjustaHora();	// Chama a função AjustaHora();
+			}
 
-			// Se tecla igual a 1 ou menuConfig igual a 0 e tecla igual a yes
-				// menuConfig recebe 2
-				// Chama a função AjustaHora();
 			// Senão se tecla igual a 6 ou menuConfig igual a 5 e tecla igual a yes
-				// menuConfig recebe 6
-				// Chama a função AjustaCorrelação();
+			else if( readQueueKeyboard == 6 || ( menuConfig == 5 && readQueueKeyboard == yes ) ){
+				menuConfig = 6;	// menuConfig recebe 6
+				clear_display_text();
+				AjustaCorrelacao();	// Chama a função AjustaCorrelação();
+			}
 
-			// Se menuConfigAnterior for diferente de menuConfig
-				// Chama função WriteMenuName
+			// Senão se tecla igual a NO, retorna ao menu principal
+			else if( readQueueKeyboard == no ){
+				clear_display_text();	// Limpa a tela
+				desenho_menu2();	// Desenha o menu 1
+				WriteMenuName(menu, PRINCIPAL);	// Escreve o título do comando selecionado
+				send_command(Display_mode_text | Display_mode_graphic);	// Modo de texto e gráfico junto
+				status(1);
+				estado_display = 0;	// Estado inicial
+			}
 
-			// menuConfigAnterior recebe menuConfig
+			if( menuConfigAnterior != menuConfig )	// Se menuConfigAnterior for diferente de menuConfig
+				WriteMenuName(menuConfig, CONFIGURACAO );	// Chama função WriteMenuName
+
+			menuConfigAnterior = menuConfig;	// menuConfigAnterior recebe menuConfig
 			break;
 		}
 	}
@@ -1676,7 +1683,7 @@ unsigned char calibA( unsigned char wash ){
 	adc16ChannelConfigStruct.enableInterruptOnConversionCompleted = false;
 	adc16ChannelConfigStruct.enableDifferentialConversion = false;
 
-	for( unsigned int i = ADDR_FLASH + 0x768; i >= ADDR_FLASH; i = i - DADOS_SALVOS ){	// Faz a verificação de memória apagada
+	for( unsigned int i = ADDR_CALIBRACAO + 0x768; i >= ADDR_CALIBRACAO; i = i - DADOS_CALIBRACAO ){	// Faz a verificação de memória apagada
 
 		if( *(volatile unsigned int *)(i) != 0xFFFFFFFF ){	// Se a memória foi escrita
 			// Armazena no vetor os valores de calibração já feitos
@@ -2045,7 +2052,7 @@ unsigned char calibA( unsigned char wash ){
 						medidasCalibSalva[3] = voltageCalA_Ca;	// Salva calibrador Ca
 						medidasCalibSalva[4] = voltageCalA_pH;	// Salva calibrador pH
 						medidasCalibSalva[5] = bcdtodec(hora & 0x3F) << 16 | bcdtodec(minuto & 0x7F) << 8 | contadorCalib;	// Salva horário, contador de calibração e 0 para calibrador A
-						FLASH_Program(&s_flashDriver, ADDR_FLASH + contAddrMemoria * DADOS_SALVOS, medidasCalibSalva, DADOS_SALVOS);	// Salva dados de calibração
+						FLASH_Program(&s_flashDriver, ADDR_CALIBRACAO + contAddrMemoria * DADOS_CALIBRACAO, medidasCalibSalva, DADOS_CALIBRACAO);	// Salva dados de calibração
 
 						contAddrMemoria++;	// Incrementa contador de memória
 
@@ -2072,11 +2079,11 @@ unsigned char calibA( unsigned char wash ){
 							estado = 3;
 						}
 						if( estado != 3 ){
-							medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS);	// Lê o valor de calibração anterior K
-							medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA);	// Lê o valor de calibração anterior Na
-							medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*2);	// Lê o valor de calibração anterior Cl
-							medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*3);	// Lê o valor de calibração anterior Ca
-							medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*4);	// Lê o valor de calibração anterior pH
+							medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_CALIBRACAO + (contAddrMemoria - 1) * DADOS_CALIBRACAO);	// Lê o valor de calibração anterior K
+							medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_CALIBRACAO + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA);	// Lê o valor de calibração anterior Na
+							medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_CALIBRACAO + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA*2);	// Lê o valor de calibração anterior Cl
+							medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_CALIBRACAO + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA*3);	// Lê o valor de calibração anterior Ca
+							medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_CALIBRACAO + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA*4);	// Lê o valor de calibração anterior pH
 						}
 					}
 					else if( erroDiferencaTensoes != 0 && segundos == 0 ){	// Senão
@@ -2172,7 +2179,7 @@ unsigned char calibB( void ){
 	escrita_texto( 9, "Calibrador B", sizeof("Calibrador B"));	// Escreve Calibrador A na posição 9
 	escrita_texto( 394, "Aspirando Calibrador B", sizeof("Aspirando Calibrador B"));	// Escreve "Aspirando Calibrador A" na posição 394
 
-	for( unsigned int i = ADDR_FLASH + 0xEE8; i >= ADDR_FLASH + 0x780; i = i - DADOS_SALVOS ){	// Faz a verificação de memória apagada
+	for( unsigned int i = ADDR_CALIBRACAO + 0xEE8; i >= ADDR_CALIBRACAO + 0x780; i = i - DADOS_CALIBRACAO ){	// Faz a verificação de memória apagada
 
 		if( *(volatile unsigned int *)(i) != 0xFFFFFFFF ){	// Se a memória foi escrita
 			// Armazena no vetor os valores de calibração já feitos
@@ -2438,7 +2445,7 @@ unsigned char calibB( void ){
 						medidasCalibSalva[3] = voltageCalB_Ca;	// Salva calibrador Ca
 						medidasCalibSalva[4] = voltageCalB_pH;	// Salva calibrador pH
 						medidasCalibSalva[5] = 0x01 << 24 | bcdtodec(hora & 0x3F) << 16 | bcdtodec(minuto & 0x7F) << 8 | contadorCalib;	// Salva horário, contador de calibração e 0 para calibrador A
-						FLASH_Program(&s_flashDriver, ADDR_FLASH + 0x780 + contAddrMemoria * DADOS_SALVOS, medidasCalibSalva, DADOS_SALVOS);	// Salva dados de calibração
+						FLASH_Program(&s_flashDriver, ADDR_CALIBRACAO + 0x780 + contAddrMemoria * DADOS_CALIBRACAO, medidasCalibSalva, DADOS_CALIBRACAO);	// Salva dados de calibração
 
 						contAddrMemoria++;	// Incrementa contador de memória
 
@@ -2465,11 +2472,11 @@ unsigned char calibB( void ){
 							estado = 3;
 						}
 						if( estado != 3 ){
-							medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS);	// Lê o valor de calibração anterior K
-							medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA);	// Lê o valor de calibração anterior Na
-							medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*2);	// Lê o valor de calibração anterior Cl
-							medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*3);	// Lê o valor de calibração anterior Ca
-							medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*4);	// Lê o valor de calibração anterior pH
+							medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_CALIBRACAO + 0x780 + (contAddrMemoria - 1) * DADOS_CALIBRACAO);	// Lê o valor de calibração anterior K
+							medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_CALIBRACAO + 0x780 + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA);	// Lê o valor de calibração anterior Na
+							medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_CALIBRACAO + 0x780 + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA*2);	// Lê o valor de calibração anterior Cl
+							medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_CALIBRACAO + 0x780 + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA*3);	// Lê o valor de calibração anterior Ca
+							medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_CALIBRACAO + 0x780 + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA*4);	// Lê o valor de calibração anterior pH
 						}
 					}
 					else if( erroDiferencaTensoes != 0 && segundos == 0 ){	// Senão
@@ -2553,15 +2560,15 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 	unsigned int contReadAD = 0, timeout = 0, temporizador;
 	unsigned int medidaAnterior_K = 0, medidaAnterior_Cl = 0, medidaAnterior_Na = 0, medidaAnterior_Ca = 0, medidaAnterior_pH = 0;
 	static unsigned long k = 0, na = 0, cl = 0, ph = 0, ca = 0;
-	unsigned short contAddrMemoria = 384, examesFeitos = 1;
+	unsigned short contAddrMemoria = 2569, examesFeitos = 1;
 	adc16_channel_config_t adc16ChannelConfigStruct;
 	adc16ChannelConfigStruct.enableInterruptOnConversionCompleted = false;
 	adc16ChannelConfigStruct.enableDifferentialConversion = false;
 
-	for( unsigned int i = 0x100000; i >= ADDR_EXAME; i = i - CONT_DADOS ){	// Faz a verificação de memória apagada
+	for( unsigned int i = 0xF7120; i >= ADDR_EXAME; i = i - DADOS_EXAMES ){	// Faz a verificação de memória apagada
 
 		if( *(volatile unsigned int *)(i) != 0xFFFFFFFF ){	// Se a memória foi escrita
-			examesFeitos = ( i - ADDR_EXAME ) / CONT_DADOS;
+			examesFeitos = ( i - ADDR_EXAME ) / DADOS_EXAMES;
 			break;
 		}
 		contAddrMemoria--; // Caso não tenha encontrado memória, decrementa contador de endereço
@@ -3102,49 +3109,113 @@ unsigned char clearLine( unsigned int line ){
 
 void WriteMenuName( unsigned char menu, unsigned char tipoMenu ){
 
-	static unsigned char menu_anterior;
+	static unsigned char menu_anterior, menuAnteriorConfig;
 	clearLine(12);
-	if( menu == 0 )
-		escrita_texto(371, "1 PONTO", sizeof("1 PONTO"));
-	if( menu == 1 )
-		escrita_texto(371, "2 PONTOS", sizeof("2 PONTOS"));
-	if( menu == 2 ){
-		escrita_texto(370, "MANUTEN", sizeof("MANUTEN"));
-		EscreveCedilhaAOTil();
-	}
-	if( menu == 3 )
-		escrita_texto(368, "TESTE DE SORO", sizeof("TESTE DE SORO"));
-	if( menu == 4 )
-		escrita_texto(364, "TESTE DE SANGUE TOTAL", sizeof("TESTE DE SANGUE TOTAL"));
-	if( menu == 5 )
-		escrita_texto(368, "TESTE DE URINA", sizeof("TESTE DE URINA"));
-	if( menu == 6 )
-		escrita_texto(368, "TESTE DE C.Q.", sizeof("TESTE DE C.Q."));
-	if( menu == 7 ){
-		escrita_texto(368, "CONFIGURA", sizeof("CONFIGURA"));
-		EscreveCedilhaAOTil();
-	}
-	if( menu == 8 ){
-		escrita_texto(372, "SERVI", sizeof("SERVI"));
-		send_data(0x60);	// Comando para escrever Ç
-		send_command(0xC0);	 // Escreve com incremente de um passo no endereço do display
-		status(1);
-		send_data(0x2F);	// Comando para escrever O
-		send_command(0xC0);	// Escreve com incremente de um passo no endereço do display
-		status(1);
-	}
-	desenha_fundo_menu( menu_anterior % 4, 0 );
-	if( ( menu_anterior == 8 || menu_anterior == 4 ) && ( menu >= 0 && menu < 4 ) )
-		desenho_menu1();
-	else if( ( menu_anterior == 3 || menu_anterior == 8 )  && ( menu >= 4 && menu < 8 ))
-		desenho_menu2();
-	else if( ( menu_anterior == 7 || menu_anterior == 0 ) && ( menu == 8 )  )
-		desenho_menu3();
-	desenha_fundo_menu( menu % 4, 1 );
-	send_command(Mode_set_exor);
-	status(1);
-	menu_anterior = menu;
+	if( tipoMenu == PRINCIPAL ){	// Se tipoMenu igual a PRINCIPAL
 
+		switch( menu ){	// Máquina de estado para definir escrita
+
+		case 0:	// Caso 0 escreve "1 PONTO"
+			escrita_texto(371, "1 PONTO", sizeof("1 PONTO"));
+			break;
+		case 1:	// Caso 1 escreve "2 PONTOS"
+			escrita_texto(371, "2 PONTOS", sizeof("2 PONTOS"));
+			break;
+		case 2:	// Caso 2 escreve "MANUTENÇÃO"
+			escrita_texto(370, "MANUTEN", sizeof("MANUTEN"));
+			EscreveCedilhaAOTil();
+			break;
+		case 3:	// Caso 3 escreve "TESTE DE SORO"
+			escrita_texto(368, "TESTE DE SORO", sizeof("TESTE DE SORO"));
+			break;
+		case 4:	// Caso 4 escreve "TESTE DE SANGUE TOTAL"
+			escrita_texto(364, "TESTE DE SANGUE TOTAL", sizeof("TESTE DE SANGUE TOTAL"));
+			break;
+		case 5:	// Caso 5 escreve "TESTE DE URINA"
+			escrita_texto(368, "TESTE DE URINA", sizeof("TESTE DE URINA"));
+			break;
+		case 6:	// Caso 6 escreve "TESTE DE C.Q."
+			escrita_texto(368, "TESTE DE C.Q.", sizeof("TESTE DE C.Q."));
+			break;
+		case 7:	// Caso 7 escreve "CONFIGURAÇÃO"
+			escrita_texto(368, "CONFIGURA", sizeof("CONFIGURA"));
+			EscreveCedilhaAOTil();
+			break;
+		case 8:	// Caso 8 escreve "SERVIÇO"
+			escrita_texto(372, "SERVI", sizeof("SERVI"));
+			send_data(0x60);	// Comando para escrever Ç
+			send_command(0xC0);	 // Escreve com incremente de um passo no endereço do display
+			status(1);
+			send_data(0x2F);	// Comando para escrever O
+			send_command(0xC0);	// Escreve com incremente de um passo no endereço do display
+			status(1);
+			break;
+		}
+		desenha_fundo_menu( menu_anterior % 4, 0 );
+		if( ( menu_anterior == 8 || menu_anterior == 4 ) && ( menu >= 0 && menu < 4 ) )
+			desenho_menu1();
+		else if( ( menu_anterior == 3 || menu_anterior == 8 )  && ( menu >= 4 && menu < 8 ))
+			desenho_menu2();
+		else if( ( menu_anterior == 7 || menu_anterior == 0 ) && ( menu == 8 )  )
+			desenho_menu3();
+		desenha_fundo_menu( menu % 4, 1 );
+		send_command(Mode_set_exor);
+		status(1);
+		menu_anterior = menu;
+	}
+	else if( tipoMenu == CONFIGURACAO ){	// Se tipoMenu igual a CONFIGURACAO
+
+		switch( menu ){	// Máquina de estado para definir escrita
+
+		case 0:	// Caso 0 escreve "DATA E HORA"
+			escrita_texto(369, "DATA E HORA", sizeof("DATA E HORA"));
+			break;
+		case 1:	// Caso 1 escreve "FAIXA DE VALOR DE REFERÊNCIA"
+			escrita_texto(361, "FAIXA DE VALOR DE REFERENCIA", sizeof("FAIXA DE VALOR DE REFERENCIA"));
+			break;
+		case 2:	// Caso 2 escreve "INTERVALO DE MANUTENÇÃO"
+			escrita_texto(363, "INTERVALO DE MANUTEN", sizeof("INTERVALO DE MANUTEN"));
+			EscreveCedilhaAOTil();
+			break;
+		case 3:	// Caso 3 escreve "CANAL DE TESTES"
+			escrita_texto(367, "CANAL DE TESTES", sizeof("CANAL DE TESTES"));
+			break;
+		case 4:	// Caso 4 escreve "VOLUME DE AMOSTRAS"
+			escrita_texto(366, "VOLUME DE AMOSTRAS", sizeof("VOLUME DE AMOSTRAS"));
+			break;
+		case 5:	// Caso 5 escreve "FATOR DE CORRELAÇÃO"
+			escrita_texto(366, "FATOR DE CORRELA", sizeof("FATOR DE CORRELA"));
+			EscreveCedilhaAOTil();
+			break;
+		case 6:	// Caso 6 escreve "CONFIGURAR IMPRESSORA"
+			escrita_texto(365, "CONFIGURAR IMPRESSORA", sizeof("CONFIGURAR IMPRESSORA"));
+			break;
+		case 7:	// Caso 7 escreve "CONTRASTE DO DISPLAY"
+			escrita_texto(365, "CONTRASTE DO DISPLAY", sizeof("CONTRASTE DO DISPLAY"));
+			break;
+		case 8:	// Caso 8 escreve "MODO DE CALIBRAÇÃO"
+			escrita_texto(367, "MODO DE CALIBRA", sizeof("MODO DE CALIBRA"));
+			EscreveCedilhaAOTil();
+			break;
+		case 9:	// Caso 8 escreve "SELEÇÃO DE LINGUA"
+			escrita_texto(367, "SELE", sizeof("SELE"));
+			EscreveCedilhaAOTil();
+			escrita_texto(374,  " DE LINGUA", sizeof(" DE LINGUA"));
+			break;
+
+		}
+		desenha_fundo_menu( menuAnteriorConfig % 4, 0 );
+		if( ( menuAnteriorConfig == 9 || menuAnteriorConfig == 4 ) && ( menu >= 0 && menu < 4 ) )
+			desenho_configuracao1();
+		else if( ( menuAnteriorConfig == 3 || menuAnteriorConfig == 8 )  && ( menu >= 4 && menu < 8 ))
+			desenho_configuracao2();
+		else if( ( menuAnteriorConfig == 7 || menuAnteriorConfig == 0 ) && ( menu == 9 || menu == 8 )  )
+			desenho_configuracao3();
+		desenha_fundo_menu( menu % 4, 1 );
+		send_command(Mode_set_exor);
+		status(1);
+		menuAnteriorConfig = menu;
+	}
 }
 
 void calibValues( void ){
@@ -3189,7 +3260,7 @@ unsigned int verifyError( unsigned char typeAorB, unsigned char abnormal ){
 		else
 			contError &= ~(1 << ErrorpH);
 
-		for( unsigned int i = ADDR_FLASH + 0x768; i >= ADDR_FLASH; i = i - DADOS_SALVOS ){	// Faz a verificação de memória apagada
+		for( unsigned int i = ADDR_CALIBRACAO + 0x768; i >= ADDR_CALIBRACAO; i = i - DADOS_CALIBRACAO ){	// Faz a verificação de memória apagada
 
 			if( *(volatile unsigned int *)(i) != 0xFFFFFFFF ){	// Se a memória foi escrita
 				// Armazena no vetor os valores de calibração já feitos
@@ -3198,11 +3269,11 @@ unsigned int verifyError( unsigned char typeAorB, unsigned char abnormal ){
 			contAddrMemoria--;
 
 		}
-		medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS);	// Lê o valor de calibração anterior K
-		medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA);	// Lê o valor de calibração anterior Na
-		medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*2);	// Lê o valor de calibração anterior Cl
-		medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*3);	// Lê o valor de calibração anterior Ca
-		medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_FLASH + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*4);	// Lê o valor de calibração anterior pH
+		medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_CALIBRACAO + (contAddrMemoria - 1) * DADOS_CALIBRACAO);	// Lê o valor de calibração anterior K
+		medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_CALIBRACAO + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA);	// Lê o valor de calibração anterior Na
+		medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_CALIBRACAO + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA*2);	// Lê o valor de calibração anterior Cl
+		medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_CALIBRACAO + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA*3);	// Lê o valor de calibração anterior Ca
+		medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_CALIBRACAO + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA*4);	// Lê o valor de calibração anterior pH
 
 		if( abs(medidaCalAnterior_K - voltageCalA_K) < 500 )	// Se a variação entre duas calibrações é menor que 0,5, ok, senão, erro
 			erroDiferencaTensoes &= ~(1 << ErrorK);
@@ -3257,7 +3328,7 @@ unsigned int verifyError( unsigned char typeAorB, unsigned char abnormal ){
 			contError &= ~(1 << ErrorpH);
 
 
-		for( unsigned int i = ADDR_FLASH + 0xEE8; i >= ADDR_FLASH + 0x780; i = i - DADOS_SALVOS ){	// Faz a verificação de memória apagada
+		for( unsigned int i = ADDR_CALIBRACAO + 0xEE8; i >= ADDR_CALIBRACAO + 0x780; i = i - DADOS_CALIBRACAO ){	// Faz a verificação de memória apagada
 
 			if( *(volatile unsigned int *)(i) != 0xFFFFFFFF ){	// Se a memória foi escrita
 				// Armazena no vetor os valores de calibração já feitos
@@ -3266,11 +3337,11 @@ unsigned int verifyError( unsigned char typeAorB, unsigned char abnormal ){
 			contAddrMemoria--; // Caso não tenha encontrado memória, decrementa contador de endereço
 
 		}
-		medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS);	// Lê o valor de calibração anterior K
-		medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA);	// Lê o valor de calibração anterior Na
-		medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*2);	// Lê o valor de calibração anterior Cl
-		medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*3);	// Lê o valor de calibração anterior Ca
-		medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_FLASH + 0x780 + (contAddrMemoria - 1) * DADOS_SALVOS + DADO_MEMORIA*4);	// Lê o valor de calibração anterior pH
+		medidaCalAnterior_K = *(volatile unsigned short *)(ADDR_CALIBRACAO + 0x780 + (contAddrMemoria - 1) * DADOS_CALIBRACAO);	// Lê o valor de calibração anterior K
+		medidaCalAnterior_Na = *(volatile unsigned short *)(ADDR_CALIBRACAO + 0x780 + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA);	// Lê o valor de calibração anterior Na
+		medidaCalAnterior_Cl = *(volatile unsigned short *)(ADDR_CALIBRACAO + 0x780 + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA*2);	// Lê o valor de calibração anterior Cl
+		medidaCalAnterior_Ca = *(volatile unsigned short *)(ADDR_CALIBRACAO + 0x780 + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA*3);	// Lê o valor de calibração anterior Ca
+		medidaCalAnterior_pH = *(volatile unsigned short *)(ADDR_CALIBRACAO + 0x780 + (contAddrMemoria - 1) * DADOS_CALIBRACAO + DADO_MEMORIA*4);	// Lê o valor de calibração anterior pH
 
 		if( abs(medidaCalAnterior_K - voltageCalB_K) < 500 )	// Se a variação entre duas calibrações é menor que 0,5, ok, senão, erro
 			erroDiferencaTensoes &= ~(1 << ErrorK);
@@ -4262,9 +4333,124 @@ char *ConverteNumParaLcd( unsigned char qtdDigitos, unsigned char qtdCasasDecima
 
 char ContaCaracteres( void ){
 
+	/*
+	 * Função que retorna quantos caracteres foram escritos para
+	 * automatizar a escrita dos dados salvos no vetor de data
+	 */
 	for( unsigned char i = 0; i < 6; i ++ )
 		if( data[i] == 0 )
 			return i;
 	return 0;
+
+}
+
+void AjustaHora( void ){
+
+}
+
+void AjustaCorrelacao( void ){
+
+	/*
+	 * Mínimo e máximo de valores: -100 até 100
+	 * Define os valores de correlação para slope e intercept
+	 * Área de memória utilizada: Slope - 0xE2000 até 0xE20010
+	 * Área de memória utilizada: Intercept - 0xE2014 até 0xE2024
+	 */
+	// Verifica se há algum dado salvo na memória para cada um dos elementos
+	unsigned int slopeEletrodos[5], interceptEletrodos[5];
+
+	// Verificação se há dados salvos de Slope para o eletrodo K
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_K) != 0xFFFFFFFF )
+		slopeEletrodos[0] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_K);
+	else
+		slopeEletrodos[0] = 100;
+
+	// Verificação se há dados salvos de Slope para o eletrodo Na
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Na) != 0xFFFFFFFF )
+		slopeEletrodos[1] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Na);
+	else
+		slopeEletrodos[1] = 100;
+
+	// Verificação se há dados salvos de Slope para o eletrodo Cl
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Cl) != 0xFFFFFFFF )
+		slopeEletrodos[2] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Cl);
+	else
+		slopeEletrodos[2] = 100;
+
+	// Verificação se há dados salvos de Slope para o eletrodo Ca
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Ca) != 0xFFFFFFFF )
+		slopeEletrodos[3] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Ca);
+	else
+		slopeEletrodos[3] = 100;
+
+	// Verificação se há dados salvos de Slope para o eletrodo pH
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_pH) != 0xFFFFFFFF )
+		slopeEletrodos[4] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_pH);
+	else
+		slopeEletrodos[4] = 100;
+
+	// Verificação se há dados salvos de intercept para o eletrodo K
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_K) != 0xFFFFFFFF )
+		interceptEletrodos[0] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_K);
+	else
+		interceptEletrodos[0] = 0;
+
+	// Verificação se há dados salvos de intercept para o eletrodo Na
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Na) != 0xFFFFFFFF )
+		interceptEletrodos[1] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Na);
+	else
+		interceptEletrodos[1] = 0;
+
+	// Verificação se há dados salvos de intercept para o eletrodo Cl
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Cl) != 0xFFFFFFFF )
+		interceptEletrodos[2] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Cl);
+	else
+		interceptEletrodos[2] = 0;
+
+	// Verificação se há dados salvos de intercept para o eletrodo Ca
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Ca) != 0xFFFFFFFF )
+		interceptEletrodos[3] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Ca);
+	else
+		interceptEletrodos[3] = 0;
+
+	// Verificação se há dados salvos de intercept para o eletrodo pH
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_pH) != 0xFFFFFFFF )
+		interceptEletrodos[4] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_pH);
+	else
+		interceptEletrodos[4] = 0;
+
+	// Escrita configuração
+	escrita_texto(9, "CONFIGURA", sizeof("CONFIGURA"));
+	EscreveCedilhaAOTil();
+
+	escrita_texto(73, "SLOPE", sizeof("SLOPE")); // Escreve "SLOPE" na linha 3
+
+	escrita_texto(83, "INTERC", sizeof("INTERC")); // Escreve "INTERC" na linha 3
+
+	writeLine(13);	// Escrita de traço na linha 13
+	escrita_texto(96, "K", sizeof("K"));
+	escrita_texto(104, ConverteNumParaLcd(3, 2, slopeEletrodos[0]), ContaCaracteres()+1);
+	escrita_texto(114, ConverteNumParaLcd(3, 2, interceptEletrodos[0]), ContaCaracteres()+1);
+
+	escrita_texto(156, "Na", sizeof("Na"));
+	escrita_texto(164, ConverteNumParaLcd(3, 2, slopeEletrodos[1]), ContaCaracteres()+1);
+	escrita_texto(174, ConverteNumParaLcd(3, 2, interceptEletrodos[1]), ContaCaracteres()+1);
+
+	escrita_texto(216, "Cl", sizeof("Cl"));
+	escrita_texto(224, ConverteNumParaLcd(3, 2, slopeEletrodos[2]), ContaCaracteres()+1);
+	escrita_texto(234, ConverteNumParaLcd(3, 2, interceptEletrodos[2]), ContaCaracteres()+1);
+
+	escrita_texto(276, "Ca", sizeof("Ca"));
+	escrita_texto(284, ConverteNumParaLcd(3, 2, slopeEletrodos[3]), ContaCaracteres()+1);
+	escrita_texto(294, ConverteNumParaLcd(3, 2, interceptEletrodos[3]), ContaCaracteres()+1);
+
+	escrita_texto(336, "pH", sizeof("pH"));
+	escrita_texto(344, ConverteNumParaLcd(3, 2, slopeEletrodos[4]), ContaCaracteres()+1);
+	escrita_texto(354, ConverteNumParaLcd(3, 2, interceptEletrodos[4]), ContaCaracteres()+1);
+
+	escrita_texto(420, "<=RESET", sizeof("<=RESET"));
+	escrita_texto(450, "1=ENTRAR", sizeof("1=ENTRAR"));
+	escrita_texto(459, "2=CAL", sizeof("2=CAL"));
+	escrita_texto(465, "YES=Salvar", sizeof("YES=Salvar"));
 
 }
