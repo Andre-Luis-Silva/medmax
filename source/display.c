@@ -542,9 +542,14 @@ void display_run( void ){
 
 			// Senão se tecla igual a 6 ou menuConfig igual a 5 e tecla igual a yes
 			else if( readQueueKeyboard == 6 || ( menuConfig == 5 && readQueueKeyboard == yes ) ){
-				menuConfig = 6;	// menuConfig recebe 6
+				menuConfig = 5;	// menuConfig recebe 6
 				clear_display_text();
 				AjustaCorrelacao();	// Chama a função AjustaCorrelação();
+				clear_display_text();	// Limpa a tela
+				desenho_configuracao2();	// Desenha o menu 1
+				WriteMenuName(menuConfig, CONFIGURACAO);	// Escreve o título do comando selecionado
+				send_command(Display_mode_text | Display_mode_graphic);	// Modo de texto e gráfico junto
+				status(1);
 			}
 
 			// Senão se tecla igual a NO, retorna ao menu principal
@@ -4358,6 +4363,8 @@ void AjustaCorrelacao( void ){
 	 */
 	// Verifica se há algum dado salvo na memória para cada um dos elementos
 	unsigned int slopeEletrodos[5], interceptEletrodos[5];
+	unsigned int timeout = 0;
+	unsigned char estadoCorrelacao = 0, contOk = 0, readTeclado = 0;
 
 	// Verificação se há dados salvos de Slope para o eletrodo K
 	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_K) != 0xFFFFFFFF )
@@ -4419,38 +4426,114 @@ void AjustaCorrelacao( void ){
 	else
 		interceptEletrodos[4] = 0;
 
-	// Escrita configuração
-	escrita_texto(9, "CONFIGURA", sizeof("CONFIGURA"));
-	EscreveCedilhaAOTil();
 
-	escrita_texto(73, "SLOPE", sizeof("SLOPE")); // Escreve "SLOPE" na linha 3
+	while( 1 ){
+		readTeclado = verifyKeyBoard();
+		switch( estadoCorrelacao ){	// Máquina de estado para correlação
+		case 0:
+			// Escrita configuração
+			escrita_texto(9, "CONFIGURA", sizeof("CONFIGURA"));
+			EscreveCedilhaAOTil();
 
-	escrita_texto(83, "INTERC", sizeof("INTERC")); // Escreve "INTERC" na linha 3
+			escrita_texto(73, "SLOPE", sizeof("SLOPE")); // Escreve "SLOPE" na linha 3
 
-	writeLine(13);	// Escrita de traço na linha 13
-	escrita_texto(96, "K", sizeof("K"));
-	escrita_texto(104, ConverteNumParaLcd(3, 2, slopeEletrodos[0]), ContaCaracteres()+1);
-	escrita_texto(114, ConverteNumParaLcd(3, 2, interceptEletrodos[0]), ContaCaracteres()+1);
+			escrita_texto(83, "INTERC", sizeof("INTERC")); // Escreve "INTERC" na linha 3
 
-	escrita_texto(156, "Na", sizeof("Na"));
-	escrita_texto(164, ConverteNumParaLcd(3, 2, slopeEletrodos[1]), ContaCaracteres()+1);
-	escrita_texto(174, ConverteNumParaLcd(3, 2, interceptEletrodos[1]), ContaCaracteres()+1);
+			writeLine(13);	// Escrita de traço na linha 13
+			// Escrtia do eletrodo K e dos valores salvos na flash
+			escrita_texto(96, "K", sizeof("K"));
+			escrita_texto(104, ConverteNumParaLcd(3, 2, slopeEletrodos[0]), ContaCaracteres()+1);	// Slope
+			escrita_texto(114, ConverteNumParaLcd(3, 2, interceptEletrodos[0]), ContaCaracteres()+1);	// Intercept
 
-	escrita_texto(216, "Cl", sizeof("Cl"));
-	escrita_texto(224, ConverteNumParaLcd(3, 2, slopeEletrodos[2]), ContaCaracteres()+1);
-	escrita_texto(234, ConverteNumParaLcd(3, 2, interceptEletrodos[2]), ContaCaracteres()+1);
+			// Escrtia do eletrodo Na e dos valores salvos na flash
+			escrita_texto(156, "Na", sizeof("Na"));
+			escrita_texto(164, ConverteNumParaLcd(3, 2, slopeEletrodos[1]), ContaCaracteres()+1);	// Slope
+			escrita_texto(174, ConverteNumParaLcd(3, 2, interceptEletrodos[1]), ContaCaracteres()+1);	// Intercept
 
-	escrita_texto(276, "Ca", sizeof("Ca"));
-	escrita_texto(284, ConverteNumParaLcd(3, 2, slopeEletrodos[3]), ContaCaracteres()+1);
-	escrita_texto(294, ConverteNumParaLcd(3, 2, interceptEletrodos[3]), ContaCaracteres()+1);
+			// Escrtia do eletrodo Cl e dos valores salvos na flash
+			escrita_texto(216, "Cl", sizeof("Cl"));
+			escrita_texto(224, ConverteNumParaLcd(3, 2, slopeEletrodos[2]), ContaCaracteres()+1);	// Slope
+			escrita_texto(234, ConverteNumParaLcd(3, 2, interceptEletrodos[2]), ContaCaracteres()+1);	// Intercept
 
-	escrita_texto(336, "pH", sizeof("pH"));
-	escrita_texto(344, ConverteNumParaLcd(3, 2, slopeEletrodos[4]), ContaCaracteres()+1);
-	escrita_texto(354, ConverteNumParaLcd(3, 2, interceptEletrodos[4]), ContaCaracteres()+1);
+			// Escrtia do eletrodo Ca e dos valores salvos na flash
+			escrita_texto(276, "Ca", sizeof("Ca"));
+			escrita_texto(284, ConverteNumParaLcd(3, 2, slopeEletrodos[3]), ContaCaracteres()+1);	// Slope
+			escrita_texto(294, ConverteNumParaLcd(3, 2, interceptEletrodos[3]), ContaCaracteres()+1);	// Intercept
 
-	escrita_texto(420, "<=RESET", sizeof("<=RESET"));
-	escrita_texto(450, "1=ENTRAR", sizeof("1=ENTRAR"));
-	escrita_texto(459, "2=CAL", sizeof("2=CAL"));
-	escrita_texto(465, "YES=Salvar", sizeof("YES=Salvar"));
+			// Escrtia do eletrodo pH e dos valores salvos na flash
+			escrita_texto(336, "pH", sizeof("pH"));
+			escrita_texto(344, ConverteNumParaLcd(3, 2, slopeEletrodos[4]), ContaCaracteres()+1);	// Slope
+			escrita_texto(354, ConverteNumParaLcd(3, 2, interceptEletrodos[4]), ContaCaracteres()+1);	// Intercept
+
+			escrita_texto(420, "<=RESET", sizeof("<=RESET"));
+			escrita_texto(450, "1=ENTRAR", sizeof("1=ENTRAR"));
+			escrita_texto(459, "2=CAL", sizeof("2=CAL"));
+			escrita_texto(465, "YES=Salvar", sizeof("YES=Salvar"));
+			estadoCorrelacao = 1;
+		break;
+
+		case 1:
+
+			if( flag_timer ){	// Se flag timer igual a 1
+				flag_timer = 0;	// Flag timer recebe 0
+				timeout++;	// Incrementa timeout de 1
+				if( timeout >= 60000 || ( readTeclado) == no )	// Se timeout é maior ou igual a 60000 (1 minuto) ou teclado igual a No
+					return;
+			}
+			if( readTeclado == um ){	// Se teclado igual a 1
+
+				estadoCorrelacao = 10;	// estadoCorrelacao recebe 10
+				clearLine(15);	// Limpa a linha 15
+				escrita_texto(450, "Entre com a senha:", sizeof("Entre com a senha:"));	// Escreve "Entre com a senha" na posição 450
+
+			}
+			else if( readTeclado == dois )	// Senão se teclado igual a 2
+				estadoCorrelacao = 20;	// estadoCorrelacao recebe 20, cálculo automático de correlação
+			else if( readTeclado == yes ){	// Senão se teclado igual a yes
+					// Salva os dados em um vetor
+					// Apaga a flash neste setor
+					// Salva o vetor com o valor atualizado na flash
+					// Criar função???
+			}
+			else if( readTeclado == left ){	// Senão se teclado igual a ←
+					// Restaura os valores padrão (1.00 e 0.00, apenas escrita)
+				// Escrtia do eletrodo K e dos valores salvos na flash
+				escrita_texto(104, ConverteNumParaLcd(3, 2, 100), ContaCaracteres()+1);	// Slope
+				escrita_texto(114, ConverteNumParaLcd(3, 2, 0), ContaCaracteres()+1);	// Intercept
+
+				// Escrtia do eletrodo Na e dos valores salvos na flash
+				escrita_texto(164, ConverteNumParaLcd(3, 2, 100), ContaCaracteres()+1);	// Slope
+				escrita_texto(174, ConverteNumParaLcd(3, 2, 0), ContaCaracteres()+1);	// Intercept
+
+				// Escrtia do eletrodo Cl e dos valores salvos na flash
+				escrita_texto(224, ConverteNumParaLcd(3, 2, 100), ContaCaracteres()+1);	// Slope
+				escrita_texto(234, ConverteNumParaLcd(3, 2, 0), ContaCaracteres()+1);	// Intercept
+
+				// Escrtia do eletrodo Ca e dos valores salvos na flash
+				escrita_texto(284, ConverteNumParaLcd(3, 2, 100), ContaCaracteres()+1);	// Slope
+				escrita_texto(294, ConverteNumParaLcd(3, 2, 0), ContaCaracteres()+1);	// Intercept
+
+				// Escrtia do eletrodo pH e dos valores salvos na flash
+				escrita_texto(344, ConverteNumParaLcd(3, 2, 100), ContaCaracteres()+1);	// Slope
+				escrita_texto(354, ConverteNumParaLcd(3, 2, 0), ContaCaracteres()+1);	// Intercept
+
+			}
+			break;
+
+		case 10:
+
+			if( readTeclado == cinco ){	// Se tecla igual a 5
+				contOk++;	// Incrementa contOk
+				if( contOk == 2 )	// Se contOk igual a 2, estadoCorrelacao recebe 11
+					estadoCorrelacao = 11;
+			}
+			else if( readTeclado != 0 ){	// Senão
+				contOk = 0;	// contOk recebe 0
+				estadoCorrelacao = 0;	// estadoCorrelacao recebe 0
+				clear_display_text();
+			}
+			break;
+		}
+	}
 
 }
