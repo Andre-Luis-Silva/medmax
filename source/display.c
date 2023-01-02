@@ -3617,7 +3617,7 @@ unsigned char verifyKeyBoard( void ){
 	 */
 
 	/* Variável de escrita de espaço da fila e variável de leitura do teclado */
-	int emptyKeyboard = uxQueueSpacesAvailable(fila_teclado), readQueueKeyboard = 0;	// Verifica se a fila está com dados
+	int emptyKeyboard = uxQueueSpacesAvailable(fila_teclado), readQueueKeyboard = 16;	// Verifica se a fila está com dados
 
 	if( emptyKeyboard == 0 ){	// Se espaço na fila é 0
 
@@ -4365,6 +4365,7 @@ void AjustaCorrelacao( void ){
 	unsigned int slopeEletrodos[5], interceptEletrodos[5];
 	unsigned int timeout = 0;
 	unsigned char estadoCorrelacao = 0, contOk = 0, readTeclado = 0;
+	float *numero;
 
 	// Verificação se há dados salvos de Slope para o eletrodo K
 	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_K) != 0xFFFFFFFF )
@@ -4524,16 +4525,282 @@ void AjustaCorrelacao( void ){
 
 			if( readTeclado == cinco ){	// Se tecla igual a 5
 				contOk++;	// Incrementa contOk
-				if( contOk == 2 )	// Se contOk igual a 2, estadoCorrelacao recebe 11
+				if( contOk == 2 ){	// Se contOk igual a 2, estadoCorrelacao recebe 11
 					estadoCorrelacao = 11;
+
+				}
 			}
-			else if( readTeclado != 0 ){	// Senão
+			else if( readTeclado != 16 ){	// Senão
 				contOk = 0;	// contOk recebe 0
 				estadoCorrelacao = 0;	// estadoCorrelacao recebe 0
 				clear_display_text();
 			}
 			break;
+
+		case 11:
+
+			numero = EscreveTela( 13, 3, 6, 0 );
+
+			break;
 		}
 	}
 
+}
+float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned char contDigitos, unsigned char apenasNumeros  ){
+
+	unsigned char tecla = 0, contaCaracter = 1, dadosTecla[contDigitos], posicaoInicialX = posicaoX, posicaoInicialY = posicaoY, posicaoPonto = 0;
+	unsigned short posicaoTexto = posicaoX + posicaoY * 30, posicaoTextoInicial = posicaoInicialX + posicaoInicialY * 30 ;
+	static float numero[10];
+
+	Cursor( posicaoX, posicaoY, 1, 1 );// Define a posição do cursor
+
+	for( int i = 0; i < contDigitos; i++)
+		dadosTecla[i] = 0;
+
+	while(1){	// Enquanto 1
+
+		tecla = verifyKeyBoard();	// Faz a leitura do teclado
+		if( tecla != 16 && !apenasNumeros ){	// Se teclado diferente de 0
+			posicaoTexto = posicaoX + posicaoY * 30;
+			if( tecla == left ){			// Se teclado igual a left
+
+				escrita_texto( posicaoTexto - 1, " ", sizeof(" "));		// Escreve ' '
+				if( dadosTecla[posicaoPonto] == dot )
+					posicaoPonto = 0;
+				contaCaracter--;	// Decrementa contaCaracter
+				if( contaCaracter == 0)	// Se chegar a 0
+					contaCaracter = 1;	// contaCaracter recebe 1
+				if( posicaoX == posicaoInicialX || posicaoX == posicaoInicialX + 10 ){	// Se posicaoX igual a posicaoInicialX
+					posicaoY -= 2;	// posicaoY subtrai 2
+					if( posicaoY == 1 && posicaoX == 23 ){	// Quando a posiçãoY igual a 13
+						posicaoX = 13;	// posiçãoX recebe 23
+						posicaoY = 11;	// posiçãoY recebe 3
+					}
+					if( posicaoY < posicaoInicialY )	// Se posicaoY menor que posicaoInicialY
+						posicaoY = posicaoInicialY;	// posicaoY recebe posicaoInicialY
+				}
+				posicaoX--;	//Retorna a posição em 1
+				if( posicaoX < posicaoInicialX + 5 ){
+					if( posicaoX < posicaoInicialX )	// Impede que a posição da escrita seja menor que a inicial
+						posicaoX = posicaoInicialX;
+				}
+				else if( posicaoX < posicaoInicialX + 10 )
+					posicaoX = posicaoInicialX + 10;
+				Cursor(posicaoX, posicaoY, 1, 1);
+
+			}
+			else if( tecla == no )		// Se tecla igual a no, retorna
+				return -99999;	// Valor de saída
+			else if( tecla == hifen ){	// Se tecla igual a hifen
+
+				if( dadosTecla[0] != hifen ){	// Se o vetor na posicao 0 é diferente de hifen
+					dadosTecla[0] = tecla;	// Vetor na posição 0 recebe hifen
+					EscreveDigito( posicaoTexto-1, tecla );	// Desenha o hifen
+				}
+				else{	// Senão
+					dadosTecla[0] = 0;	// O vetor na posição 0 recebe 0
+					escrita_texto( posicaoTexto - 1, " ", sizeof(" "));		// Escreve ' '
+				}
+
+			}
+			else if( tecla == dot && posicaoPonto == 0){	// Se tecla for igual a ponto
+
+					posicaoPonto = contaCaracter;// posicaoPonto recebe i)
+					posicaoX++;	// Incrementa a posição em 1
+					dadosTecla[contaCaracter] = tecla;	// data[contaCaracter] recebe teclado
+					contaCaracter++;	// Incrementa contaCaracter
+					Cursor(posicaoX, posicaoY, 1, 1);
+					EscreveDigito( posicaoTexto, tecla );
+
+			}
+
+			// Se teclado diferente de 'yes' e diferente de 'no' e diferente de left e diferente de right
+			if( tecla != yes && tecla != no && tecla != left && tecla != right && tecla != hifen && tecla != dot ){
+
+				EscreveDigito( posicaoTexto, tecla );
+				posicaoX++;	// Incrementa a posição em 1
+				dadosTecla[contaCaracter] = tecla;	// data[contaCaracter] recebe teclado
+				contaCaracter++;	// Incrementa contaCaracter
+				Cursor(posicaoX, posicaoY, 1, 1);
+
+			}
+
+			if( contaCaracter == contDigitos || tecla == yes ){	// Se contaCaracter igual a contDigitos
+				posicaoY += 2;  // Muda o número para as próximas posições (K, Na, Cl, Ca, pH)
+				if( contaCaracter == 1 ){
+					if( dadosTecla[0] == hifen ){
+						escrita_texto( posicaoTexto - 1, " ", sizeof(" "));
+					}
+					if( posicaoY == 13 && posicaoX == 13 ){	// Quando a posiçãoY igual a 13
+						posicaoX = 23;	// posiçãoX recebe 23
+						posicaoY = 3;	// posiçãoY recebe 3
+					}
+				}
+				else{
+					static unsigned char addrMemoria = 0;
+					switch( posicaoPonto ){	// Posição do ponto no vetor de número
+					case 1:	// Caso esteja na primeira posição
+						// Número recebe dadosTecla[2] * 0.1 + dadosTecla[3] * 0.01 + dadosTecla[4] * 0.001 + dadosTecla[5] * 0.0001
+						numero[addrMemoria] = dadosTecla[2] * 0.1 + dadosTecla[3] * 0.01 + dadosTecla[4] * 0.001 + dadosTecla[5] * 0.0001;
+						break;
+					case 2:	// Caso esteja na segunda posição
+						// Número recebe dadosTecla[1] * 1 + dadosTecla[3] * 0.1 + dadosTecla[4] * 0.01 + dadosTecla[5] * 0.001;
+						numero[addrMemoria] = dadosTecla[1] * 1 + dadosTecla[3] * 0.1 + dadosTecla[4] * 0.01 + dadosTecla[5] * 0.001;
+						break;
+					case 3:	// Caso esteja na terceira posição
+						// Número recebe dadosTecla[1] * 10 + dadosTecla[2] * 1 + dadosTecla[4] * 0.1 + dadosTecla[5] * 0.01;
+						numero[addrMemoria] = dadosTecla[1] * 10 + dadosTecla[2] * 1 + dadosTecla[4] * 0.1 + dadosTecla[5] * 0.01;
+						break;
+					case 4:	// Caso esteja na quarta posição
+						// Número recebe dadosTecla[2] * 0.1 + dadosTecla[3] * 0.01 + dadosTecla[4] * 0.001 + dadosTecla[5] * 0.0001
+						numero[addrMemoria] = dadosTecla[1] * 100 + dadosTecla[2] * 10 + dadosTecla[3] * 1 + dadosTecla[5] * 0.1;
+						break;
+					case 5:	// Caso esteja na quinta posição
+						// Número recebe dadosTecla[2] * 0.1 + dadosTecla[3] * 0.01 + dadosTecla[4] * 0.001 + dadosTecla[5] * 0.0001
+						numero[addrMemoria] = dadosTecla[1] * 1000 + dadosTecla[2] * 100 + dadosTecla[3] * 10 + dadosTecla[4] * 1;
+						break;
+					default:
+						for( int i = 1; i < contaCaracter; i++ ){	// Para i começando de 1, i menor que contaCaracter, i incrementa de 1
+							numero[addrMemoria] += dadosTecla[i]*pow(10,contaCaracter - 1 - i); // dadosTecla[i] vezes 10^( contaCaracter - 1 - i )
+						}
+						//numero[addrMemoria] = dadosTecla[1] * 10000 + dadosTecla[2] * 1000 + dadosTecla[3] * 100 + dadosTecla[4] * 10 + dadosTecla[5] * 1;
+						break;
+					}
+					if( dadosTecla[0] == hifen && numero[addrMemoria] != 0 ){
+						numero[addrMemoria] *= (-1);
+					}
+					else if( dadosTecla[0] == hifen && numero[addrMemoria] == 0 ){
+						escrita_texto( posicaoTexto - contaCaracter, " ", sizeof(" "));
+					}
+					escrita_texto(posicaoTexto - (contaCaracter - 1), "      ", sizeof("      "));
+					if( numero[addrMemoria] < -100 || numero[addrMemoria]  > 100 ){	// Se n° menor que -100 ou número maior que 100
+						if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + addrMemoria * 4) == 0xFFFFFFFF ){	// Se a memória não está salva
+							escrita_texto(posicaoTexto - (contaCaracter - 2), ConverteNumParaLcd(3, 2, 100), ContaCaracteres()+1);	// Escreve o valor 1.00
+						}
+						else{	// Senão
+
+							// Verifica os valores na memória e escreve
+							if( ( *(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) > -1 && *(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) < 1 )
+							|| ( *(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) > -10 && *(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) < 10 ) )
+								escrita_texto(posicaoTexto - (contaCaracter - 2), ConverteNumParaLcd(3, 2,(*(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) * 100)), ContaCaracteres()+1);
+							else
+								escrita_texto(posicaoTexto - (contaCaracter - 1), ConverteNumParaLcd(4, 2,(*(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) * 100)), ContaCaracteres()+1);
+						}
+					}
+					else{	// Senão, escreve o número e armazena na memória
+						// Verifica se está entre -1 e 1 ou -10 e 10
+						if( ( numero[addrMemoria] > -1 && numero[addrMemoria] < 1 ) || ( numero[addrMemoria] > -10 && numero[addrMemoria] < 10 ) )
+							escrita_texto(posicaoTexto - (contaCaracter - 2), ConverteNumParaLcd(3, 2,(unsigned int)( abs(numero[addrMemoria] * 100))), ContaCaracteres()+1);
+						else
+							escrita_texto(posicaoTexto - (contaCaracter - 1), ConverteNumParaLcd(4, 2,(unsigned int)( abs(numero[addrMemoria] * 100))), ContaCaracteres()+1);
+
+					}
+					contaCaracter = 1;	// Reinicia a contagem de caracteres
+					posicaoPonto = 0;
+					addrMemoria++;	// Incrementa contador de memória
+					if( addrMemoria < 5 ){	// Se o endereço é menor que 5
+						posicaoX = 13;	// Posição do primeiro digito para Slope
+					}
+					else if( addrMemoria < 10 ){	// Se o endereço é menor que 10
+						posicaoX = 23;	// Posição do primeiro digito
+					}
+					else{
+						return numero;	// Retorna o ponteiro do número
+					}
+				}
+				Cursor(posicaoX, posicaoY, 1, 1);
+			}
+		}
+	}
+}
+
+void Cursor( unsigned char posicaoX, unsigned char posicaoY, unsigned char piscar, unsigned char tamanhoCursor ){
+
+	send_data( posicaoX ); 	// Dado de posição 8 bits MSB
+	send_data( posicaoY );	// Dado de posição 8 bits LSB
+	send_command( Set_cursor_pointer );	// Envia o comando de cursor
+	if( piscar )	// Se piscar igual a 1
+		send_command( 0x97 );	// Envia o comando 0x97 - Manual SAP1024B - Comando do cursor
+	else	// Senão
+		send_command( 0x96 );	// Envia o comando 0x96 - Manual SAP1024B - Comando do cursor
+	switch( tamanhoCursor ){	// Escolha o tamanho do Cursor
+	case 1:// Caso 1
+			send_command( 0xA0 );	// Envia o comando 0xA0 - Manual SAP1024B - Comando do cursor
+		break;
+	case 2:// Caso 2
+			send_command( 0xA1 );	// Envia o comando 0xA0 - Manual SAP1024B - Comando do cursor
+		break;
+	case 3:// Caso 3
+			send_command( 0xA2 );	// Envia o comando 0xA0 - Manual SAP1024B - Comando do cursor
+		break;
+	case 4:// Caso 4
+			send_command( 0xA3 );	// Envia o comando 0xA0 - Manual SAP1024B - Comando do cursor
+		break;
+	case 5:// Caso 5
+			send_command( 0xA4 );	// Envia o comando 0xA0 - Manual SAP1024B - Comando do cursor
+		break;
+	case 6:// Caso 6
+			send_command( 0xA5 );	// Envia o comando 0xA0 - Manual SAP1024B - Comando do cursor
+		break;
+	case 7:// Caso 7
+			send_command( 0xA6 );	// Envia o comando 0xA0 - Manual SAP1024B - Comando do cursor
+		break;
+	case 8:// Caso 8
+			send_command( 0xA7 );	// Envia o comando 0xA0 - Manual SAP1024B - Comando do cursor
+		break;
+	}
+}
+
+void EscreveDigito( unsigned int posicao, unsigned char tecla ){
+
+	switch( tecla ){	// Escolha teclado
+		case zero:	// Caso zero:
+			escrita_texto( posicao, "0", sizeof("0"));	// Escreve '0'
+			break;
+
+		case um:	// Caso um:
+			escrita_texto( posicao, "1", sizeof("1"));	// Escreve '1'
+			break;
+
+		case dois:	// Caso dois:
+			escrita_texto( posicao, "2", sizeof("2"));	// Escreve '2'
+			break;
+
+		case tres:	// Caso tres:
+			escrita_texto( posicao, "3", sizeof("3"));		// Escreve '3'
+			break;
+
+		case quatro:	// Caso quatro:
+			escrita_texto( posicao, "4", sizeof("4"));		// Escreve '4'
+			break;
+
+		case cinco:	// Caso cinco:
+			escrita_texto( posicao, "5", sizeof("5"));		// Escreve '5'
+			break;
+
+		case seis:	// Caso seis:
+			escrita_texto( posicao, "6", sizeof("6"));		// Escreve '6'
+			break;
+
+		case sete:	// Caso sete:
+			escrita_texto( posicao, "7", sizeof("7"));		// Escreve '7'
+			break;
+
+		case oito:	// Caso oito:
+			escrita_texto( posicao, "8", sizeof("8"));		// Escreve '8'
+			break;
+
+		case nove:	// Caso nove:
+			escrita_texto( posicao, "9", sizeof("9"));		// Escreve '9'
+			break;
+
+		case hifen:	// Caso hifen:
+			escrita_texto( posicao, "-", sizeof("-"));		// Escreve '-'
+			break;
+
+		case dot:			// Caso dot:
+			escrita_texto( posicao, ".", sizeof("."));		// Escreve '.'
+			break;
+
+	}
 }

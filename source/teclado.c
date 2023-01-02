@@ -149,9 +149,9 @@ void teclado_run( void ){
 		else
 			cont_matriz++;
 
-		if( comando != 0 ){
+		if( comando != 16 ){
 			xQueueSendToBack(fila_teclado,&comando, 0);
-			comando = 0;
+			comando = 16;
 		}
 		vTaskDelay(75);
 

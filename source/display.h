@@ -63,6 +63,7 @@
 #define agulhaAberta	GPIO_PinRead(GPIOA, 17) == 1
 #define agulhaFechada	GPIO_PinRead(GPIOA, 17) == 0
 
+// Biblioteca do display
 #define Set_cursor_pointer		0x21
 #define Set_offset_register		0x22
 #define Set_address_pointer		0x24
@@ -80,32 +81,40 @@
 #define Set_data_auto_write   	0xB0
 #define Auto_reset			   	0xB2
 
+// Erro para os eletrodos
 #define ErrorK					0
 #define ErrorNa					1
 #define ErrorCl					2
 #define ErrorCa					3
 #define ErrorpH					4
 
+// Definição dos tipos de calibração
 #define TYPEA					1
 #define TYPEB					2
 
+// Leitura de erro em anormal e não anormal
 #define NOABNORMAL				0
 #define ABNORMAL				1
 
+// Se define como calibração ou número
 #define CAL						0
 #define NUM						1
 
+// Retorno de funções
 #define OK						0
 #define ERRO					2
 
+// Definição do tipo de exame
 #define SORO					0
 #define SANGUE					1
 #define URINA					2
 
+// Definição dos menus
 #define PRINCIPAL				0
 #define CONFIGURACAO			1
 #define SERVICO					2
 
+// Tempo de atraso para verificação de exame
 #define TIMERCOM	250
 
 void display_run( void );
@@ -150,4 +159,7 @@ char *ConverteNumParaLcd( unsigned char qtdDigitos, unsigned char qtdCasasDecima
 char ContaCaracteres( void );
 void AjustaHora( void );
 void AjustaCorrelacao( void );
+void Cursor( unsigned char posicaoX, unsigned char posicaoY, unsigned char piscar, unsigned char tamanhoCursor );
+float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned char contDigitos, unsigned char apenasNumeros  );
+void EscreveDigito( unsigned int posicao, unsigned char tecla );
 #endif /* DISPLAY_H_ */
