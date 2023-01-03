@@ -162,4 +162,5 @@ void AjustaCorrelacao( void );
 void Cursor( unsigned char posicaoX, unsigned char posicaoY, unsigned char piscar, unsigned char tamanhoCursor );
 float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned char contDigitos, unsigned char apenasNumeros  );
 void EscreveDigito( unsigned int posicao, unsigned char tecla );
+void SalvaFlashConfiguracao( unsigned int enderecoInicial, unsigned int enderecoFinal, int *dados );
 #endif /* DISPLAY_H_ */

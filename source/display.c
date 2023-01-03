@@ -4488,10 +4488,10 @@ void AjustaCorrelacao( void ){
 				escrita_texto(450, "Entre com a senha:", sizeof("Entre com a senha:"));	// Escreve "Entre com a senha" na posição 450
 
 			}
-			else if( readTeclado == dois )	// Senão se teclado igual a 2
+			else if( readTeclado == dois ){	// Senão se teclado igual a 2
 				estadoCorrelacao = 20;	// estadoCorrelacao recebe 20, cálculo automático de correlação
-			else if( readTeclado == yes ){	// Senão se teclado igual a yes
-					// Salva os dados em um vetor
+			}else if( readTeclado == yes ){	// Senão se teclado igual a yes
+					SalvaFlashConfiguracao(ADDR_CONFIGURACAO, 0xE2028,(int*) numero); // Salva os dados em um vetor
 					// Apaga a flash neste setor
 					// Salva o vetor com o valor atualizado na flash
 					// Criar função???
@@ -4540,6 +4540,7 @@ void AjustaCorrelacao( void ){
 		case 11:
 
 			numero = EscreveTela( 13, 3, 6, 0 );
+			estadoCorrelacao = 1;
 
 			break;
 		}
@@ -4549,13 +4550,15 @@ void AjustaCorrelacao( void ){
 float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned char contDigitos, unsigned char apenasNumeros  ){
 
 	unsigned char tecla = 0, contaCaracter = 1, dadosTecla[contDigitos], posicaoInicialX = posicaoX, posicaoInicialY = posicaoY, posicaoPonto = 0;
+	unsigned char addrMemoria = 0;
 	unsigned short posicaoTexto = posicaoX + posicaoY * 30, posicaoTextoInicial = posicaoInicialX + posicaoInicialY * 30 ;
-	static float numero[10];
+	static float numero[10] = {1.0,1.0,1.0,1.0,1.0,0,0,0,0,0};
 
 	Cursor( posicaoX, posicaoY, 1, 1 );// Define a posição do cursor
 
-	for( int i = 0; i < contDigitos; i++)
+	for( int i = 0; i < contDigitos; i++){
 		dadosTecla[i] = 0;
+	}
 
 	while(1){	// Enquanto 1
 
@@ -4565,11 +4568,13 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 			if( tecla == left ){			// Se teclado igual a left
 
 				escrita_texto( posicaoTexto - 1, " ", sizeof(" "));		// Escreve ' '
-				if( dadosTecla[posicaoPonto] == dot )
+				if( dadosTecla[posicaoPonto] == dot ){
 					posicaoPonto = 0;
+				}
 				contaCaracter--;	// Decrementa contaCaracter
-				if( contaCaracter == 0)	// Se chegar a 0
+				if( contaCaracter == 0){	// Se chegar a 0
 					contaCaracter = 1;	// contaCaracter recebe 1
+				}
 				if( posicaoX == posicaoInicialX || posicaoX == posicaoInicialX + 10 ){	// Se posicaoX igual a posicaoInicialX
 					posicaoY -= 2;	// posicaoY subtrai 2
 					if( posicaoY == 1 && posicaoX == 23 ){	// Quando a posiçãoY igual a 13
@@ -4584,18 +4589,20 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 					if( posicaoX < posicaoInicialX )	// Impede que a posição da escrita seja menor que a inicial
 						posicaoX = posicaoInicialX;
 				}
-				else if( posicaoX < posicaoInicialX + 10 )
+				else if( posicaoX < posicaoInicialX + 10 ){
 					posicaoX = posicaoInicialX + 10;
+				}
 				Cursor(posicaoX, posicaoY, 1, 1);
 
 			}
-			else if( tecla == no )		// Se tecla igual a no, retorna
-				return -99999;	// Valor de saída
+			else if( tecla == no ){		// Se tecla igual a no, retorna
+				return numero;	// Valor de saída
+			}
 			else if( tecla == hifen ){	// Se tecla igual a hifen
 
 				if( dadosTecla[0] != hifen ){	// Se o vetor na posicao 0 é diferente de hifen
 					dadosTecla[0] = tecla;	// Vetor na posição 0 recebe hifen
-					EscreveDigito( posicaoTexto-1, tecla );	// Desenha o hifen
+					EscreveDigito( posicaoTexto - 1, tecla );	// Desenha o hifen
 				}
 				else{	// Senão
 					dadosTecla[0] = 0;	// O vetor na posição 0 recebe 0
@@ -4603,7 +4610,7 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 				}
 
 			}
-			else if( tecla == dot && posicaoPonto == 0){	// Se tecla for igual a ponto
+			else if( tecla == dot && posicaoPonto == 0 ){	// Se tecla for igual a ponto
 
 					posicaoPonto = contaCaracter;// posicaoPonto recebe i)
 					posicaoX++;	// Incrementa a posição em 1
@@ -4635,9 +4642,14 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 						posicaoX = 23;	// posiçãoX recebe 23
 						posicaoY = 3;	// posiçãoY recebe 3
 					}
+					else if( posicaoY == 13 && posicaoX == 23 ){
+
+						return numero;
+
+					}
 				}
 				else{
-					static unsigned char addrMemoria = 0;
+
 					switch( posicaoPonto ){	// Posição do ponto no vetor de número
 					case 1:	// Caso esteja na primeira posição
 						// Número recebe dadosTecla[2] * 0.1 + dadosTecla[3] * 0.01 + dadosTecla[4] * 0.001 + dadosTecla[5] * 0.0001
@@ -4660,6 +4672,7 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 						numero[addrMemoria] = dadosTecla[1] * 1000 + dadosTecla[2] * 100 + dadosTecla[3] * 10 + dadosTecla[4] * 1;
 						break;
 					default:
+						numero[addrMemoria] = 0;
 						for( int i = 1; i < contaCaracter; i++ ){	// Para i começando de 1, i menor que contaCaracter, i incrementa de 1
 							numero[addrMemoria] += dadosTecla[i]*pow(10,contaCaracter - 1 - i); // dadosTecla[i] vezes 10^( contaCaracter - 1 - i )
 						}
@@ -4681,30 +4694,32 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 
 							// Verifica os valores na memória e escreve
 							if( ( *(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) > -1 && *(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) < 1 )
-							|| ( *(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) > -10 && *(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) < 10 ) )
+							|| ( *(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) > -10 && *(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) < 10 ) ){
 								escrita_texto(posicaoTexto - (contaCaracter - 2), ConverteNumParaLcd(3, 2,(*(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) * 100)), ContaCaracteres()+1);
-							else
+							}
+							else{
 								escrita_texto(posicaoTexto - (contaCaracter - 1), ConverteNumParaLcd(4, 2,(*(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) * 100)), ContaCaracteres()+1);
+
+							}
 						}
 					}
 					else{	// Senão, escreve o número e armazena na memória
 						// Verifica se está entre -1 e 1 ou -10 e 10
-						if( ( numero[addrMemoria] > -1 && numero[addrMemoria] < 1 ) || ( numero[addrMemoria] > -10 && numero[addrMemoria] < 10 ) )
+						if( ( numero[addrMemoria] > -1 && numero[addrMemoria] < 1 ) || ( numero[addrMemoria] > -10 && numero[addrMemoria] < 10 ) ){
 							escrita_texto(posicaoTexto - (contaCaracter - 2), ConverteNumParaLcd(3, 2,(unsigned int)( abs(numero[addrMemoria] * 100))), ContaCaracteres()+1);
-						else
+						}
+						else{
 							escrita_texto(posicaoTexto - (contaCaracter - 1), ConverteNumParaLcd(4, 2,(unsigned int)( abs(numero[addrMemoria] * 100))), ContaCaracteres()+1);
-
+						}
 					}
 					contaCaracter = 1;	// Reinicia a contagem de caracteres
 					posicaoPonto = 0;
 					addrMemoria++;	// Incrementa contador de memória
-					if( addrMemoria < 5 ){	// Se o endereço é menor que 5
-						posicaoX = 13;	// Posição do primeiro digito para Slope
+					if( posicaoY == 13 && posicaoX == 13 ){	// Quando a posiçãoY igual a 13
+						posicaoX = 23;	// posiçãoX recebe 23
+						posicaoY = 3;	// posiçãoY recebe 3
 					}
-					else if( addrMemoria < 10 ){	// Se o endereço é menor que 10
-						posicaoX = 23;	// Posição do primeiro digito
-					}
-					else{
+					else if(  posicaoY == 13 && posicaoX == 23 ){
 						return numero;	// Retorna o ponteiro do número
 					}
 				}
@@ -4803,4 +4818,30 @@ void EscreveDigito( unsigned int posicao, unsigned char tecla ){
 			break;
 
 	}
+}
+
+void SalvaFlashConfiguracao( unsigned int enderecoInicial, unsigned int enderecoFinal, int *dados ){
+
+	unsigned int deltaMemoria = enderecoFinal - enderecoInicial, vetorMemoria[1024];	// Diferença entre endereço final e inicial
+
+	// Para i começando de ADDR_CONFIGURACAO(0xE2000), i menor que ADDR_CONFIGURACAO(0xE2000) + 0x1000; i incrementa DADO_MEMORIA (4)
+	for( int i = ADDR_CONFIGURACAO; i < ADDR_CONFIGURACAO + 0x1000; i = i + DADO_MEMORIA ){
+
+		if( *(volatile unsigned int *)(i) != 0xFFFFFFFF )	// Se memória estiver gravada
+			vetorMemoria[i/4] = *(volatile int *)(i);	// Vetor memória recebe o que está salvo na posição de memória
+
+	}
+	// Para i igual a enderecoFinal - ADDR_CONFIGURACAO, i menor que deltaMemoria (diferença de endereços), i incrementa DADO_MEMORIA (4)
+	for( int i = enderecoInicial - ADDR_CONFIGURACAO; i < deltaMemoria; i = i + DADO_MEMORIA ){
+
+		vetorMemoria[i/4] = *(dados++);
+
+	}
+
+	FLASH_Erase(&s_flashDriver, 0xE2000, 0x1000, kFLASH_ApiEraseKey);	// Apaga a memória
+
+	FLASH_ProgramSection(&s_flashDriver, ADDR_CONFIGURACAO, vetorMemoria, 1024);	// Escreve na memória
+
+	float numero = *(volatile float *)(ADDR_CONFIGURACAO);
+
 }
