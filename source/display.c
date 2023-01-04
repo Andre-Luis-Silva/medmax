@@ -4362,68 +4362,68 @@ void AjustaCorrelacao( void ){
 	 * Área de memória utilizada: Intercept - 0xE2014 até 0xE2024
 	 */
 	// Verifica se há algum dado salvo na memória para cada um dos elementos
-	unsigned int slopeEletrodos[5], interceptEletrodos[5];
+	float slopeEletrodos[5], interceptEletrodos[5];
 	unsigned int timeout = 0;
 	unsigned char estadoCorrelacao = 0, contOk = 0, readTeclado = 0;
-	float *numero;
+	float *numero = NULL;
 
 	// Verificação se há dados salvos de Slope para o eletrodo K
 	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_K) != 0xFFFFFFFF )
-		slopeEletrodos[0] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_K);
+		slopeEletrodos[0] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_SLOPE_K);
 	else
-		slopeEletrodos[0] = 100;
+		slopeEletrodos[0] = 1;
 
 	// Verificação se há dados salvos de Slope para o eletrodo Na
 	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Na) != 0xFFFFFFFF )
-		slopeEletrodos[1] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Na);
+		slopeEletrodos[1] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Na);
 	else
-		slopeEletrodos[1] = 100;
+		slopeEletrodos[1] = 1;
 
 	// Verificação se há dados salvos de Slope para o eletrodo Cl
 	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Cl) != 0xFFFFFFFF )
-		slopeEletrodos[2] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Cl);
+		slopeEletrodos[2] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Cl);
 	else
-		slopeEletrodos[2] = 100;
+		slopeEletrodos[2] = 1;
 
 	// Verificação se há dados salvos de Slope para o eletrodo Ca
 	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Ca) != 0xFFFFFFFF )
-		slopeEletrodos[3] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Ca);
+		slopeEletrodos[3] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Ca);
 	else
-		slopeEletrodos[3] = 100;
+		slopeEletrodos[3] = 1;
 
 	// Verificação se há dados salvos de Slope para o eletrodo pH
 	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_pH) != 0xFFFFFFFF )
-		slopeEletrodos[4] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_pH);
+		slopeEletrodos[4] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_SLOPE_pH);
 	else
-		slopeEletrodos[4] = 100;
+		slopeEletrodos[4] = 1;
 
 	// Verificação se há dados salvos de intercept para o eletrodo K
 	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_K) != 0xFFFFFFFF )
-		interceptEletrodos[0] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_K);
+		interceptEletrodos[0] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_K);
 	else
 		interceptEletrodos[0] = 0;
 
 	// Verificação se há dados salvos de intercept para o eletrodo Na
 	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Na) != 0xFFFFFFFF )
-		interceptEletrodos[1] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Na);
+		interceptEletrodos[1] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Na);
 	else
 		interceptEletrodos[1] = 0;
 
 	// Verificação se há dados salvos de intercept para o eletrodo Cl
 	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Cl) != 0xFFFFFFFF )
-		interceptEletrodos[2] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Cl);
+		interceptEletrodos[2] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Cl);
 	else
 		interceptEletrodos[2] = 0;
 
 	// Verificação se há dados salvos de intercept para o eletrodo Ca
 	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Ca) != 0xFFFFFFFF )
-		interceptEletrodos[3] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Ca);
+		interceptEletrodos[3] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Ca);
 	else
 		interceptEletrodos[3] = 0;
 
 	// Verificação se há dados salvos de intercept para o eletrodo pH
 	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_pH) != 0xFFFFFFFF )
-		interceptEletrodos[4] = *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_pH);
+		interceptEletrodos[4] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_pH);
 	else
 		interceptEletrodos[4] = 0;
 
@@ -4443,28 +4443,58 @@ void AjustaCorrelacao( void ){
 			writeLine(13);	// Escrita de traço na linha 13
 			// Escrtia do eletrodo K e dos valores salvos na flash
 			escrita_texto(96, "K", sizeof("K"));
-			escrita_texto(104, ConverteNumParaLcd(3, 2, slopeEletrodos[0]), ContaCaracteres()+1);	// Slope
-			escrita_texto(114, ConverteNumParaLcd(3, 2, interceptEletrodos[0]), ContaCaracteres()+1);	// Intercept
+			if( slopeEletrodos[0] < 0 ){	// Se a posição da memória é negativa
+				escrita_texto( 102, "-", sizeof("-"));	// Escreve "-"
+			}
+			if( interceptEletrodos[0] < 0 ){	// Se a posição da memória é negativa
+				escrita_texto( 112, "-", sizeof("-"));	// Escreve "-"
+			}
+			escrita_texto(104, ConverteNumParaLcd(3, 2,(unsigned int)(abs(slopeEletrodos[0] * 100))), ContaCaracteres()+1);	// Slope
+			escrita_texto(114, ConverteNumParaLcd(3, 2,(unsigned int)(abs(interceptEletrodos[0] * 100))), ContaCaracteres()+1);	// Intercept
 
 			// Escrtia do eletrodo Na e dos valores salvos na flash
 			escrita_texto(156, "Na", sizeof("Na"));
-			escrita_texto(164, ConverteNumParaLcd(3, 2, slopeEletrodos[1]), ContaCaracteres()+1);	// Slope
-			escrita_texto(174, ConverteNumParaLcd(3, 2, interceptEletrodos[1]), ContaCaracteres()+1);	// Intercept
+			if( slopeEletrodos[1] < 0 ){	// Se a posição da memória é negativa
+				escrita_texto( 162, "-", sizeof("-"));	// Escreve "-"
+			}
+			if( interceptEletrodos[1] < 0 ){	// Se a posição da memória é negativa
+				escrita_texto( 172, "-", sizeof("-"));	// Escreve "-"
+			}
+			escrita_texto(164, ConverteNumParaLcd(3, 2, (unsigned int)(abs(slopeEletrodos[1] * 100))), ContaCaracteres()+1);	// Slope
+			escrita_texto(174, ConverteNumParaLcd(3, 2, (unsigned int)(abs(interceptEletrodos[1] * 100))), ContaCaracteres()+1);	// Intercept
 
 			// Escrtia do eletrodo Cl e dos valores salvos na flash
 			escrita_texto(216, "Cl", sizeof("Cl"));
-			escrita_texto(224, ConverteNumParaLcd(3, 2, slopeEletrodos[2]), ContaCaracteres()+1);	// Slope
-			escrita_texto(234, ConverteNumParaLcd(3, 2, interceptEletrodos[2]), ContaCaracteres()+1);	// Intercept
+			if( slopeEletrodos[2] < 0 ){	// Se a posição da memória é negativa
+				escrita_texto( 222, "-", sizeof("-"));	// Escreve "-"
+			}
+			if( interceptEletrodos[2] < 0 ){	// Se a posição da memória é negativa
+				escrita_texto( 232, "-", sizeof("-"));	// Escreve "-"
+			}
+			escrita_texto(224, ConverteNumParaLcd(3, 2, (unsigned int)(abs(slopeEletrodos[2] * 100))), ContaCaracteres()+1);	// Slope
+			escrita_texto(234, ConverteNumParaLcd(3, 2, (unsigned int)(abs(interceptEletrodos[2] * 100))), ContaCaracteres()+1);	// Intercept
 
 			// Escrtia do eletrodo Ca e dos valores salvos na flash
 			escrita_texto(276, "Ca", sizeof("Ca"));
-			escrita_texto(284, ConverteNumParaLcd(3, 2, slopeEletrodos[3]), ContaCaracteres()+1);	// Slope
-			escrita_texto(294, ConverteNumParaLcd(3, 2, interceptEletrodos[3]), ContaCaracteres()+1);	// Intercept
+			if( slopeEletrodos[3] < 0 ){	// Se a posição da memória é negativa
+				escrita_texto( 282, "-", sizeof("-"));	// Escreve "-"
+			}
+			if( interceptEletrodos[3] < 0 ){	// Se a posição da memória é negativa
+				escrita_texto( 292, "-", sizeof("-"));	// Escreve "-"
+			}
+			escrita_texto(284, ConverteNumParaLcd(3, 2, (unsigned int)(abs(slopeEletrodos[3] * 100))), ContaCaracteres()+1);	// Slope
+			escrita_texto(294, ConverteNumParaLcd(3, 2, (unsigned int)(abs(interceptEletrodos[3] * 100))), ContaCaracteres()+1);	// Intercept
 
 			// Escrtia do eletrodo pH e dos valores salvos na flash
 			escrita_texto(336, "pH", sizeof("pH"));
-			escrita_texto(344, ConverteNumParaLcd(3, 2, slopeEletrodos[4]), ContaCaracteres()+1);	// Slope
-			escrita_texto(354, ConverteNumParaLcd(3, 2, interceptEletrodos[4]), ContaCaracteres()+1);	// Intercept
+			if( slopeEletrodos[4] < 0 ){	// Se a posição da memória é negativa
+				escrita_texto( 332, "-", sizeof("-"));	// Escreve "-"
+			}
+			if( interceptEletrodos[4] < 0 ){	// Se a posição da memória é negativa
+				escrita_texto( 352, "-", sizeof("-"));	// Escreve "-"
+			}
+			escrita_texto(344, ConverteNumParaLcd(3, 2, (unsigned int)(abs(slopeEletrodos[4] * 100))), ContaCaracteres()+1);	// Slope
+			escrita_texto(354, ConverteNumParaLcd(3, 2, (unsigned int)(abs(interceptEletrodos[4] * 100))), ContaCaracteres()+1);	// Intercept
 
 			escrita_texto(420, "<=RESET", sizeof("<=RESET"));
 			escrita_texto(450, "1=ENTRAR", sizeof("1=ENTRAR"));
@@ -4492,9 +4522,7 @@ void AjustaCorrelacao( void ){
 				estadoCorrelacao = 20;	// estadoCorrelacao recebe 20, cálculo automático de correlação
 			}else if( readTeclado == yes ){	// Senão se teclado igual a yes
 					SalvaFlashConfiguracao(ADDR_CONFIGURACAO, 0xE2028,(int*) numero); // Salva os dados em um vetor
-					// Apaga a flash neste setor
-					// Salva o vetor com o valor atualizado na flash
-					// Criar função???
+
 			}
 			else if( readTeclado == left ){	// Senão se teclado igual a ←
 					// Restaura os valores padrão (1.00 e 0.00, apenas escrita)
@@ -4540,6 +4568,12 @@ void AjustaCorrelacao( void ){
 		case 11:
 
 			numero = EscreveTela( 13, 3, 6, 0 );
+			send_command(Display_mode_text);	// Desliga cursor e liga texto
+			clearLine( 15 );
+			escrita_texto(420, "<=RESET", sizeof("<=RESET"));
+			escrita_texto(450, "1=ENTRAR", sizeof("1=ENTRAR"));
+			escrita_texto(459, "2=CAL", sizeof("2=CAL"));
+			escrita_texto(465, "YES=Salvar", sizeof("YES=Salvar"));
 			estadoCorrelacao = 1;
 
 			break;
@@ -4551,7 +4585,7 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 
 	unsigned char tecla = 0, contaCaracter = 1, dadosTecla[contDigitos], posicaoInicialX = posicaoX, posicaoInicialY = posicaoY, posicaoPonto = 0;
 	unsigned char addrMemoria = 0;
-	unsigned short posicaoTexto = posicaoX + posicaoY * 30, posicaoTextoInicial = posicaoInicialX + posicaoInicialY * 30 ;
+	unsigned short posicaoTexto = posicaoX + posicaoY * 30, posicaoTextoHifen;
 	static float numero[10] = {1.0,1.0,1.0,1.0,1.0,0,0,0,0,0};
 
 	Cursor( posicaoX, posicaoY, 1, 1 );// Define a posição do cursor
@@ -4571,6 +4605,7 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 				if( dadosTecla[posicaoPonto] == dot ){
 					posicaoPonto = 0;
 				}
+				dadosTecla[contaCaracter] = 0;
 				contaCaracter--;	// Decrementa contaCaracter
 				if( contaCaracter == 0){	// Se chegar a 0
 					contaCaracter = 1;	// contaCaracter recebe 1
@@ -4580,6 +4615,7 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 					if( posicaoY == 1 && posicaoX == 23 ){	// Quando a posiçãoY igual a 13
 						posicaoX = 13;	// posiçãoX recebe 23
 						posicaoY = 11;	// posiçãoY recebe 3
+						posicaoInicialX = 13;
 					}
 					if( posicaoY < posicaoInicialY )	// Se posicaoY menor que posicaoInicialY
 						posicaoY = posicaoInicialY;	// posicaoY recebe posicaoInicialY
@@ -4600,13 +4636,14 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 			}
 			else if( tecla == hifen ){	// Se tecla igual a hifen
 
+				posicaoTextoHifen = posicaoInicialX + posicaoY * 30;
 				if( dadosTecla[0] != hifen ){	// Se o vetor na posicao 0 é diferente de hifen
 					dadosTecla[0] = tecla;	// Vetor na posição 0 recebe hifen
-					EscreveDigito( posicaoTexto - 1, tecla );	// Desenha o hifen
+					EscreveDigito( posicaoTextoHifen - 1, tecla );	// Desenha o hifen
 				}
 				else{	// Senão
 					dadosTecla[0] = 0;	// O vetor na posição 0 recebe 0
-					escrita_texto( posicaoTexto - 1, " ", sizeof(" "));		// Escreve ' '
+					escrita_texto( posicaoTextoHifen - 1, " ", sizeof(" "));		// Escreve ' '
 				}
 
 			}
@@ -4641,6 +4678,7 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 					if( posicaoY == 13 && posicaoX == 13 ){	// Quando a posiçãoY igual a 13
 						posicaoX = 23;	// posiçãoX recebe 23
 						posicaoY = 3;	// posiçãoY recebe 3
+						posicaoInicialX = 23;
 					}
 					else if( posicaoY == 13 && posicaoX == 23 ){
 
@@ -4691,15 +4729,19 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 							escrita_texto(posicaoTexto - (contaCaracter - 2), ConverteNumParaLcd(3, 2, 100), ContaCaracteres()+1);	// Escreve o valor 1.00
 						}
 						else{	// Senão
-
+							if( *(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) < 0 ){	// Se a posição da memória é negativa
+								escrita_texto( posicaoTexto - contaCaracter, "-", sizeof("-"));	// Escreve "-"
+							}
+							else{// Senão
+								escrita_texto( posicaoTexto - contaCaracter, " ", sizeof(" "));	// Escreve " "
+							}
 							// Verifica os valores na memória e escreve
 							if( ( *(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) > -1 && *(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) < 1 )
 							|| ( *(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) > -10 && *(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) < 10 ) ){
-								escrita_texto(posicaoTexto - (contaCaracter - 2), ConverteNumParaLcd(3, 2,(*(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) * 100)), ContaCaracteres()+1);
+								escrita_texto(posicaoTexto - (contaCaracter - 2), ConverteNumParaLcd(3, 2,abs(*(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) * 100)), ContaCaracteres()+1);
 							}
 							else{
-								escrita_texto(posicaoTexto - (contaCaracter - 1), ConverteNumParaLcd(4, 2,(*(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) * 100)), ContaCaracteres()+1);
-
+								escrita_texto(posicaoTexto - (contaCaracter - 1), ConverteNumParaLcd(4, 2,abs(*(volatile float*)(ADDR_CONFIGURACAO + addrMemoria * 4) * 100)), ContaCaracteres()+1);
 							}
 						}
 					}
@@ -4709,8 +4751,17 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 							escrita_texto(posicaoTexto - (contaCaracter - 2), ConverteNumParaLcd(3, 2,(unsigned int)( abs(numero[addrMemoria] * 100))), ContaCaracteres()+1);
 						}
 						else{
-							escrita_texto(posicaoTexto - (contaCaracter - 1), ConverteNumParaLcd(4, 2,(unsigned int)( abs(numero[addrMemoria] * 100))), ContaCaracteres()+1);
+							if( posicaoPonto != 0 ){
+								escrita_texto(posicaoTexto - (contaCaracter - 2), ConverteNumParaLcd(4, 2,(unsigned int)( abs(numero[addrMemoria] * 100))), ContaCaracteres()+1);
+							}
+							else{
+								escrita_texto(posicaoTexto - (contaCaracter - 1), ConverteNumParaLcd(4, 2,(unsigned int)( abs(numero[addrMemoria] * 100))), ContaCaracteres()+1);
+							}
 						}
+					}
+					posicaoX = posicaoX - ( contaCaracter - 1 );
+					for( unsigned char i  = 0; i < 6; i++ ){
+						dadosTecla[i] = 0;
 					}
 					contaCaracter = 1;	// Reinicia a contagem de caracteres
 					posicaoPonto = 0;
@@ -4718,6 +4769,7 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 					if( posicaoY == 13 && posicaoX == 13 ){	// Quando a posiçãoY igual a 13
 						posicaoX = 23;	// posiçãoX recebe 23
 						posicaoY = 3;	// posiçãoY recebe 3
+						posicaoInicialX = 23;
 					}
 					else if(  posicaoY == 13 && posicaoX == 23 ){
 						return numero;	// Retorna o ponteiro do número
@@ -4822,17 +4874,18 @@ void EscreveDigito( unsigned int posicao, unsigned char tecla ){
 
 void SalvaFlashConfiguracao( unsigned int enderecoInicial, unsigned int enderecoFinal, int *dados ){
 
-	unsigned int deltaMemoria = enderecoFinal - enderecoInicial, vetorMemoria[1024];	// Diferença entre endereço final e inicial
-
+	unsigned int deltaMemoria = enderecoFinal - enderecoInicial, vetorMemoria[256];	// Diferença entre endereço final e inicial
+	uint32_t i = ADDR_CONFIGURACAO;
 	// Para i começando de ADDR_CONFIGURACAO(0xE2000), i menor que ADDR_CONFIGURACAO(0xE2000) + 0x1000; i incrementa DADO_MEMORIA (4)
-	for( int i = ADDR_CONFIGURACAO; i < ADDR_CONFIGURACAO + 0x1000; i = i + DADO_MEMORIA ){
+	for( i = i ; i < ADDR_CONFIGURACAO + 0x1000; i = i + DADO_MEMORIA ){
 
 		if( *(volatile unsigned int *)(i) != 0xFFFFFFFF )	// Se memória estiver gravada
-			vetorMemoria[i/4] = *(volatile int *)(i);	// Vetor memória recebe o que está salvo na posição de memória
+			vetorMemoria[(i - ADDR_CONFIGURACAO)/4] = *(volatile unsigned int *)(i);	// Vetor memória recebe o que está salvo na posição de memória
 
 	}
+	i = enderecoInicial - ADDR_CONFIGURACAO;
 	// Para i igual a enderecoFinal - ADDR_CONFIGURACAO, i menor que deltaMemoria (diferença de endereços), i incrementa DADO_MEMORIA (4)
-	for( int i = enderecoInicial - ADDR_CONFIGURACAO; i < deltaMemoria; i = i + DADO_MEMORIA ){
+	for( i = i ; i < deltaMemoria; i = i + DADO_MEMORIA ){
 
 		vetorMemoria[i/4] = *(dados++);
 
@@ -4840,8 +4893,6 @@ void SalvaFlashConfiguracao( unsigned int enderecoInicial, unsigned int endereco
 
 	FLASH_Erase(&s_flashDriver, 0xE2000, 0x1000, kFLASH_ApiEraseKey);	// Apaga a memória
 
-	FLASH_ProgramSection(&s_flashDriver, ADDR_CONFIGURACAO, vetorMemoria, 1024);	// Escreve na memória
-
-	float numero = *(volatile float *)(ADDR_CONFIGURACAO);
+	FLASH_Program(&s_flashDriver, ADDR_CONFIGURACAO, vetorMemoria, 1024);	// Escreve na memória
 
 }
