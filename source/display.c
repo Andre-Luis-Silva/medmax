@@ -342,22 +342,21 @@ void display_run( void ){
 
 		case 2:
 
-			respCalibA = calibA(0);
-			if( respCalibA == 0 ){
-				clear_display_text();
-				respCalibB = calibB();
-				if( respCalibB == 0 ){
-					calibValues();
-					flagCalibOk = 1;
-				}
-			}else if( respCalibA != 0 || respCalibB != 0 )
-				flagCalibOk = 0;
-			clear_display_text();
-			desenho_menu1();
-			WriteMenuName(menu, PRINCIPAL);
-			send_command(Display_mode_text | Display_mode_graphic);
+			respCalibA = calibA(0);	// Chama o calibrador A
+			clear_display_text();	// Apaga a tela
+			respCalibB = calibB();	// Chama o calibrador B
+			if( respCalibB == 0 ){	// Se as respostas forem OK
+				calibValues();	// Faz o cálculo da calibração dos valores padrão
+				flagCalibOk = 1;	// Seta o flag de calibração OK
+			}
+			else if( respCalibA != 0 || respCalibB != 0 )	// Se há erro
+				flagCalibOk = 0;	// Desliga o flag de calibração OK
+			clear_display_text();	// Apaga a tela
+			desenho_menu1();	// Desenha a tela do menu 1
+			WriteMenuName(menu, PRINCIPAL);	// Escreve o menu principal
+			send_command(Display_mode_text | Display_mode_graphic);	// Chama o desenho da tela
 			status(1);
-			estado_display = 0;
+			estado_display = 0;	// Volta o display para o estado inicial
 			/*			if( controlMenu == 0 ){
 
 				respCalibA = calibA(0);
@@ -1955,7 +1954,7 @@ unsigned char calibA( unsigned char wash ){
 					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve os segundos
 					segundos--; // Decrementa segundos
 					if( segundos == 0 ){	// Se segundos for igual a 0
-						//estado = 3;
+						estado = 3;
 					}
 				}
 			}
@@ -4363,8 +4362,8 @@ void AjustaCorrelacao( void ){
 	 */
 	// Verifica se há algum dado salvo na memória para cada um dos elementos
 	float slopeEletrodos[5], interceptEletrodos[5];
-	unsigned int timeout = 0;
-	unsigned char estadoCorrelacao = 0, contOk = 0, readTeclado = 0;
+	unsigned int timeout = 0, posicaoTexto[10];
+	unsigned char estadoCorrelacao = 0, contOk = 0, readTeclado = 0, tamanhoDigito[10];
 	float *numero = NULL;
 
 	// Verificação se há dados salvos de Slope para o eletrodo K
@@ -4427,6 +4426,29 @@ void AjustaCorrelacao( void ){
 	else
 		interceptEletrodos[4] = 0;
 
+	for( int i = 0; i < 10; i++){	// Faz a verificação do valor salvo na memória, se é maior ou menor que 10
+		if( i < 5 ){
+			if( abs(slopeEletrodos[i]) >= 10 ){	// Se for maior que 10
+				tamanhoDigito[i] = 4;	// Serão 4 dígitos escritos
+				posicaoTexto[i] = 103 + 60*i;	// Posição inicial do desenho mas o pulo de duas linhas
+			}
+			else{
+				tamanhoDigito[i] = 3;	// Serão 3 dígitos escritos
+				posicaoTexto[i] = 104 + 60*i;	// Posição inicial do desenho mas o pulo de duas linhas
+			}
+		}
+		else{
+			if( abs(interceptEletrodos[i % 5]) >= 10 ){	// Faz a verificação do valor salvo na memória, se é maior ou menor que 10
+				tamanhoDigito[i] = 4;	// Serão 4 dígitos escritos
+				posicaoTexto[i] = 113 + 60*(i % 5) ;	// Posição inicial do desenho mas o pulo de duas linhas
+			}
+			else{
+				tamanhoDigito[i] = 3;	// Serão 3 dígitos escritos
+				posicaoTexto[i] = 114 + 60*(i % 5);	// Posição inicial do desenho mas o pulo de duas linhas
+			}
+		}
+	}
+
 
 	while( 1 ){
 		readTeclado = verifyKeyBoard();
@@ -4449,19 +4471,21 @@ void AjustaCorrelacao( void ){
 			if( interceptEletrodos[0] < 0 ){	// Se a posição da memória é negativa
 				escrita_texto( 112, "-", sizeof("-"));	// Escreve "-"
 			}
-			escrita_texto(104, ConverteNumParaLcd(3, 2,(unsigned int)(abs(slopeEletrodos[0] * 100))), ContaCaracteres()+1);	// Slope
-			escrita_texto(114, ConverteNumParaLcd(3, 2,(unsigned int)(abs(interceptEletrodos[0] * 100))), ContaCaracteres()+1);	// Intercept
+			// Faz a verificação do tamanho do dígito
+			escrita_texto(posicaoTexto[0], ConverteNumParaLcd(tamanhoDigito[0], 2,(unsigned int)(abs(slopeEletrodos[0] * 100))), ContaCaracteres()+1);	// Slope
+			escrita_texto(posicaoTexto[5], ConverteNumParaLcd(tamanhoDigito[5], 2,(unsigned int)(abs(interceptEletrodos[0] * 100))), ContaCaracteres()+1);	// Intercept
 
 			// Escrtia do eletrodo Na e dos valores salvos na flash
 			escrita_texto(156, "Na", sizeof("Na"));
+
 			if( slopeEletrodos[1] < 0 ){	// Se a posição da memória é negativa
 				escrita_texto( 162, "-", sizeof("-"));	// Escreve "-"
 			}
 			if( interceptEletrodos[1] < 0 ){	// Se a posição da memória é negativa
 				escrita_texto( 172, "-", sizeof("-"));	// Escreve "-"
 			}
-			escrita_texto(164, ConverteNumParaLcd(3, 2, (unsigned int)(abs(slopeEletrodos[1] * 100))), ContaCaracteres()+1);	// Slope
-			escrita_texto(174, ConverteNumParaLcd(3, 2, (unsigned int)(abs(interceptEletrodos[1] * 100))), ContaCaracteres()+1);	// Intercept
+			escrita_texto(posicaoTexto[1], ConverteNumParaLcd(tamanhoDigito[1], 2, (unsigned int)(abs(slopeEletrodos[1] * 100))), ContaCaracteres()+1);	// Slope
+			escrita_texto(posicaoTexto[6], ConverteNumParaLcd(tamanhoDigito[6], 2, (unsigned int)(abs(interceptEletrodos[1] * 100))), ContaCaracteres()+1);	// Intercept
 
 			// Escrtia do eletrodo Cl e dos valores salvos na flash
 			escrita_texto(216, "Cl", sizeof("Cl"));
@@ -4471,8 +4495,8 @@ void AjustaCorrelacao( void ){
 			if( interceptEletrodos[2] < 0 ){	// Se a posição da memória é negativa
 				escrita_texto( 232, "-", sizeof("-"));	// Escreve "-"
 			}
-			escrita_texto(224, ConverteNumParaLcd(3, 2, (unsigned int)(abs(slopeEletrodos[2] * 100))), ContaCaracteres()+1);	// Slope
-			escrita_texto(234, ConverteNumParaLcd(3, 2, (unsigned int)(abs(interceptEletrodos[2] * 100))), ContaCaracteres()+1);	// Intercept
+			escrita_texto(posicaoTexto[2], ConverteNumParaLcd(tamanhoDigito[2], 2, (unsigned int)(abs(slopeEletrodos[2] * 100))), ContaCaracteres()+1);	// Slope
+			escrita_texto(posicaoTexto[7], ConverteNumParaLcd(tamanhoDigito[7], 2, (unsigned int)(abs(interceptEletrodos[2] * 100))), ContaCaracteres()+1);	// Intercept
 
 			// Escrtia do eletrodo Ca e dos valores salvos na flash
 			escrita_texto(276, "Ca", sizeof("Ca"));
@@ -4482,8 +4506,8 @@ void AjustaCorrelacao( void ){
 			if( interceptEletrodos[3] < 0 ){	// Se a posição da memória é negativa
 				escrita_texto( 292, "-", sizeof("-"));	// Escreve "-"
 			}
-			escrita_texto(284, ConverteNumParaLcd(3, 2, (unsigned int)(abs(slopeEletrodos[3] * 100))), ContaCaracteres()+1);	// Slope
-			escrita_texto(294, ConverteNumParaLcd(3, 2, (unsigned int)(abs(interceptEletrodos[3] * 100))), ContaCaracteres()+1);	// Intercept
+			escrita_texto(posicaoTexto[3], ConverteNumParaLcd(tamanhoDigito[3], 2, (unsigned int)(abs(slopeEletrodos[3] * 100))), ContaCaracteres()+1);	// Slope
+			escrita_texto(posicaoTexto[8], ConverteNumParaLcd(tamanhoDigito[8], 2, (unsigned int)(abs(interceptEletrodos[3] * 100))), ContaCaracteres()+1);	// Intercept
 
 			// Escrtia do eletrodo pH e dos valores salvos na flash
 			escrita_texto(336, "pH", sizeof("pH"));
@@ -4491,10 +4515,10 @@ void AjustaCorrelacao( void ){
 				escrita_texto( 332, "-", sizeof("-"));	// Escreve "-"
 			}
 			if( interceptEletrodos[4] < 0 ){	// Se a posição da memória é negativa
-				escrita_texto( 352, "-", sizeof("-"));	// Escreve "-"
+				escrita_texto( 342, "-", sizeof("-"));	// Escreve "-"
 			}
-			escrita_texto(344, ConverteNumParaLcd(3, 2, (unsigned int)(abs(slopeEletrodos[4] * 100))), ContaCaracteres()+1);	// Slope
-			escrita_texto(354, ConverteNumParaLcd(3, 2, (unsigned int)(abs(interceptEletrodos[4] * 100))), ContaCaracteres()+1);	// Intercept
+			escrita_texto(posicaoTexto[4], ConverteNumParaLcd(tamanhoDigito[4], 2, (unsigned int)(abs(slopeEletrodos[4] * 100))), ContaCaracteres()+1);	// Slope
+			escrita_texto(posicaoTexto[9], ConverteNumParaLcd(tamanhoDigito[9], 2, (unsigned int)(abs(interceptEletrodos[4] * 100))), ContaCaracteres()+1);	// Intercept
 
 			escrita_texto(420, "<=RESET", sizeof("<=RESET"));
 			escrita_texto(450, "1=ENTRAR", sizeof("1=ENTRAR"));
@@ -4522,7 +4546,9 @@ void AjustaCorrelacao( void ){
 				estadoCorrelacao = 20;	// estadoCorrelacao recebe 20, cálculo automático de correlação
 			}else if( readTeclado == yes ){	// Senão se teclado igual a yes
 					SalvaFlashConfiguracao(ADDR_CONFIGURACAO, 0xE2028,(int*) numero); // Salva os dados em um vetor
-
+					send_command(0x90);
+					for( unsigned int i = 0; i < 65535; i++);
+					send_command(Display_mode_text);
 			}
 			else if( readTeclado == left ){	// Senão se teclado igual a ←
 					// Restaura os valores padrão (1.00 e 0.00, apenas escrita)
@@ -4587,6 +4613,13 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 	unsigned char addrMemoria = 0;
 	unsigned short posicaoTexto = posicaoX + posicaoY * 30, posicaoTextoHifen;
 	static float numero[10] = {1.0,1.0,1.0,1.0,1.0,0,0,0,0,0};
+
+	// Atualização dos números anteriores
+	for( int i = 0; i < 10; i++){
+		if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + i*4) != 0xFFFFFFFF ){
+			numero[i] = *(volatile float *)(ADDR_CONFIGURACAO + i*4);
+		}
+	}
 
 	Cursor( posicaoX, posicaoY, 1, 1 );// Define a posição do cursor
 
@@ -4726,6 +4759,7 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 					escrita_texto(posicaoTexto - (contaCaracter - 1), "      ", sizeof("      "));
 					if( numero[addrMemoria] < -100 || numero[addrMemoria]  > 100 ){	// Se n° menor que -100 ou número maior que 100
 						if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + addrMemoria * 4) == 0xFFFFFFFF ){	// Se a memória não está salva
+							numero[addrMemoria] = 1;
 							escrita_texto(posicaoTexto - (contaCaracter - 2), ConverteNumParaLcd(3, 2, 100), ContaCaracteres()+1);	// Escreve o valor 1.00
 						}
 						else{	// Senão
