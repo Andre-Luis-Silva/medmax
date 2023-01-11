@@ -114,8 +114,27 @@ void configRTC( void ){
 
 }
 
-void writeHourRTC( void ){
+void AtualizaHoraRTC( void ){
 
-
-
+	clear_display_text();	// Limpa a tela
+	unsigned char dia, mes, ano, hora, minuto;
+	I2C_READ_PCF8653( &dia, Days );	// Faz a leitura do dia
+	I2C_READ_PCF8653( &mes, Century_months );	// Faz a leitura do mês
+	I2C_READ_PCF8653( &ano, Years );	// Faz a leitura do ano
+	I2C_READ_PCF8653( &hora, Hours );	// Faz a leitura da hora
+	I2C_READ_PCF8653( &minuto, Minutes );	// Faz a leitura do minuto
+	escrita_texto( 9, "CONFIGURA", sizeof("CONFIGURA") );	// Escreve CONFIGURA
+	EscreveCedilhaAOTil();	// Chama função AOTil
+	escrita_texto( 184, ConverteNumParaLcd( 2, 0, dia ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+	escrita_texto( 186, "/" , sizeof("/") );	// Escreve "/"
+	escrita_texto( 187, ConverteNumParaLcd( 2, 0, mes ), ContaCaracteres() + 1 );	// Escreve o mês salvo com 2 dígitos
+	escrita_texto( 189, "/20", sizeof("/20") );		// Escreve "/20"
+	escrita_texto( 191, ConverteNumParaLcd( 2, 0, ano ), ContaCaracteres() + 1 );	// Escreve o ano salvo com 2 dígitos
+	escrita_texto( 193, ConverteNumParaLcd( 2, 0, hora ), ContaCaracteres() + 1 );	// Escreve a hora salvo com 2 dígitos
+	escrita_texto( 195, ":" , sizeof(":") );	// Escreve ":"
+	escrita_texto( 184, ConverteNumParaLcd( 2, 0, minuto ), ContaCaracteres() + 1 );	// Escreve o minuto salvo com 2 dígitos
+	escrita_texto( 399, "DATA E HORA", sizeof("DATA E HORA") );	// Escreve "DATA E HORA"
+	escrita_texto( 450, "YES=SALVAR NO=SAIR", sizeof("YES=SALVAR NO=SAIR") );	// Escreve "YES=SALVAR NO=SAIR"
+		// Escreve ←
+		// Escreve "=VOLTA"
 }

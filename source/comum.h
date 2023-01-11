@@ -33,6 +33,7 @@
 #include "fsl_flash.h"
 #include <Nfc.h>
 #include <ndef_helper.h>
+#include "printer.h"
 
 #define ADDR_CALIBRACAO		0xE0000
 #define ADDR_CONFIGURACAO	0xE2000

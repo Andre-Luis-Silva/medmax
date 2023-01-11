@@ -197,6 +197,11 @@ void BOARD_InitPins(void)
 			kPORT_MuxAsGpio,                                         /* Pin is configured as GPIO */
 			kPORT_UnlockRegister                                     /* Pin Control Register fields [15:0] are not locked */
 	};
+	/* PORTB11, pino BUSY da printer */
+	PORT_SetPinConfig(PORTB, 11, &port_pin_config2);
+
+	/* PORTC0, pino STB da printer */
+	PORT_SetPinConfig(PORTC, 0, &port_pin_config2);
 
     /* PORTE4 (pin 5) is configured as UART3_RX */
     PORT_SetPinMux(PORTE, 4U, kPORT_MuxAlt3);
@@ -268,8 +273,6 @@ void BOARD_InitPins(void)
 
 	/* Inicialização POT leitura AD
 	 * PTB11, PTC0 - PTC2 */
-	PORT_SetPinMux(PORTB, 11, kPORT_PinDisabledOrAnalog);
-	PORT_SetPinMux(PORTC, 0, kPORT_PinDisabledOrAnalog);
 	PORT_SetPinMux(PORTC, 1, kPORT_PinDisabledOrAnalog);
 	PORT_SetPinMux(PORTC, 2, kPORT_PinDisabledOrAnalog);
 
@@ -356,6 +359,12 @@ void BOARD_InitPins(void)
 	GPIO_PinInit(GPIOA, 16, &gpio_out_0);
 
 	GPIO_PinInit(GPIOA, 17, &gpio_input);
+
+	/* GPIOB11 para leitura do pino BUSY da printer*/
+	GPIO_PinInit(GPIOB, 11, &gpio_input);
+
+	/* GPIOC0 para acionamento do pino STB da printer */
+	GPIO_PinInit(GPIOC, 0, &gpio_out_1);
 
 }
 

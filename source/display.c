@@ -167,8 +167,9 @@ void display_run( void ){
 
 	unsigned char readRxI2c = 0;
 	I2C_READ_PCF8653( &readRxI2c, Control_Status_1 );
-	if( readRxI2c != 0x00 )
+	if( readRxI2c != 0x00 ){
 		configRTC();
+	}
 
 	while(1){
 
@@ -726,8 +727,6 @@ void send_data( unsigned char data ){
 	cd_on;
 	wr_on;
 	rd_on;
-
-
 
 }
 
