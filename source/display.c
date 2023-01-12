@@ -536,8 +536,13 @@ void display_run( void ){
 
 			// Senão se tecla igual a 1 ou menuConfig igual a 0 e tecla igual a yes
 			else if(readQueueKeyboard == 1 || ( menuConfig == 0 && readQueueKeyboard == yes ) ){
-				menuConfig = 2;	// menuConfig recebe 2
-				AjustaHora();	// Chama a função AjustaHora();
+				menuConfig = 0;	// menuConfig recebe 2
+				AtualizaHoraRTC();	// Chama a função AjustaHora();
+				clear_display_text();	// Limpa a tela
+				desenho_configuracao1();	// Desenha o menu 1
+				WriteMenuName(menuConfig, CONFIGURACAO);	// Escreve o título do comando selecionado
+				send_command(Display_mode_text | Display_mode_graphic);	// Modo de texto e gráfico junto
+				status(1);
 			}
 
 			// Senão se tecla igual a 6 ou menuConfig igual a 5 e tecla igual a yes

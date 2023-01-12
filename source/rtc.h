@@ -31,5 +31,6 @@ void initRTC( void );
 void writeHourRTC( void );
 unsigned long I2C_READ_PCF8653(uint8_t *pBuff, uint8_t reg);
 unsigned long I2C_WRITE_PCF8653(uint8_t *pBuff, uint16_t buffLen);
+void AtualizaHoraRTC( void );
 
 #endif /* RTC_H_ */
