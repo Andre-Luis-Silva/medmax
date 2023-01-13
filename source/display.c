@@ -27,9 +27,10 @@ float Ck_standard = 0, Cca_standard = 0, Ccl_standard = 0, CpH_standard = 0, Cna
 
 void display_run( void ){
 
-	unsigned char estado_display = 0, flagError = 0, flagCalibOk = 0, menuConfig = 0, menuConfigAnterior = 0;
-	unsigned char menu = 0, menu_anterior = 0, respCalibA, respCalibB, readQueueKeyboard;
-
+	unsigned char estado_display = 0, flagCalibOk = 0, menuConfig = 0, menuConfigAnterior = 0;
+	unsigned char menu = 0, menu_anterior = 0, respCalibA = OK, respCalibB = OK, readQueueKeyboard;
+	unsigned char readRxI2c = 0, timerErro = 0, contErro = 0;
+	unsigned char verificaMaior;
 	rst_off;
 	for(int i = 0; i < 1000; i++ );
 	rst_on;
@@ -165,7 +166,6 @@ void display_run( void ){
 	send_command(Display_mode_text | Display_mode_graphic);
 	status(1);
 
-	unsigned char readRxI2c = 0;
 	I2C_READ_PCF8653( &readRxI2c, Control_Status_1 );
 	if( readRxI2c != 0x00 ){
 		configRTC();
@@ -189,17 +189,126 @@ void display_run( void ){
 			 */
 
 			timerRTC = 0;
-			readRxI2c = 0;
-			I2C_READ_PCF8653( &readRxI2c, Hours );
-			escrita_texto(71, numtolcd( bcdtodec( readRxI2c & 0x3F ), NUM ), 3);
-			escrita_texto(73, ":", 2);
-			I2C_READ_PCF8653( &readRxI2c, Minutes );
-			escrita_texto(74, numtolcd( bcdtodec( readRxI2c & 0x7F ), NUM ), 3);
-			escrita_texto(76, ":", 2);
-			I2C_READ_PCF8653( &readRxI2c, VL_seconds );
-			escrita_texto(77, numtolcd( bcdtodec( readRxI2c & 0x7F ), NUM ), 3);
+			unsigned char dia, mes, ano, hora, minuto, posicaoDesenho = 65;
+			I2C_READ_PCF8653( &dia, Days );	// Faz a leitura do dia
+			I2C_READ_PCF8653( &mes, Century_months );	// Faz a leitura do mês
+			I2C_READ_PCF8653( &ano, Years );	// Faz a leitura do ano
+			I2C_READ_PCF8653( &hora, Hours );	// Faz a leitura da hora
+			I2C_READ_PCF8653( &minuto, Minutes );	// Faz a leitura do minuto
+			escrita_texto( posicaoDesenho, ConverteNumParaLcd( 2, 0, bcdtodec( dia & 0x3F ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+			escrita_texto( posicaoDesenho + 2, "/" , sizeof("/") );	// Escreve "/"
+			escrita_texto( posicaoDesenho + 3, ConverteNumParaLcd( 2, 0, bcdtodec( mes & 0x1F ) ), ContaCaracteres() + 1 );	// Escreve o mês salvo com 2 dígitos
+			escrita_texto( posicaoDesenho + 5, "/20", sizeof("/20") );		// Escreve "/20"
+			escrita_texto( posicaoDesenho + 8, ConverteNumParaLcd( 2, 0, bcdtodec( ano ) ), ContaCaracteres() + 1 );	// Escreve o ano salvo com 2 dígitos
+			escrita_texto( posicaoDesenho + 12, ConverteNumParaLcd( 2, 0, bcdtodec( hora & 0x3F ) ), ContaCaracteres() + 1 );	// Escreve a hora salvo com 2 dígitos
+			escrita_texto( posicaoDesenho + 14, ":" , sizeof(":") );	// Escreve ":"
+			escrita_texto( posicaoDesenho + 15, ConverteNumParaLcd( 2, 0, bcdtodec( minuto & 0x7F ) ), ContaCaracteres() + 1 );	// Escreve o minuto salvo com 2 dígitos
 
+			/* Verificação de erro */
+			if( timerErro >= 5 && ( respCalibA != OK || respCalibB != OK ) ){	// Se temporizador de erro chegar a 5 segundos
 
+				timerErro = 0;
+				switch( contErro ){	// Escolha contErro
+				case 0:	// Caso 0 - Falta de calibrador A
+
+					if( respCalibA == ERRO_FALTA_CALIBA )	// Se flagCaliA for igual a ERRO_FALTA_CALIBA
+					{
+						clearLine(14);
+						clearLine(15);
+						escrita_texto(420, "Falta CAL A. Verifique a tubula", sizeof("Falta CAL A. Verifique a tubula"));	// Escreve "Falta calibrador A"
+						EscreveCedilhaAOTil();
+						escrita_texto(455, "e o pacote de reagentes", sizeof("e o pacote de reagentes"));
+
+					}
+					else	// Senão
+					{
+						contErro++;	// contErro recebe 1
+					}
+
+					break;
+				case 1:	// Caso 1 - Falta de calibrador B
+
+					if( respCalibB == ERRO_FALTA_CALIBB )	// Se flagCaliB for igual a ERRO_FALTA_CALIBB
+					{
+						clearLine(14);
+						clearLine(15);
+						escrita_texto(420, "Falta CAL B. Verifique a tubula", sizeof("Falta CAL B. Verifique a tubula"));	// Escreve "Falta calibrador A"
+						EscreveCedilhaAOTil();
+						escrita_texto(455, "e o pacote de reagentes", sizeof("e o pacote de reagentes"));// Escreve "Falta calibrador B"
+					}
+					else	// Senão
+					{
+						contErro++;	// contErro recebe 2
+					}
+
+					break;
+				case 2:	// Caso 2 - mV fora da faixa
+
+					if( ( verifyError(TYPEA, NOABNORMAL) & 0xFF ) > ( verifyError(TYPEB, NOABNORMAL) & 0xFF ) )
+					{
+						verificaMaior = TYPEA;
+					}
+					else
+					{
+						verificaMaior = TYPEB;
+					}
+
+					if( ( verifyError(verificaMaior, NOABNORMAL) & 0xFF ) != OK
+						&& ( respCalibA == ERRO || respCalibB == ERRO ) )	// Se verifyError e 0xFF for difente de 0
+					{
+						clearLine(14);
+						stateMachineError(420, verifyError(verificaMaior, NOABNORMAL) & 0xFF, 1);	// Chama máquina de estado de erro
+					}
+					else// Senão
+					{
+						contErro++;// contErro recebe 3
+					}
+
+					break;
+				case 3:	// Caso 3 - Anormal
+
+					if( ( verifyError(TYPEB, ABNORMAL) >> 8 ) != OK
+						&& ( respCalibA == ERRO || respCalibB == ERRO ) )	// Se verifyError move 8 bits para direita for difente de 0
+					{
+						clearLine(14);
+						stateMachineError(420, verifyError(TYPEB, ABNORMAL) >> 8, 2);	// Chama máquina de estado de erro com o verifyError movido 8 bits para a direita
+					}
+
+					else// Senão
+					{
+						contErro++;// contErro recebe 4
+					}
+
+					break;
+				case 4:	// Caso 4 - Variando
+
+					if( ( verifyError(TYPEA, NOABNORMAL) >> 16 ) > ( verifyError(TYPEB, NOABNORMAL) >> 16 ) )
+					{
+						verificaMaior = TYPEA;
+					}
+					else
+					{
+						verificaMaior = TYPEB;
+					}
+
+					if( ( verifyError(TYPEA, ABNORMAL) >> 16 ) != OK
+						&& ( respCalibA == ERRO || respCalibB == ERRO ) )// Se verifyError move168 bits para direita for difente de 0
+					{
+						clearLine(14);
+						stateMachineError(420, verifyError(TYPEB, NOABNORMAL) >> 16, 3);	// Chama máquina de estado de erro com o verifyError movido 16 bits para a direita
+					}
+					else// Senão
+					{
+						contErro = 0;	// contErro recebe 0
+					}
+
+					break;
+				}
+				contErro++;
+			}
+			else{	// Senão
+				timerErro++;
+			}
 		}
 
 		switch(estado_display){
@@ -263,7 +372,7 @@ void display_run( void ){
 
 		case 1:
 
-			flagError = calibA(0);
+			respCalibA = calibA(0);
 			clear_display_text();
 			desenho_menu1();
 			WriteMenuName(menu, PRINCIPAL);
@@ -350,7 +459,7 @@ void display_run( void ){
 				calibValues();	// Faz o cálculo da calibração dos valores padrão
 				flagCalibOk = 1;	// Seta o flag de calibração OK
 			}
-			else if( respCalibA != 0 || respCalibB != 0 )	// Se há erro
+			else if( respCalibA != OK || respCalibB != 0 )	// Se há erro
 				flagCalibOk = 0;	// Desliga o flag de calibração OK
 			clear_display_text();	// Apaga a tela
 			desenho_menu1();	// Desenha a tela do menu 1
@@ -1894,7 +2003,7 @@ unsigned char calibA( unsigned char wash ){
 					escrita_texto( 400, "Lavando...", sizeof("Lavando..."));	// Escreve "Lavando..." na posição 400
 			}
 			else if( verifyKeyBoard() == no )	// Senão se teclado igual a No
-				return ERRO;	// Retorna 2
+				return ERRO_FALTA_CALIBA;	// Retorna 2
 
 			else if( verifyKeyBoard() == um ){	// Senão se teclado igual a 1
 
@@ -2288,7 +2397,7 @@ unsigned char calibB( void ){
 
 			}
 			else if( verifyKeyBoard() == no )	// Senão se teclado igual a No
-				return ERRO;	// Retorna 2
+				return ERRO_FALTA_CALIBB;	// Retorna 2
 
 			else if( verifyKeyBoard() == um ){	// Senão se teclado igual a 1
 
@@ -3602,11 +3711,11 @@ void stateMachineError( unsigned int position, unsigned char error, unsigned cha
 	}
 	if( error != 0 ){
 		if( typeError == 1 )
-			escrita_texto(position + 13, "mV fora da faixa",sizeof("mV fora da faixa"));
+			escrita_texto(position + 14, "mV fora da faixa",sizeof("mV fora da faixa"));
 		else if( typeError == 2 )
-			escrita_texto(position + 13, "ANORMAL",sizeof("ANORMAL"));
+			escrita_texto(position + 14, "ANORMAL",sizeof("ANORMAL"));
 		else
-			escrita_texto(position + 13, "VARIANDO",sizeof("VARIANDO"));
+			escrita_texto(position + 14, "VARIANDO",sizeof("VARIANDO"));
 	}
 
 }

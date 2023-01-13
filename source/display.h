@@ -102,7 +102,9 @@
 
 // Retorno de funções
 #define OK						0
+#define ERRO_FALTA_CALIBA		1
 #define ERRO					2
+#define ERRO_FALTA_CALIBB		3
 
 // Definição do tipo de exame
 #define SORO					0

@@ -196,10 +196,7 @@ void AtualizaHoraRTC( void ){
 			}
 			else if( tecla == left ){	// Senão se tecla é igual a ←
 				if( contDigito % 2 == 0 ){	// Se contDigito % 2 é 0
-					contDigito -= 2;	// contDigito subtrai 2
-					if( contDigito < 0 ){	// Se contDigito é menor que 0
-						contDigito = 0;	// contDigito recebe 0
-					}
+
 					if( contDigito == 0 ){	// Se contDigito é 0
 						escrita_texto( posicaoDia , ConverteNumParaLcd( 2, 0, bcdtodec( dia & 0x3F ) ), ContaCaracteres() + 1 );	// Escreve dia
 					}
@@ -215,21 +212,27 @@ void AtualizaHoraRTC( void ){
 					else if( contDigito == 8 ){	// Senão se contDigito é 8
 						escrita_texto( posicaoMinuto, ConverteNumParaLcd( 2, 0, bcdtodec( minuto & 0x7F ) ), ContaCaracteres() + 1 );	// Escreve minuto
 					}
+					if( contDigito == 0 ){	// Se contDigito é menor que 0
+						contDigito = 0;	// contDigito recebe 0
+					}
+					else{
+						contDigito -= 2;	// contDigito subtrai 2
+					}
 				}
 				else{	// Senão se contDigito % 2 é 1
 					if( contDigito == 1 ){	// Se contDigito é 0
 						escrita_texto( posicaoDia + 1, " ", sizeof(" ") );	// Escreve dia
 					}
-					else if( contDigito == 2 ){		// Senão se contDigito é 2
+					else if( contDigito == 3 ){		// Senão se contDigito é 2
 						escrita_texto( posicaoMes + 1, " ", sizeof(" ") );	// Escreve dia
 					}
-					else if( contDigito == 4 ){		// Senão se contDigito é 4
+					else if( contDigito == 5 ){		// Senão se contDigito é 4
 						escrita_texto( posicaoAno + 1, " ", sizeof(" ") );	// Escreve dia
 					}
-					else if( contDigito  == 6 ){	// Senão se contDigito é 6
+					else if( contDigito  == 7 ){	// Senão se contDigito é 6
 						escrita_texto( posicaoHora + 1, " ", sizeof(" ") );	// Escreve dia
 					}
-					else if( contDigito == 8 ){	// Senão se contDigito é 8
+					else if( contDigito == 9 ){	// Senão se contDigito é 8
 						escrita_texto( posicaoMinuto + 1, " ", sizeof(" ") );	// Escreve dia
 					}
 					contDigito--;	// contDigito subtrai 1
@@ -259,19 +262,19 @@ void AtualizaHoraRTC( void ){
 				}
 				contDigito++;	// contDigito incrementa 1
 				if( contDigito == 2 ){	// Se contDigito igual a 2
-					dia = primeiroDigito*10 + segundoDigito;// dia recebe primeiroDigito * 10 + segundoDigito
+					dia = dectobcd( primeiroDigito*10 + segundoDigito );// dia recebe primeiroDigito * 10 + segundoDigito
 				}
 				else if( contDigito == 4 ){	// Se contDigito igual a 2
-					mes = primeiroDigito*10 + segundoDigito;// dia recebe primeiroDigito * 10 + segundoDigito
+					mes = dectobcd( primeiroDigito*10 + segundoDigito );// dia recebe primeiroDigito * 10 + segundoDigito
 				}
 				else if( contDigito == 6 ){	// Se contDigito igual a 2
-					ano = primeiroDigito*10 + segundoDigito;// dia recebe primeiroDigito * 10 + segundoDigito
+					ano = dectobcd( primeiroDigito*10 + segundoDigito );// dia recebe primeiroDigito * 10 + segundoDigito
 				}
 				else if( contDigito == 8 ){	// Se contDigito igual a 2
-					hora = primeiroDigito*10 + segundoDigito;// dia recebe primeiroDigito * 10 + segundoDigito
+					hora = dectobcd( primeiroDigito*10 + segundoDigito );// dia recebe primeiroDigito * 10 + segundoDigito
 				}
 				else{	// Se contDigito igual a 2
-					minuto = primeiroDigito*10 + segundoDigito; // dia recebe primeiroDigito * 10 + segundoDigito
+					minuto = dectobcd( primeiroDigito*10 + segundoDigito ); // dia recebe primeiroDigito * 10 + segundoDigito
 				}
 
 			}
@@ -292,17 +295,17 @@ void AtualizaHoraRTC( void ){
 
 				// Escreve os minutos
 				g_master_txBuff[0] = Minutes;
-				g_master_txBuff[1] = dectobcd( minuto );
+				g_master_txBuff[1] = minuto ;
 				I2C_WRITE_PCF8653(g_master_txBuff, 2);
 
 				// Escreve as horas
 				g_master_txBuff[0] = Hours;
-				g_master_txBuff[1] = dectobcd( hora );
+				g_master_txBuff[1] = hora;
 				I2C_WRITE_PCF8653(g_master_txBuff, 2);
 
 				// Escreve o dia
 				g_master_txBuff[0] = Days;
-				g_master_txBuff[1] = dectobcd( dia );
+				g_master_txBuff[1] = dia;
 				I2C_WRITE_PCF8653(g_master_txBuff, 2);
 
 				// Escreve a semana
@@ -312,12 +315,12 @@ void AtualizaHoraRTC( void ){
 
 				// Escreve os meses
 				g_master_txBuff[0] = Century_months;
-				g_master_txBuff[1] = dectobcd( mes );
+				g_master_txBuff[1] = mes;
 				I2C_WRITE_PCF8653(g_master_txBuff, 2);
 
 				// Escreve os anos
 				g_master_txBuff[0] = Years;
-				g_master_txBuff[1] = dectobcd( ano );
+				g_master_txBuff[1] = ano;
 				I2C_WRITE_PCF8653(g_master_txBuff, 2);
 
 				// Inicia o RTC
