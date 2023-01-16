@@ -165,4 +165,5 @@ void Cursor( unsigned char posicaoX, unsigned char posicaoY, unsigned char pisca
 float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned char contDigitos, unsigned char apenasNumeros  );
 void EscreveDigito( unsigned int posicao, unsigned char tecla );
 void SalvaFlashConfiguracao( unsigned int enderecoInicial, unsigned int enderecoFinal, int *dados );
+unsigned char ContaDigitos( unsigned int num );
 #endif /* DISPLAY_H_ */

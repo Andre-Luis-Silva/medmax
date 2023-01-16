@@ -171,6 +171,8 @@ void display_run( void ){
 		configRTC();
 	}
 
+
+
 	while(1){
 
 		readQueueKeyboard = verifyKeyBoard(); // Leitura do teclado
@@ -187,7 +189,6 @@ void display_run( void ){
 			 * 		Escreve :
 			 * 		Escreve as horas na tela
 			 */
-
 			timerRTC = 0;
 			unsigned char dia, mes, ano, hora, minuto, posicaoDesenho = 65;
 			I2C_READ_PCF8653( &dia, Days );	// Faz a leitura do dia
@@ -205,7 +206,7 @@ void display_run( void ){
 			escrita_texto( posicaoDesenho + 15, ConverteNumParaLcd( 2, 0, bcdtodec( minuto & 0x7F ) ), ContaCaracteres() + 1 );	// Escreve o minuto salvo com 2 dígitos
 
 			/* Verificação de erro */
-			if( timerErro >= 5 && ( respCalibA != OK || respCalibB != OK ) ){	// Se temporizador de erro chegar a 5 segundos
+			if( timerErro >= 3 && ( respCalibA != OK || respCalibB != OK ) ){	// Se temporizador de erro chegar a 5 segundos
 
 				timerErro = 0;
 				switch( contErro ){	// Escolha contErro
@@ -220,10 +221,6 @@ void display_run( void ){
 						escrita_texto(455, "e o pacote de reagentes", sizeof("e o pacote de reagentes"));
 
 					}
-					else	// Senão
-					{
-						contErro++;	// contErro recebe 1
-					}
 
 					break;
 				case 1:	// Caso 1 - Falta de calibrador B
@@ -235,10 +232,6 @@ void display_run( void ){
 						escrita_texto(420, "Falta CAL B. Verifique a tubula", sizeof("Falta CAL B. Verifique a tubula"));	// Escreve "Falta calibrador A"
 						EscreveCedilhaAOTil();
 						escrita_texto(455, "e o pacote de reagentes", sizeof("e o pacote de reagentes"));// Escreve "Falta calibrador B"
-					}
-					else	// Senão
-					{
-						contErro++;	// contErro recebe 2
 					}
 
 					break;
@@ -259,10 +252,6 @@ void display_run( void ){
 						clearLine(14);
 						stateMachineError(420, verifyError(verificaMaior, NOABNORMAL) & 0xFF, 1);	// Chama máquina de estado de erro
 					}
-					else// Senão
-					{
-						contErro++;// contErro recebe 3
-					}
 
 					break;
 				case 3:	// Caso 3 - Anormal
@@ -274,10 +263,6 @@ void display_run( void ){
 						stateMachineError(420, verifyError(TYPEB, ABNORMAL) >> 8, 2);	// Chama máquina de estado de erro com o verifyError movido 8 bits para a direita
 					}
 
-					else// Senão
-					{
-						contErro++;// contErro recebe 4
-					}
 
 					break;
 				case 4:	// Caso 4 - Variando
@@ -297,14 +282,12 @@ void display_run( void ){
 						clearLine(14);
 						stateMachineError(420, verifyError(TYPEB, NOABNORMAL) >> 16, 3);	// Chama máquina de estado de erro com o verifyError movido 16 bits para a direita
 					}
-					else// Senão
-					{
-						contErro = 0;	// contErro recebe 0
-					}
 
 					break;
 				}
 				contErro++;
+				if( contErro == 4 )
+					contErro = 0;
 			}
 			else{	// Senão
 				timerErro++;
@@ -455,12 +438,15 @@ void display_run( void ){
 			respCalibA = calibA(0);	// Chama o calibrador A
 			clear_display_text();	// Apaga a tela
 			respCalibB = calibB();	// Chama o calibrador B
-			if( respCalibB == 0 ){	// Se as respostas forem OK
+			if( respCalibB == 0 )	// Se as respostas forem OK
+			{
 				calibValues();	// Faz o cálculo da calibração dos valores padrão
 				flagCalibOk = 1;	// Seta o flag de calibração OK
 			}
 			else if( respCalibA != OK || respCalibB != 0 )	// Se há erro
+			{
 				flagCalibOk = 0;	// Desliga o flag de calibração OK
+			}
 			clear_display_text();	// Apaga a tela
 			desenho_menu1();	// Desenha a tela do menu 1
 			WriteMenuName(menu, PRINCIPAL);	// Escreve o menu principal
@@ -2214,7 +2200,7 @@ unsigned char calibA( unsigned char wash ){
 						}
 
 					}
-					contReadAD = 0;	// Zera contador de leitura AD
+					contReadAD = 1;	// Zera contador de leitura AD
 
 					// Medida anterior recebe Medida atual
 					medidaAnterior_K = voltageCalA_K;
@@ -2606,7 +2592,7 @@ unsigned char calibB( void ){
 						}
 
 					}
-					contReadAD = 0;	// Zera contador de leitura AD
+					contReadAD = 1;	// Zera contador de leitura AD
 
 					// Medida anterior recebe Medida atual
 					medidaAnterior_K = voltageCalB_K;
@@ -2731,7 +2717,7 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 				escrita_texto(381, " 1:9", sizeof(" 1:9"));	// Escreve "1:9"
 
 			}
-			escrita_texto( 30, ConverteNumParaLcd(5, 0, examesFeitos), sizeof(5));	// Escreve a quantidade de exames na posição 30
+			escrita_texto( 30, ConverteNumParaLcd(4, 0, examesFeitos), 5);	// Escreve a quantidade de exames na posição 30
 			escrita_texto( 34, ":", sizeof(":"));	// Escreve : na posição 34
 			escrita_texto( 35, "0000000000001", sizeof("0000000000001"));	// Escreve o n° de série 0000000000001 na posição 35
 			escrita_texto( 271, "Levante a Sonda para Aspirar", sizeof("Levante a Sonda para Aspirar"));
@@ -2782,7 +2768,7 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 			}
 			else if( verifyKeyBoard() == yes ){ 	//
 				escrita_texto(401, "Aspirando", sizeof("Aspirando"));		// Escreve “Aspirando“ na linha 390
-				move_tripa(WAYAHOUR,SPEEDTRP1,1800);	// Aciona tripa por 2,4 segundos na velocidade 1
+				move_tripa(WAYAHOUR,SPEEDTRP1,1500);	// Aciona tripa por 2,4 segundos na velocidade 1
 				clearLine(7);	// Apaga a linha 7
 				clearLine(9);
 				escrita_texto(215, "Favor abaixar a Sonda", sizeof("Favor abaixar a Sonda"));	// Escreve “Favor abaixar a Sonda” na posição 210
@@ -2829,31 +2815,31 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve os segundos
 
 					escrita_texto(91, "K    ", sizeof("K   "));
-					escrita_texto(97, numtolcd(Ck, CAL), 7);
+					escrita_texto(97, ConverteNumParaLcd(ContaDigitos(Ck), 2, Ck), ContaCaracteres() + 1);
 					escrita_texto(104, "mmol/L", sizeof("mmol/L"));
 					escrita_texto(112, numtolcd(k * 8.0325 / contReadAD, CAL), 7);
 					escrita_texto(118, "mV", sizeof( "mV"));
 
 					escrita_texto(151, "Na    ", sizeof("K   "));
-					escrita_texto(157, numtolcd(Cna, CAL), 7);
+					escrita_texto(157, ConverteNumParaLcd(ContaDigitos(Cna), 2, Cna), ContaCaracteres() + 1);
 					escrita_texto(164, "mmol/L", sizeof("mmol/L"));
 					escrita_texto(172, numtolcd(na * 8.0325 / contReadAD, CAL), 7);
 					escrita_texto(178, "mV", sizeof( "mV"));
 
 					escrita_texto(211, "Cl    ", sizeof("Cl   "));
-					escrita_texto(217, numtolcd(Ccl, CAL), 7);
+					escrita_texto(217, ConverteNumParaLcd(ContaDigitos(Ccl), 2, Ccl), ContaCaracteres() + 1);
 					escrita_texto(224, "mmol/L", sizeof("mmol/L"));
 					escrita_texto(232, numtolcd(cl * 8.0325 / contReadAD, CAL), 7);
 					escrita_texto(238, "mV", sizeof( "mV"));
 
 					escrita_texto(271, "Ca    ", sizeof("Ca    "));
-					escrita_texto(277, numtolcd(Cca, CAL), 7);
+					escrita_texto(277, ConverteNumParaLcd(ContaDigitos(Cca), 2, Cca), ContaCaracteres() + 1);
 					escrita_texto(284, "mmol/L", sizeof("mmol/L"));
 					escrita_texto(292, numtolcd(ca * 8.0325 / contReadAD, CAL), 7);
 					escrita_texto(298, "mV", sizeof( "mV"));
 
 					escrita_texto(331, "pH    ", sizeof("pH    "));
-					escrita_texto(337, numtolcd(CpH, CAL), 7);
+					escrita_texto(337, ConverteNumParaLcd(ContaDigitos(CpH), 2, CpH), ContaCaracteres() + 1);
 					escrita_texto(344, "      ", sizeof("      "));
 					escrita_texto(352, numtolcd(ph * 8.0325 / contReadAD, CAL), 7);
 					escrita_texto(358, "mV", sizeof( "mV"));
@@ -2911,11 +2897,11 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 
 				}
 				else{
-					Ck = Ck_standard * pow( 10, (k * 8.0325 / contReadAD) / ( ( voltageCalB_K - voltageCalA_K ) * 3.32 ) );
-					CpH = CpH_standard * pow( 10, (ph * 8.0325 / contReadAD) / ( ( voltageCalB_pH - voltageCalA_pH ) * 47.19 ) );
+					Ck = Ck_standard * pow( 10, (k * 8.0325 / contReadAD) / ( ( voltageCalB_K - voltageCalA_K ) * 3.32 ) ) * 100;
+					CpH = CpH_standard * pow( 10, (ph * 8.0325 / contReadAD) / ( ( voltageCalB_pH - voltageCalA_pH ) * 47.19 ) )* 100;
 					Cca = Cca_standard * pow( 10, (ca * 8.0325 / contReadAD) / ( ( voltageCalB_Ca - voltageCalA_Ca ) * 3.31 ) ) * 100;
-					Ccl = Ccl_standard * pow( 10, (cl * 8.0325 / contReadAD) / ( ( voltageCalA_Cl - voltageCalB_Cl ) * 5.105) ) * 100;
-					Cna = Cna_standard * pow( 10, (na * 8.0325 / contReadAD) / ( ( voltageCalB_Na - voltageCalA_Na ) * 9.633) );
+					Ccl = Ccl_standard * pow( 10, (cl * 8.0325 / contReadAD) / ( (int)( voltageCalA_Cl - voltageCalB_Cl ) * 5.105) ) * 100;
+					Cna = Cna_standard * pow( 10, (na * 8.0325 / contReadAD) / ( ( voltageCalA_Na - voltageCalB_Na ) * 9.633) ) * 100;
 
 					// Faz a verificação da diferença e armazena o erro em uma flag
 					if( medidaAnterior_K != 0 && medidaAnterior_Ca != 0 && medidaAnterior_Na != 0 && medidaAnterior_Cl != 0 && medidaAnterior_pH != 0 ){
@@ -2951,7 +2937,7 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 					ca = 0;
 					cl = 0;
 					na = 0;
-					contReadAD = 0;
+					contReadAD = 1;
 					if( erroDiferencaTensoes == 0 && segundos < 27 ){
 						Keep_Configuration();
 						estado = 4;
@@ -2980,6 +2966,7 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 				clear_display_text();
 				move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
 				estado = 0;
+				examesFeitos++;	// Incrementa a quantidade de exames
 			}
 
 			break;
@@ -3339,7 +3326,7 @@ void calibValues( void ){
 
 	Ck_standard = 4 / ( pow( 10, ( voltageCalA_K  / (float)( ( voltageCalB_K - voltageCalA_K ) * 3.32 ) ) ) );
 	Cna_standard = 140 / ( pow( 10, voltageCalA_Na / (float)( ( voltageCalA_Na - voltageCalB_Na ) * 9.633) ) );
-	Ccl_standard = 110 / ( pow( 10, voltageCalA_Cl / (float)( ( voltageCalA_Cl - voltageCalB_Cl ) * 5.105 ) ) );
+	Ccl_standard = 110 / ( pow( 10, voltageCalA_Cl / ( (int)( voltageCalA_Cl - voltageCalB_Cl ) * 5.105 ) ) );
 	Cca_standard = 1.25 / ( pow( 10, voltageCalA_Ca / (float)( ( voltageCalB_Ca - voltageCalA_Ca ) * 3.31 ) ) );
 	CpH_standard = 7.4 / ( pow( 10, voltageCalA_pH / (float)( ( voltageCalB_pH - voltageCalA_pH ) * 47.19 ) ) );
 
@@ -4457,7 +4444,6 @@ char ContaCaracteres( void ){
 	for( unsigned char i = 0; i < 6; i ++ )
 		if( data[i] == 0 )
 			return i;
-	return 0;
 
 }
 
@@ -5042,4 +5028,28 @@ void SalvaFlashConfiguracao( unsigned int enderecoInicial, unsigned int endereco
 
 	FLASH_Program(&s_flashDriver, ADDR_CONFIGURACAO, vetorMemoria, 1024);	// Escreve na memória
 
+}
+
+unsigned char ContaDigitos( unsigned int num ){
+
+	if( num >= 10000 )	// Se num maior ou igual a 10000
+	{
+		return 5;	// retorna 5
+	}
+	else if( num >= 1000 )	// Senão se num maior ou igual a 1000
+	{
+		return 4;	// retorna 4
+	}
+	else if( num >= 100 )	// Senão se num maior ou igual a 100
+	{
+		return 3;	// retorna 3
+	}
+	else if( num >= 10 )	// Senão se num maior ou igual a 10
+	{
+		return 2;	// retorna 2
+	}
+	else	// Senão
+	{
+		return 1;	// retorna 1
+	}
 }
