@@ -171,8 +171,6 @@ void display_run( void ){
 		configRTC();
 	}
 
-
-
 	while(1){
 
 		readQueueKeyboard = verifyKeyBoard(); // Leitura do teclado
@@ -206,8 +204,8 @@ void display_run( void ){
 			escrita_texto( posicaoDesenho + 15, ConverteNumParaLcd( 2, 0, bcdtodec( minuto & 0x7F ) ), ContaCaracteres() + 1 );	// Escreve o minuto salvo com 2 dígitos
 
 			/* Verificação de erro */
-			if( timerErro >= 3 && ( respCalibA != OK || respCalibB != OK ) ){	// Se temporizador de erro chegar a 5 segundos
-
+			if( timerErro >= 3 && ( respCalibA != OK || respCalibB != OK ) )	// Se temporizador de erro chegar a 5 segundos
+			{
 				timerErro = 0;
 				switch( contErro ){	// Escolha contErro
 				case 0:	// Caso 0 - Falta de calibrador A
@@ -285,12 +283,21 @@ void display_run( void ){
 
 					break;
 				}
-				contErro++;
-				if( contErro == 4 )
-					contErro = 0;
+				contErro++;	// Contador de erro
+				if( contErro == 4 )	// Se erro igual a 4
+				{
+					contErro = 0;	// Erro recebe 0
+				}
 			}
-			else{	// Senão
-				timerErro++;
+			else
+			{	// Senão
+				timerErro++;	// Contador de tempo
+				if( respCalibA == OK && respCalibB == OK )	// Se está sem erro
+				{
+					// Apaga as linhas dos erros
+					clearLine(14);
+					clearLine(15);
+				}
 			}
 		}
 
@@ -362,74 +369,6 @@ void display_run( void ){
 			send_command(Display_mode_text | Display_mode_graphic);
 			status(1);
 			estado_display = 0;
-			/*if( controlMenu == 0 ){
-
-				respCalib = calibA(0);
-
-				if( respCalib == 0 )
-					controlMenu = 1;
-				else if( respCalib == 2 ){
-
-					controlMenu = 0;
-					clear_display_text();
-					desenho_menu1();
-					desenha_fundo_menu( menu, 1 );
-					writeMenuName(menu);
-					send_command(Display_mode_text | Display_mode_graphic);
-					status(1);
-					estado_display = 0;
-
-				}
-
-			}else if( controlMenu == 1 ){
-
-				clearLine(3);
-				clearLine(5);
-				clearLine(7);
-				clearLine(9);
-				clearLine(11);
-				contError = verifyError(TYPEA, NOABNORMAL);
-				if( contError != 0 ){
-					clearLine(13);
-					controlMenu = 2;
-					flagError = 1;
-				}
-				else{
-					flagError = 0;
-					controlMenu = 0;
-					clear_display_text();
-					desenho_menu1();
-					desenha_fundo_menu( menu, 1 );
-					writeMenuName(menu);
-					send_command(Display_mode_text | Display_mode_graphic);
-					status(1);
-					estado_display = 0;
-				}
-			}else if( controlMenu == 2 ){
-
-				escrita_texto(450, "YES=CALIBRAR NO=SAIR", sizeof("YES=CALIBRAR NO=SAIR"));
-
-				if( readQueueKeyboard == yes ){
-					estado_display = 1;
-					controlMenu = 0;
-					clear_display_text();
-
-				}
-				else if( readQueueKeyboard == no ){
-
-					controlMenu = 0;
-					clear_display_text();
-					desenho_menu1();
-					desenha_fundo_menu( menu, 1 );
-					writeMenuName(menu);
-					send_command(Display_mode_text | Display_mode_graphic);
-					status(1);
-					estado_display = 0;
-
-				}
-				readQueueKeyboard = 0;
-
-			}*/
 
 			break;
 
@@ -453,99 +392,6 @@ void display_run( void ){
 			send_command(Display_mode_text | Display_mode_graphic);	// Chama o desenho da tela
 			status(1);
 			estado_display = 0;	// Volta o display para o estado inicial
-			/*			if( controlMenu == 0 ){
-
-				respCalibA = calibA(0);
-
-				if( respCalibA == 0 )
-					controlMenu = 1;
-
-			}else if( controlMenu == 1 ){
-				if( !flagCalibB ){
-					clearLine(3);
-					clearLine(5);
-					clearLine(7);
-					clearLine(9);
-					clearLine(11);
-					contError = verifyError(TYPEA, NOABNORMAL);
-				}
-				if( contError != 0 && !flagCalibB ){
-					clearLine(13);
-					controlMenu = 3;
-					flagError = 1;
-				}
-				else{
-
-					flagError = 0;
-					respCalibB = calibB();
-					if( respCalibB == 0 ){
-						controlMenu = 2;
-					}
-
-				}
-			}
-			else if( controlMenu == 2 ){
-				clearLine(3);
-				clearLine(5);
-				clearLine(7);
-				clearLine(9);
-				clearLine(11);
-				contError = verifyError(TYPEB, ABNORMAL);
-				if( contError != 0 ){
-					clearLine(13);
-					controlMenu = 4;
-					flagError = 1;
-				}
-				else{
-
-					calibA(1);
-					flagError = 0;
-					calibValues();
-					flagCalibOk = 1;
-					controlMenu = 0;
-					clear_display_text();
-					desenho_menu1();
-					desenha_fundo_menu( menu, 1 );
-					writeMenuName(menu);
-					send_command(Display_mode_text | Display_mode_graphic);
-					status(1);
-					estado_display = 0;
-
-				}
-			}
-			else if( controlMenu == 3 || controlMenu == 4 ){
-
-				escrita_texto(450, "YES=CALIBRAR NO=SAIR", sizeof("YES=CALIBRAR NO=SAIR"));
-
-				if( readQueueKeyboard == yes ){
-					estado_display = 2;
-					clear_display_text();
-					if( controlMenu == 3 ){
-						controlMenu = 0;
-					}
-					else if( controlMenu == 4 ){
-						flagCalibB = 1;
-						controlMenu = 1;
-
-					}
-				}
-				else if( readQueueKeyboard == no ){
-
-					flagCalibB = 0;
-					controlMenu = 0;
-					calibA(1);
-					clear_display_text();
-					desenho_menu1();
-					desenha_fundo_menu( menu, 1 );
-					writeMenuName(menu);
-					send_command(Display_mode_text | Display_mode_graphic);
-					status(1);
-					estado_display = 0;
-
-				}
-				readQueueKeyboard = 0;
-
-			}*/
 
 			break;
 
@@ -2660,27 +2506,119 @@ unsigned char calibB( void ){
 unsigned char TesteAmostras( unsigned char tipoTeste ){
 
 	unsigned char sample, contReadAd = 0, estado = 0, segundos = 0, respMotor = 0,  erroDiferencaTensoes = 0;
+	unsigned int dadosMemoria[8];
 	unsigned int contReadAD = 0, timeout = 0, temporizador;
 	unsigned int medidaAnterior_K = 0, medidaAnterior_Cl = 0, medidaAnterior_Na = 0, medidaAnterior_Ca = 0, medidaAnterior_pH = 0;
 	static unsigned long k = 0, na = 0, cl = 0, ph = 0, ca = 0;
-	unsigned short contAddrMemoria = 2569, examesFeitos = 1;
+	unsigned int contAddrMemoria = 0, examesFeitos = 1, flagExame = 0;
+	unsigned long long codigoDeBarras = 1, auxiliarCodigoDebarras;
 	adc16_channel_config_t adc16ChannelConfigStruct;
 	adc16ChannelConfigStruct.enableInterruptOnConversionCompleted = false;
 	adc16ChannelConfigStruct.enableDifferentialConversion = false;
 
-	for( unsigned int i = 0xF7120; i >= ADDR_EXAME; i = i - DADOS_EXAMES ){	// Faz a verificação de memória apagada
-
-		if( *(volatile unsigned int *)(i) != 0xFFFFFFFF ){	// Se a memória foi escrita
-			examesFeitos = ( i - ADDR_EXAME ) / DADOS_EXAMES;
+	for( unsigned int i = ADDR_EXAME; i < 0xF7120; i = i + DADOS_EXAMES )	// Faz a verificação de memória apagada
+	{
+		if( *(volatile unsigned int *)(i) == 0xFFFFFFFF )	// Se a memória foi escrita
+		{
 			break;
 		}
-		contAddrMemoria--; // Caso não tenha encontrado memória, decrementa contador de endereço
+		else
+		{
+			examesFeitos++;	// Incrementa quantidade de exames feitos
+			contAddrMemoria++; // Caso não tenha encontrado memória, decrementa contador de endereço
+			codigoDeBarras = ((*(volatile unsigned long *)(i + (i - ADDR_EXAME) * DADOS_EXAMES + 24) << 32) |
+							 (*(volatile unsigned long *)(i + (i - ADDR_EXAME) * DADOS_EXAMES + 28))) + 1;
+		}
 
 	}
 
-	while( 1 ){
+	float slopeEletrodos[5], interceptEletrodos[5];
+	// Verificação se há dados salvos de Slope para o eletrodo K
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_K) != 0xFFFFFFFF )
+		slopeEletrodos[0] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_SLOPE_K);
+	else
+		slopeEletrodos[0] = 1;
 
-		switch(estado){
+	// Verificação se há dados salvos de Slope para o eletrodo Na
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Na) != 0xFFFFFFFF )
+		slopeEletrodos[1] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Na);
+	else
+		slopeEletrodos[1] = 1;
+
+	// Verificação se há dados salvos de Slope para o eletrodo Cl
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Cl) != 0xFFFFFFFF )
+		slopeEletrodos[2] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Cl);
+	else
+		slopeEletrodos[2] = 1;
+
+	// Verificação se há dados salvos de Slope para o eletrodo Ca
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Ca) != 0xFFFFFFFF )
+		slopeEletrodos[3] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_SLOPE_Ca);
+	else
+		slopeEletrodos[3] = 1;
+
+	// Verificação se há dados salvos de Slope para o eletrodo pH
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_pH) != 0xFFFFFFFF )
+		slopeEletrodos[4] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_SLOPE_pH);
+	else
+		slopeEletrodos[4] = 1;
+
+	// Verificação se há dados salvos de intercept para o eletrodo K
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_K) != 0xFFFFFFFF )
+		interceptEletrodos[0] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_K);
+	else
+		interceptEletrodos[0] = 0;
+
+	// Verificação se há dados salvos de intercept para o eletrodo Na
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Na) != 0xFFFFFFFF )
+		interceptEletrodos[1] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Na);
+	else
+		interceptEletrodos[1] = 0;
+
+	// Verificação se há dados salvos de intercept para o eletrodo Cl
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Cl) != 0xFFFFFFFF )
+		interceptEletrodos[2] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Cl);
+	else
+		interceptEletrodos[2] = 0;
+
+	// Verificação se há dados salvos de intercept para o eletrodo Ca
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Ca) != 0xFFFFFFFF )
+		interceptEletrodos[3] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_Ca);
+	else
+		interceptEletrodos[3] = 0;
+
+	// Verificação se há dados salvos de intercept para o eletrodo pH
+	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_pH) != 0xFFFFFFFF )
+		interceptEletrodos[4] = *(volatile float *)(ADDR_CONFIGURACAO + ADDR_INTERCEPT_pH);
+	else
+		interceptEletrodos[4] = 0;
+
+
+	writeLine(0);
+	writeLine(13);
+
+	if( tipoTeste == SORO )	// Se tipoTeste igual a SORO
+	{
+		escrita_texto( 0x08, "TESTE DE SORO", sizeof("TESTE DE SORO"));	// Escreve "Teste de Soro"
+	}
+	else if( tipoTeste == SANGUE )	// Senão se tipoTeste igual a SANGUE
+	{
+		escrita_texto( 0x06, "TESTE DE SANGUE", sizeof("TESTE DE SANGUE"));	// Escreve "Teste de Sangue"
+	}
+	else if( tipoTeste == URINA )	// Senão se tipoTeste igual a URINA
+	{
+		escrita_texto( 0x07, "TESTE DE URINA", sizeof("TESTE DE URINA"));	// Escreve "Teste de Urina"
+		escrita_texto( 331, "Favor diluir a urina no calibrador A na propor",
+				sizeof( "Favor diluir a urina no calibrador A na propor" ));	// Escreve "Favor diluir a urina no calibrador A na propor"
+		EscreveCedilhaAOTil();
+		escrita_texto(381, " 1:9", sizeof(" 1:9"));	// Escreve "1:9"
+	}
+
+	while( 1 )
+	{
+
+		switch(estado)
+		{
 		case 0:	//Início movimento dos motores
 
 			Keep_Configuration();
@@ -2703,23 +2641,11 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 			move_mux(POSITION1, SPEEDMUX1);
 			vTaskDelay(TIMERCOM);
 
-			writeLine(0);
-			writeLine(13);
-			if( tipoTeste == SORO )	// Se tipoTeste igual a SORO
-				escrita_texto( 0x08, "TESTE DE SORO", sizeof("TESTE DE SORO"));	// Escreve "Teste de Soro"
-			else if( tipoTeste == SANGUE )	// Senão se tipoTeste igual a SANGUE
-				escrita_texto( 0x06, "TESTE DE SANGUE", sizeof("TESTE DE SANGUE"));	// Escreve "Teste de Sangue"
-			else if( tipoTeste == URINA ){	// Senão se tipoTeste igual a URINA
-				escrita_texto( 0x07, "TESTE DE URINA", sizeof("TESTE DE URINA"));	// Escreve "Teste de Urina"
-				escrita_texto( 331, "Favor diluir a urina no calibrador A na propor",
-						sizeof( "Favor diluir a urina no calibrador A na propor" ));	// Escreve "Favor diluir a urina no calibrador A na propor"
-				EscreveCedilhaAOTil();
-				escrita_texto(381, " 1:9", sizeof(" 1:9"));	// Escreve "1:9"
-
-			}
 			escrita_texto( 30, ConverteNumParaLcd(4, 0, examesFeitos), 5);	// Escreve a quantidade de exames na posição 30
 			escrita_texto( 34, ":", sizeof(":"));	// Escreve : na posição 34
-			escrita_texto( 35, "0000000000001", sizeof("0000000000001"));	// Escreve o n° de série 0000000000001 na posição 35
+			escrita_texto( 35, ConverteNumParaLcd( 3, 0, ( codigoDeBarras / 10000000000 )), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+			escrita_texto( 38, ConverteNumParaLcd( 5, 0, ( codigoDeBarras % 10000000000 / 100000 ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+			escrita_texto( 43, ConverteNumParaLcd( 5, 0, codigoDeBarras % 100000 ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
 			escrita_texto( 271, "Levante a Sonda para Aspirar", sizeof("Levante a Sonda para Aspirar"));
 			escrita_texto( 450, "YES=Asp", sizeof("YES=Asp"));
 			escrita_texto( 459, "NO=Sair", sizeof("NO=Sair"));
@@ -2730,7 +2656,23 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 
 		case 1:	// Estado 1. Verificação da agulha
 
-			if( agulhaFechada ){	// Se sonda fechada
+
+			if( verifyKeyBoard() == left )	// Senão se tecla igual a left
+			{
+				auxiliarCodigoDebarras = EscreveCodigoDeBarras();
+				if( auxiliarCodigoDebarras == 0 )	// Se a resposta for igual a 0, indica erro
+				{
+					// Escreve o valor anterior
+					escrita_texto( 35, ConverteNumParaLcd( 3, 0, ( codigoDeBarras / 10000000000 )), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					escrita_texto( 38, ConverteNumParaLcd( 5, 0, ( codigoDeBarras % 10000000000 / 100000 ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					escrita_texto( 43, ConverteNumParaLcd( 5, 0, codigoDeBarras % 100000 ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+				}
+				else
+				{
+					codigoDeBarras = auxiliarCodigoDebarras;	// Recebe o valor atual de código de barras
+				}
+			}
+			else if( agulhaFechada ){	// Se sonda fechada
 				if( flag_timer ){	// Se flag timer igual a 1
 					flag_timer = 0;	// Flag timer recebe 0
 					timeout++;	// Incrementa timeout de 1
@@ -2738,7 +2680,10 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 
 						move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
 						clear_display_text();	// Limpa a tela
-						calibA(1);
+						if( flagExame )	// Se detectou líquido e fez um exame
+						{
+							calibA(1);	// Chama a função lavando
+						}
 						return OK;
 
 					}
@@ -2747,9 +2692,7 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 			else if( agulhaAberta ){		// Se Sonda está aberta
 				estado = 2;		// Estado recebe 1
 				timeout = 0;	// Timeout recebe 0
-
 			}
-
 
 			break;
 
@@ -2761,16 +2704,20 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 
 					move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
 					clear_display_text();	// Limpa a tela
-					calibA(1);
+					if( flagExame )	// Se detectou líquido e fez um exame
+					{
+						calibA(1);	// Chama a função lavando
+					}
 					return OK;
 
 				}
 			}
-			else if( verifyKeyBoard() == yes ){ 	//
+			else if( verifyKeyBoard() == yes )	// Se teclado igual a Yes
+			{
 				escrita_texto(401, "Aspirando", sizeof("Aspirando"));		// Escreve “Aspirando“ na linha 390
-				move_tripa(WAYAHOUR,SPEEDTRP1,1500);	// Aciona tripa por 2,4 segundos na velocidade 1
+				move_tripa(WAYAHOUR,SPEEDTRP1,1200);	// Aciona tripa por 2,4 segundos na velocidade 1
 				clearLine(7);	// Apaga a linha 7
-				clearLine(9);
+				clearLine(9);	// Apaga a linha 9
 				escrita_texto(215, "Favor abaixar a Sonda", sizeof("Favor abaixar a Sonda"));	// Escreve “Favor abaixar a Sonda” na posição 210
 				while( agulhaAberta );	// Enquanto a sonda está aberta
 				clearLine(7);
@@ -2783,6 +2730,7 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 					escrita_texto( 401, "Testando", sizeof("Testando") );
 					vTaskDelay(10000);	// Delay de 10 segundos
 					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve segundo
+					flagExame = 1;
 					GPIO_PortClear(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 				}
 				else{
@@ -2800,7 +2748,21 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 				clear_display_text();	// Limpa a tela
 				return OK;
 			}
-
+			else if( verifyKeyBoard() == left )	// Senão se tecla igual a left
+			{
+				auxiliarCodigoDebarras = EscreveCodigoDeBarras();
+				if( auxiliarCodigoDebarras == 0 )	// Se a resposta for igual a 0, indica erro
+				{
+					// Escreve o valor anterior
+					escrita_texto( 35, ConverteNumParaLcd( 3, 0, ( codigoDeBarras / 10000000000 )), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					escrita_texto( 38, ConverteNumParaLcd( 5, 0, ( codigoDeBarras % 10000000000 / 100000 ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					escrita_texto( 43, ConverteNumParaLcd( 5, 0, codigoDeBarras % 100000 ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+				}
+				else
+				{
+					codigoDeBarras = auxiliarCodigoDebarras;	// Recebe o valor atual de código de barras
+				}
+			}
 			break;
 
 		case 3:	// Se detectou líquido começa a contagem de tempo
@@ -2817,31 +2779,31 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 					escrita_texto(91, "K    ", sizeof("K   "));
 					escrita_texto(97, ConverteNumParaLcd(ContaDigitos(Ck), 2, Ck), ContaCaracteres() + 1);
 					escrita_texto(104, "mmol/L", sizeof("mmol/L"));
-					escrita_texto(112, numtolcd(k * 8.0325 / contReadAD, CAL), 7);
+					escrita_texto(112, ConverteNumParaLcd( ContaDigitos(k * 8.0325 / contReadAD), 2, k * 8.0325 / contReadAD), ContaCaracteres() + 1 );
 					escrita_texto(118, "mV", sizeof( "mV"));
 
 					escrita_texto(151, "Na    ", sizeof("K   "));
 					escrita_texto(157, ConverteNumParaLcd(ContaDigitos(Cna), 2, Cna), ContaCaracteres() + 1);
 					escrita_texto(164, "mmol/L", sizeof("mmol/L"));
-					escrita_texto(172, numtolcd(na * 8.0325 / contReadAD, CAL), 7);
+					escrita_texto(172, ConverteNumParaLcd( ContaDigitos(na * 8.0325 / contReadAD), 2, na * 8.0325 / contReadAD), ContaCaracteres() + 1 );
 					escrita_texto(178, "mV", sizeof( "mV"));
 
 					escrita_texto(211, "Cl    ", sizeof("Cl   "));
 					escrita_texto(217, ConverteNumParaLcd(ContaDigitos(Ccl), 2, Ccl), ContaCaracteres() + 1);
 					escrita_texto(224, "mmol/L", sizeof("mmol/L"));
-					escrita_texto(232, numtolcd(cl * 8.0325 / contReadAD, CAL), 7);
+					escrita_texto(232, ConverteNumParaLcd( ContaDigitos(cl * 8.0325 / contReadAD), 2, cl * 8.0325 / contReadAD), ContaCaracteres() + 1 );
 					escrita_texto(238, "mV", sizeof( "mV"));
 
 					escrita_texto(271, "Ca    ", sizeof("Ca    "));
 					escrita_texto(277, ConverteNumParaLcd(ContaDigitos(Cca), 2, Cca), ContaCaracteres() + 1);
 					escrita_texto(284, "mmol/L", sizeof("mmol/L"));
-					escrita_texto(292, numtolcd(ca * 8.0325 / contReadAD, CAL), 7);
+					escrita_texto(292, ConverteNumParaLcd( ContaDigitos(ca * 8.0325 / contReadAD), 2, ca * 8.0325 / contReadAD), ContaCaracteres() + 1 );
 					escrita_texto(298, "mV", sizeof( "mV"));
 
 					escrita_texto(331, "pH    ", sizeof("pH    "));
 					escrita_texto(337, ConverteNumParaLcd(ContaDigitos(CpH), 2, CpH), ContaCaracteres() + 1);
 					escrita_texto(344, "      ", sizeof("      "));
-					escrita_texto(352, numtolcd(ph * 8.0325 / contReadAD, CAL), 7);
+					escrita_texto(352, ConverteNumParaLcd( ContaDigitos(ph * 8.0325 / contReadAD), 2, ph * 8.0325 / contReadAD), ContaCaracteres() + 1 );
 					escrita_texto(358, "mV", sizeof( "mV"));
 
 					segundos--; // Decrementa segundos
@@ -2897,41 +2859,45 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 
 				}
 				else{
-					Ck = Ck_standard * pow( 10, (k * 8.0325 / contReadAD) / ( ( voltageCalB_K - voltageCalA_K ) * 3.32 ) ) * 100;
-					CpH = CpH_standard * pow( 10, (ph * 8.0325 / contReadAD) / ( ( voltageCalB_pH - voltageCalA_pH ) * 47.19 ) )* 100;
-					Cca = Cca_standard * pow( 10, (ca * 8.0325 / contReadAD) / ( ( voltageCalB_Ca - voltageCalA_Ca ) * 3.31 ) ) * 100;
-					Ccl = Ccl_standard * pow( 10, (cl * 8.0325 / contReadAD) / ( (int)( voltageCalA_Cl - voltageCalB_Cl ) * 5.105) ) * 100;
-					Cna = Cna_standard * pow( 10, (na * 8.0325 / contReadAD) / ( ( voltageCalA_Na - voltageCalB_Na ) * 9.633) ) * 100;
+					Ck = Ck_standard * pow( 10, (k * 8.0325 / contReadAD) / ( ( voltageCalB_K - voltageCalA_K ) * 3.32 ) ) * 100 * slopeEletrodos[0] + interceptEletrodos[0];
+					CpH = CpH_standard * pow( 10, (ph * 8.0325 / contReadAD) / ( ( voltageCalB_pH - voltageCalA_pH ) * 47.19 ) )* 100 * slopeEletrodos[4] + interceptEletrodos[4];
+					Cca = Cca_standard * pow( 10, (ca * 8.0325 / contReadAD) / ( ( voltageCalB_Ca - voltageCalA_Ca ) * 3.31 ) ) * 100 * slopeEletrodos[3] + interceptEletrodos[3];
+					Ccl = Ccl_standard * pow( 10, (cl * 8.0325 / contReadAD) / ( (int)( voltageCalA_Cl - voltageCalB_Cl ) * 5.105) ) * 100 * slopeEletrodos[2] + interceptEletrodos[2];
+					Cna = Cna_standard * pow( 10, (na * 8.0325 / contReadAD) / ( ( voltageCalA_Na - voltageCalB_Na ) * 9.633) ) * 100 * slopeEletrodos[1] + interceptEletrodos[1];
 
 					// Faz a verificação da diferença e armazena o erro em uma flag
 					if( medidaAnterior_K != 0 && medidaAnterior_Ca != 0 && medidaAnterior_Na != 0 && medidaAnterior_Cl != 0 && medidaAnterior_pH != 0 ){
 
-						if( abs(medidaAnterior_K - k * 8.0325 / contReadAD) < 500 )
+						if( abs(medidaAnterior_K - Ck) < 500 )
 							erroDiferencaTensoes &= ~(1 << ErrorK);
 						else
 							erroDiferencaTensoes |= 1 << ErrorK;
 
-						if( abs(medidaAnterior_Na - na * 8.0325 / contReadAD) < 500 )
+						if( abs(medidaAnterior_Na - Cna) < 500 )
 							erroDiferencaTensoes &= ~(1 << ErrorNa);
 						else
 							erroDiferencaTensoes |= 1 << ErrorNa;
 
-						if( abs(medidaAnterior_Cl - cl * 8.0325 / contReadAD) < 500 )
+						if( abs(medidaAnterior_Cl - Ccl) < 500 )
 							erroDiferencaTensoes &= ~(1 << ErrorCl);
 						else
 							erroDiferencaTensoes |= 1 << ErrorCl;
 
-						if( abs(medidaAnterior_Ca - ca * 8.0325 / contReadAD) < 500 )
+						if( abs(medidaAnterior_Ca - Cca) < 500 )
 							erroDiferencaTensoes &= ~(1 << ErrorCa);
 						else
 							erroDiferencaTensoes |= 1 << ErrorCa;
 
-						if( abs(medidaAnterior_pH - ph * 8.0325 / contReadAD) < 500 )
+						if( abs(medidaAnterior_pH - CpH) < 500 )
 							erroDiferencaTensoes &= ~(1 << ErrorpH);
 						else
 							erroDiferencaTensoes |= 1 << ErrorpH;
 					}
-
+					medidaAnterior_K = Ck;	// Recebe e leitura Ck anterior
+					medidaAnterior_Na = Cna;	// Recebe e leitura Cna anterior
+					medidaAnterior_Ca = Cca;	// Recebe e leitura Cca anterior
+					medidaAnterior_Cl = Ccl;	// Recebe e leitura Ccl anterior
+					medidaAnterior_pH = CpH;	// Recebe e leitura CpH anterior
 					k = 0;
 					ph = 0;
 					ca = 0;
@@ -2941,14 +2907,28 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 					if( erroDiferencaTensoes == 0 && segundos < 27 ){
 						Keep_Configuration();
 						estado = 4;
+						dadosMemoria[0] = Ck * 100;	// dadosMemoria[0] recebe Ck
+						dadosMemoria[1] = Cna * 100;	// dadosMemoria[1] recebe Cna
+						dadosMemoria[2] = Ccl * 100;	// dadosMemoria[2] recebe Ccl
+						dadosMemoria[3] = Cca * 100;	// dadosMemoria[3] recebe Cca
+						dadosMemoria[4] = CpH * 100;	// dadosMemoria[4] recebe CpH
+						unsigned char mes, dia, hora, minuto, ano;	// Declaração das variáveis de tempo
+						I2C_READ_PCF8653(&ano, Years);	// Lê o ano do RTC
+						I2C_READ_PCF8653(&mes, Century_months);	// Lê a mês do RTC
+						I2C_READ_PCF8653(&dia, Days);	// Lê a dia do RTC
+						I2C_READ_PCF8653(&hora, Hours);	// Lê a hora do RTC
+						I2C_READ_PCF8653(&minuto, Minutes);	// Lê a minuto do RTC
+						dadosMemoria[5] = mes << 24 | dia << 16 | hora << 8 | minuto;	// dadosMemoria[5] recebe mês movido 24 bits para a esquerda mais dia movido 16 bits para esquerda mais hora movido 8 bits para esquerda mais minuto
+						dadosMemoria[6] = codigoDeBarras >> 32 | (ano << 24);	// dadosMemoria[6] recebe codigoDeBarras movido 32 bits para a direita (4 bytes)
+						dadosMemoria[7] = codigoDeBarras & 0xFFFFFFF;	// dadosMemoria[7] recebe codigoDeBarras e 0xFFFFFFFF
+						FLASH_Program(&s_flashDriver, ADDR_EXAME + contAddrMemoria * DADOS_EXAMES, dadosMemoria, DADOS_EXAMES);	// Salva dados de calibração
+						examesFeitos++;	// Incrementa a quantidade de exames
+						codigoDeBarras++; // Incrementa o código de barras
+						contAddrMemoria++;	// Incrementa o contador de variável
 					}
-					else if(erroDiferencaTensoes == 0 && segundos < 27){
+					else if(erroDiferencaTensoes == 0 && segundos == 0){
 
-						clearLine(3);
-						clearLine(5);
-						clearLine(7);
-						clearLine(9);
-						clearLine(11);
+
 						escrita_texto(28, "  ", sizeof("  "));
 						escrita_texto(210, "Eletrodos instaveis, aspirar novamente?", sizeof("Eletrodos instaveis, aspirar novamente?"));	// Escreve "Aspirando Calibrador A" na posição 394
 						estado = 7;
@@ -2963,10 +2943,13 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 
 			respMotor = calibA(1);	// Lavando (calib(1)).Faz verificação de líquido. Passa 3 vezes
 			if( respMotor == OK || respMotor == ERRO ){	// Se identificou líquido na lavagem
-				clear_display_text();
+				clearLine(3);
+				clearLine(5);
+				clearLine(7);
+				clearLine(9);
+				clearLine(11);
 				move_mux(POSITION1, SPEEDMUX1);	// Move mux para a posição 1
 				estado = 0;
-				examesFeitos++;	// Incrementa a quantidade de exames
 			}
 
 			break;
@@ -3002,8 +2985,11 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 			}
 			break;
 
+		case 8:	// Caso 8 - Escreve código de barras
 
+			EscreveCodigoDeBarras();
 
+			break;
 			/*readQueueKeyboard = verifyKeyBoard();
 
 		if( readQueueKeyboard == yes ){
@@ -4300,7 +4286,7 @@ void EscreveCedilhaAOTil( void ){
 
 }
 
-char *ConverteNumParaLcd( unsigned char qtdDigitos, unsigned char qtdCasasDecimais, unsigned int num ){
+char *ConverteNumParaLcd( unsigned char qtdDigitos, unsigned char qtdCasasDecimais, unsigned long num ){
 	/*
 	 * Faz a conversão de um número qualquer para o código usado no LCD. É possível definir até 5
 	 * dígitos e a quantidade de casas decimais que serão mostrados no LCD.
@@ -4444,6 +4430,7 @@ char ContaCaracteres( void ){
 	for( unsigned char i = 0; i < 6; i ++ )
 		if( data[i] == 0 )
 			return i;
+	return 6;
 
 }
 
@@ -4631,7 +4618,7 @@ void AjustaCorrelacao( void ){
 			if( flag_timer ){	// Se flag timer igual a 1
 				flag_timer = 0;	// Flag timer recebe 0
 				timeout++;	// Incrementa timeout de 1
-				if( timeout >= 60000 || ( readTeclado) == no )	// Se timeout é maior ou igual a 60000 (1 minuto) ou teclado igual a No
+				if( timeout >= 60000 || ( readTeclado ) == no )	// Se timeout é maior ou igual a 60000 (1 minuto) ou teclado igual a No
 					return;
 			}
 			if( readTeclado == um ){	// Se teclado igual a 1
@@ -5030,8 +5017,8 @@ void SalvaFlashConfiguracao( unsigned int enderecoInicial, unsigned int endereco
 
 }
 
-unsigned char ContaDigitos( unsigned int num ){
-
+unsigned char ContaDigitos( unsigned int num )
+{
 	if( num >= 10000 )	// Se num maior ou igual a 10000
 	{
 		return 5;	// retorna 5
@@ -5052,4 +5039,74 @@ unsigned char ContaDigitos( unsigned int num ){
 	{
 		return 1;	// retorna 1
 	}
+}
+
+unsigned long long EscreveCodigoDeBarras( void )
+{
+	unsigned char tecla = verifyKeyBoard(), contaCaracter = 0, posicaoX = 5, dadosTecla[13], posicao = 35;
+	unsigned long long codigoDeBarras = 0;
+	unsigned int timeout = 0;
+	Cursor(posicaoX, 1, 1, 1);
+	while( tecla != no && timeout < 60000 ) // Enquanto tecla diferente de 16 e timeout menor que 60000 (1 minuto)
+	{
+		if( flag_timer )	// Se flag timer igual a 1
+		{
+			flag_timer = 0;	// Flag timer recebe 0
+			timeout++;	// Incrementa timeout de 1
+		}
+		tecla = verifyKeyBoard();	//	tecla recebe verifyKeyBoard
+		if( tecla != 16 )
+		{
+			timeout = 0;	//	Timeout recebe 0
+			if( tecla != dot && tecla != hifen && tecla != right && tecla != left && tecla != yes )	//	Se tecla diferente de dot, hifen e right
+			{
+				escrita_texto( posicao + contaCaracter, "             ", sizeof("             "));
+				EscreveDigito( posicao + contaCaracter, tecla );	//	Escreve tecla
+				dadosTecla[12 - contaCaracter] = tecla;	// 	dadosTecla na posicao 12 - contaCaracter recebe tecla
+				contaCaracter++;	//	contaCaracter incrementa 1
+				if( contaCaracter == 13 )	// 	Se contaCaracter igual a 12
+				{
+					for( unsigned char i = 0; i	< contaCaracter; i++ )// loop para codigoDeBarras soma dadosTecla[12 - contaCaracter] * 10 ^ (contaCaracter - 1 - i)
+					{
+						codigoDeBarras +=  dadosTecla[13 + i - contaCaracter] * pow(10,i);
+					}
+					send_command(Display_mode_text);	// Desliga cursor e liga texto
+					escrita_texto( 35, ConverteNumParaLcd( 3, 0, ( codigoDeBarras / 10000000000 )), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					escrita_texto( 38, ConverteNumParaLcd( 5, 0, ( codigoDeBarras % 10000000000 / 100000 ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					escrita_texto( 43, ConverteNumParaLcd( 5, 0, codigoDeBarras % 100000 ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					return codigoDeBarras;
+				}
+
+			}
+			else if( tecla == left )	//	Senão se tecla igual a left
+			{
+				escrita_texto(posicao + contaCaracter, " ", sizeof(" "));
+				timeout = 0;	//	Timeout recebe 0
+				if( contaCaracter > 0 )	// Se contaCaracter maior que 0
+				{
+					contaCaracter--;	// contaCaracter decrementa 1
+				}
+				else	// Senão
+				{
+					contaCaracter = 0;	// contaCaracter recebe 0
+				}
+			}
+			else if( tecla == yes || contaCaracter == 13 )	//	Senão se tecla igual a yes
+			{
+				for( unsigned char i = 0; i	< contaCaracter; i++ )// loop para codigoDeBarras soma dadosTecla[12 - contaCaracter] * 10 ^ (contaCaracter - 1 - i)
+				{
+					codigoDeBarras +=  dadosTecla[13 + i - contaCaracter] * pow(10,i);
+				}
+				send_command(Display_mode_text);	// Desliga cursor e liga texto
+				escrita_texto( 35, ConverteNumParaLcd( 3, 0, ( codigoDeBarras / 10000000000 )), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+				escrita_texto( 38, ConverteNumParaLcd( 5, 0, ( codigoDeBarras % 10000000000 / 100000 ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+				escrita_texto( 43, ConverteNumParaLcd( 5, 0, codigoDeBarras % 100000 ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+				return codigoDeBarras;
+			}
+
+			Cursor( posicaoX + contaCaracter, 1, 1, 1 );		// 	Move o cursor para a direita (posicaoX soma contaCaracter)
+		}
+	}
+	send_command(Display_mode_text);	// Desliga cursor e liga texto
+	return 0;
 }

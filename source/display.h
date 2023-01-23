@@ -157,7 +157,7 @@ void desproteinizacao( void );
 void limpezaTubulacao( void );
 unsigned char writeLine( unsigned int line );
 void EscreveCedilhaAOTil( void );
-char *ConverteNumParaLcd( unsigned char qtdDigitos, unsigned char qtdCasasDecimais, unsigned int num );
+char *ConverteNumParaLcd( unsigned char qtdDigitos, unsigned char qtdCasasDecimais, unsigned long num );
 char ContaCaracteres( void );
 void AjustaHora( void );
 void AjustaCorrelacao( void );
@@ -166,4 +166,5 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 void EscreveDigito( unsigned int posicao, unsigned char tecla );
 void SalvaFlashConfiguracao( unsigned int enderecoInicial, unsigned int enderecoFinal, int *dados );
 unsigned char ContaDigitos( unsigned int num );
+unsigned long long EscreveCodigoDeBarras( void );
 #endif /* DISPLAY_H_ */
