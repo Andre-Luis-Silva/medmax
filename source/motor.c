@@ -13,9 +13,11 @@ void move_mux( unsigned char posicao, unsigned char velocidade ){
 	static unsigned char posicao_anterior, temporizador = 3;
 	static unsigned char tbob1 = 0,tbob2 = 0,tbob3 = 0,tbob4 = 0;
 	unsigned char flag_inicio = posicao, sentido;
-	unsigned int passos;
+	unsigned int passos = 0;
 	unsigned char cont_passos = 0;
-
+	uint32_t medida_ad = 0;
+	adc16_config_t adc16ConfigStruct;
+	adc16_channel_config_t adc16ChannelConfigStruct;
 	if( posicao > 5 )
 		posicao = 5;
 	if( flag_inicio ){
@@ -33,6 +35,30 @@ void move_mux( unsigned char posicao, unsigned char velocidade ){
 		posicao_anterior = posicao;
 
 		while( passos > 0 ){
+			if( posicao == 3 )	// Se a posição for 3, ele vai até fazer a leitura do AD
+			{
+			    adc16ChannelConfigStruct.enableInterruptOnConversionCompleted = false;
+			    adc16ChannelConfigStruct.enableDifferentialConversion = false;
+			    adc16ChannelConfigStruct.channelNumber                        = 15;
+				if( medida_ad < 4090 ){
+
+					ADC16_SetChannelConfig(DEMO_ADC16_BASE, DEMO_ADC16_CHANNEL_GROUP, &adc16ChannelConfigStruct);
+					while (0U == (kADC16_ChannelConversionDoneFlag &
+							ADC16_GetChannelStatusFlags(DEMO_ADC16_BASE, DEMO_ADC16_CHANNEL_GROUP)))
+					{
+					}
+					medida_ad = ADC16_GetChannelConversionValue(DEMO_ADC16_BASE, DEMO_ADC16_CHANNEL_GROUP);
+
+				}
+				else
+				{
+					ma1_off;
+					ma2_off;
+					ma3_off;
+					ma4_off;
+					return;
+				}
+			}
 			if( flag_timer ){
 
 				flag_timer = 0;

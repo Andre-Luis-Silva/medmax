@@ -27,7 +27,7 @@ float Ck_standard = 0, Cca_standard = 0, Ccl_standard = 0, CpH_standard = 0, Cna
 
 void display_run( void ){
 
-	unsigned char estado_display = 0, flagCalibOk = 0, menuConfig = 0, menuConfigAnterior = 0;
+	unsigned char estado_display = 0, flagCalibOk = 1, menuConfig = 0, menuConfigAnterior = 0;
 	unsigned char menu = 0, menu_anterior = 0, respCalibA = OK, respCalibB = OK, readQueueKeyboard;
 	unsigned char readRxI2c = 0, timerErro = 0, contErro = 0;
 	unsigned char verificaMaior;
@@ -2526,8 +2526,8 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 		{
 			examesFeitos++;	// Incrementa quantidade de exames feitos
 			contAddrMemoria++; // Caso não tenha encontrado memória, decrementa contador de endereço
-			codigoDeBarras = ((*(volatile unsigned long *)(i + (i - ADDR_EXAME) * DADOS_EXAMES + 24) << 32) |
-							 (*(volatile unsigned long *)(i + (i - ADDR_EXAME) * DADOS_EXAMES + 28))) + 1;
+			codigoDeBarras = (((*(volatile unsigned long long *)(i + 24) & 0xFFFF ) << 32)  |
+							 (*(volatile unsigned int *)(i + 28))) + 1;
 		}
 
 	}
@@ -2594,25 +2594,7 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 		interceptEletrodos[4] = 0;
 
 
-	writeLine(0);
-	writeLine(13);
 
-	if( tipoTeste == SORO )	// Se tipoTeste igual a SORO
-	{
-		escrita_texto( 0x08, "TESTE DE SORO", sizeof("TESTE DE SORO"));	// Escreve "Teste de Soro"
-	}
-	else if( tipoTeste == SANGUE )	// Senão se tipoTeste igual a SANGUE
-	{
-		escrita_texto( 0x06, "TESTE DE SANGUE", sizeof("TESTE DE SANGUE"));	// Escreve "Teste de Sangue"
-	}
-	else if( tipoTeste == URINA )	// Senão se tipoTeste igual a URINA
-	{
-		escrita_texto( 0x07, "TESTE DE URINA", sizeof("TESTE DE URINA"));	// Escreve "Teste de Urina"
-		escrita_texto( 331, "Favor diluir a urina no calibrador A na propor",
-				sizeof( "Favor diluir a urina no calibrador A na propor" ));	// Escreve "Favor diluir a urina no calibrador A na propor"
-		EscreveCedilhaAOTil();
-		escrita_texto(381, " 1:9", sizeof(" 1:9"));	// Escreve "1:9"
-	}
 
 	while( 1 )
 	{
@@ -2622,6 +2604,26 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 		case 0:	//Início movimento dos motores
 
 			Keep_Configuration();
+
+			writeLine(0);
+			writeLine(13);
+
+			if( tipoTeste == SORO )	// Se tipoTeste igual a SORO
+			{
+				escrita_texto( 0x08, "TESTE DE SORO", sizeof("TESTE DE SORO"));	// Escreve "Teste de Soro"
+			}
+			else if( tipoTeste == SANGUE )	// Senão se tipoTeste igual a SANGUE
+			{
+				escrita_texto( 0x06, "TESTE DE SANGUE", sizeof("TESTE DE SANGUE"));	// Escreve "Teste de Sangue"
+			}
+			else if( tipoTeste == URINA )	// Senão se tipoTeste igual a URINA
+			{
+				escrita_texto( 0x07, "TESTE DE URINA", sizeof("TESTE DE URINA"));	// Escreve "Teste de Urina"
+				escrita_texto( 331, "Favor diluir a urina no calibrador A na propor",
+						sizeof( "Favor diluir a urina no calibrador A na propor" ));	// Escreve "Favor diluir a urina no calibrador A na propor"
+				EscreveCedilhaAOTil();
+				escrita_texto(381, " 1:9", sizeof(" 1:9"));	// Escreve "1:9"
+			}
 
 			// Movimenta anti horário em 910ms
 			sample = move_tripa(WAYAHOUR, SPEEDTRP1, 950);
@@ -2669,7 +2671,7 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 				}
 				else
 				{
-					codigoDeBarras = auxiliarCodigoDebarras;	// Recebe o valor atual de código de barras
+					codigoDeBarras = auxiliarCodêigoDebarras;	// Recebe o valor atual de código de barras
 				}
 			}
 			else if( agulhaFechada ){	// Se sonda fechada
@@ -2859,11 +2861,11 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 
 				}
 				else{
-					Ck = Ck_standard * pow( 10, (k * 8.0325 / contReadAD) / ( ( voltageCalB_K - voltageCalA_K ) * 3.32 ) ) * 100 * slopeEletrodos[0] + interceptEletrodos[0];
-					CpH = CpH_standard * pow( 10, (ph * 8.0325 / contReadAD) / ( ( voltageCalB_pH - voltageCalA_pH ) * 47.19 ) )* 100 * slopeEletrodos[4] + interceptEletrodos[4];
-					Cca = Cca_standard * pow( 10, (ca * 8.0325 / contReadAD) / ( ( voltageCalB_Ca - voltageCalA_Ca ) * 3.31 ) ) * 100 * slopeEletrodos[3] + interceptEletrodos[3];
-					Ccl = Ccl_standard * pow( 10, (cl * 8.0325 / contReadAD) / ( (int)( voltageCalA_Cl - voltageCalB_Cl ) * 5.105) ) * 100 * slopeEletrodos[2] + interceptEletrodos[2];
-					Cna = Cna_standard * pow( 10, (na * 8.0325 / contReadAD) / ( ( voltageCalA_Na - voltageCalB_Na ) * 9.633) ) * 100 * slopeEletrodos[1] + interceptEletrodos[1];
+					Ck = Ck_standard * pow( 10, (k * 8.0325 / contReadAD) / ( ( voltageCalB_K - voltageCalA_K ) * 3.32 ) ) * 100 * slopeEletrodos[0] + interceptEletrodos[0] * 100;
+					CpH = CpH_standard * pow( 10, (ph * 8.0325 / contReadAD) / ( ( voltageCalB_pH - voltageCalA_pH ) * 47.19 ) )* 100 * slopeEletrodos[4] + interceptEletrodos[4] * 100;
+					Cca = Cca_standard * pow( 10, (ca * 8.0325 / contReadAD) / ( ( voltageCalB_Ca - voltageCalA_Ca ) * 3.31 ) ) * 100 * slopeEletrodos[3] + interceptEletrodos[3] * 100;
+					Ccl = Ccl_standard * pow( 10, (cl * 8.0325 / contReadAD) / ( (int)( voltageCalA_Cl - voltageCalB_Cl ) * 5.105) ) * 100 * slopeEletrodos[2] + interceptEletrodos[2] * 100;
+					Cna = Cna_standard * pow( 10, (na * 8.0325 / contReadAD) / ( ( voltageCalA_Na - voltageCalB_Na ) * 9.633) ) * 100 * slopeEletrodos[1] + interceptEletrodos[1] * 100;
 
 					// Faz a verificação da diferença e armazena o erro em uma flag
 					if( medidaAnterior_K != 0 && medidaAnterior_Ca != 0 && medidaAnterior_Na != 0 && medidaAnterior_Cl != 0 && medidaAnterior_pH != 0 ){
@@ -2920,11 +2922,21 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 						I2C_READ_PCF8653(&minuto, Minutes);	// Lê a minuto do RTC
 						dadosMemoria[5] = mes << 24 | dia << 16 | hora << 8 | minuto;	// dadosMemoria[5] recebe mês movido 24 bits para a esquerda mais dia movido 16 bits para esquerda mais hora movido 8 bits para esquerda mais minuto
 						dadosMemoria[6] = codigoDeBarras >> 32 | (ano << 24);	// dadosMemoria[6] recebe codigoDeBarras movido 32 bits para a direita (4 bytes)
-						dadosMemoria[7] = codigoDeBarras & 0xFFFFFFF;	// dadosMemoria[7] recebe codigoDeBarras e 0xFFFFFFFF
+						dadosMemoria[7] = codigoDeBarras & 0xFFFFFFFF;	// dadosMemoria[7] recebe codigoDeBarras e 0xFFFFFFFF
 						FLASH_Program(&s_flashDriver, ADDR_EXAME + contAddrMemoria * DADOS_EXAMES, dadosMemoria, DADOS_EXAMES);	// Salva dados de calibração
 						examesFeitos++;	// Incrementa a quantidade de exames
-						codigoDeBarras++; // Incrementa o código de barras
+						codigoDeBarras++; // Incrementa o código de ba
 						contAddrMemoria++;	// Incrementa o contador de variável
+						if(codigoDeBarras == pow(10,14))	// Se código de barras igual a 10^14, passou dos 13 dígitos
+						{
+							codigoDeBarras = 1;	// Código de barras recebe 1
+						}
+						if( examesFeitos == 2570 )	// Se exames feitos igual a 2570, passou da quantidade de exames salvos
+						{
+							examesFeitos = 1;	// Exames feitos recebe 1
+
+						}
+
 					}
 					else if(erroDiferencaTensoes == 0 && segundos == 0){
 
@@ -2943,6 +2955,26 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 
 			respMotor = calibA(1);	// Lavando (calib(1)).Faz verificação de líquido. Passa 3 vezes
 			if( respMotor == OK || respMotor == ERRO ){	// Se identificou líquido na lavagem
+				writeLine(0);
+				writeLine(13);
+
+				if( tipoTeste == SORO )	// Se tipoTeste igual a SORO
+				{
+					escrita_texto( 0x08, "TESTE DE SORO", sizeof("TESTE DE SORO"));	// Escreve "Teste de Soro"
+				}
+				else if( tipoTeste == SANGUE )	// Senão se tipoTeste igual a SANGUE
+				{
+					escrita_texto( 0x06, "TESTE DE SANGUE", sizeof("TESTE DE SANGUE"));	// Escreve "Teste de Sangue"
+				}
+				else if( tipoTeste == URINA )	// Senão se tipoTeste igual a URINA
+				{
+					escrita_texto( 0x07, "TESTE DE URINA", sizeof("TESTE DE URINA"));	// Escreve "Teste de Urina"
+					escrita_texto( 331, "Favor diluir a urina no calibrador A na propor",
+							sizeof( "Favor diluir a urina no calibrador A na propor" ));	// Escreve "Favor diluir a urina no calibrador A na propor"
+					EscreveCedilhaAOTil();
+					escrita_texto(381, " 1:9", sizeof(" 1:9"));	// Escreve "1:9"
+				}
+
 				clearLine(3);
 				clearLine(5);
 				clearLine(7);
@@ -4450,7 +4482,14 @@ void AjustaCorrelacao( void ){
 	float slopeEletrodos[5], interceptEletrodos[5];
 	unsigned int timeout = 0, posicaoTexto[10];
 	unsigned char estadoCorrelacao = 0, contOk = 0, readTeclado = 0, tamanhoDigito[10];
-	float *numero = NULL;
+	float numeroInit[10], *numero;
+
+	// Atualização dos números anteriores
+	for( int i = 0; i < 10; i++){
+		if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + i*4) != 0xFFFFFFFF ){
+			numeroInit[i] = *(volatile float *)(ADDR_CONFIGURACAO + i*4);
+		}
+	}
 
 	// Verificação se há dados salvos de Slope para o eletrodo K
 	if( *(volatile unsigned int *)(ADDR_CONFIGURACAO + ADDR_SLOPE_K) != 0xFFFFFFFF )
@@ -4512,34 +4551,35 @@ void AjustaCorrelacao( void ){
 	else
 		interceptEletrodos[4] = 0;
 
-	for( int i = 0; i < 10; i++){	// Faz a verificação do valor salvo na memória, se é maior ou menor que 10
-		if( i < 5 ){
-			if( abs(slopeEletrodos[i]) >= 10 ){	// Se for maior que 10
-				tamanhoDigito[i] = 4;	// Serão 4 dígitos escritos
-				posicaoTexto[i] = 103 + 60*i;	// Posição inicial do desenho mas o pulo de duas linhas
-			}
-			else{
-				tamanhoDigito[i] = 3;	// Serão 3 dígitos escritos
-				posicaoTexto[i] = 104 + 60*i;	// Posição inicial do desenho mas o pulo de duas linhas
-			}
-		}
-		else{
-			if( abs(interceptEletrodos[i % 5]) >= 10 ){	// Faz a verificação do valor salvo na memória, se é maior ou menor que 10
-				tamanhoDigito[i] = 4;	// Serão 4 dígitos escritos
-				posicaoTexto[i] = 113 + 60*(i % 5) ;	// Posição inicial do desenho mas o pulo de duas linhas
-			}
-			else{
-				tamanhoDigito[i] = 3;	// Serão 3 dígitos escritos
-				posicaoTexto[i] = 114 + 60*(i % 5);	// Posição inicial do desenho mas o pulo de duas linhas
-			}
-		}
-	}
-
-
 	while( 1 ){
 		readTeclado = verifyKeyBoard();
 		switch( estadoCorrelacao ){	// Máquina de estado para correlação
 		case 0:
+
+
+			for( int i = 0; i < 10; i++){	// Faz a verificação do valor salvo na memória, se é maior ou menor que 10
+				if( i < 5 ){
+					if( abs(slopeEletrodos[i]) >= 10 ){	// Se for maior que 10
+						tamanhoDigito[i] = 4;	// Serão 4 dígitos escritos
+						posicaoTexto[i] = 103 + 60*i;	// Posição inicial do desenho mas o pulo de duas linhas
+					}
+					else{
+						tamanhoDigito[i] = 3;	// Serão 3 dígitos escritos
+						posicaoTexto[i] = 104 + 60*i;	// Posição inicial do desenho mas o pulo de duas linhas
+					}
+				}
+				else{
+					if( abs(interceptEletrodos[i % 5]) >= 10 ){	// Faz a verificação do valor salvo na memória, se é maior ou menor que 10
+						tamanhoDigito[i] = 4;	// Serão 4 dígitos escritos
+						posicaoTexto[i] = 113 + 60*(i % 5) ;	// Posição inicial do desenho mas o pulo de duas linhas
+					}
+					else{
+						tamanhoDigito[i] = 3;	// Serão 3 dígitos escritos
+						posicaoTexto[i] = 114 + 60*(i % 5);	// Posição inicial do desenho mas o pulo de duas linhas
+					}
+				}
+			}
+
 			// Escrita configuração
 			escrita_texto(9, "CONFIGURA", sizeof("CONFIGURA"));
 			EscreveCedilhaAOTil();
@@ -4631,7 +4671,7 @@ void AjustaCorrelacao( void ){
 			else if( readTeclado == dois ){	// Senão se teclado igual a 2
 				estadoCorrelacao = 20;	// estadoCorrelacao recebe 20, cálculo automático de correlação
 			}else if( readTeclado == yes ){	// Senão se teclado igual a yes
-					SalvaFlashConfiguracao(ADDR_CONFIGURACAO, 0xE2028,(int*) numero); // Salva os dados em um vetor
+					SalvaFlashConfiguracao(ADDR_CONFIGURACAO, 0xE2028,(int*) numeroInit); // Salva os dados em um vetor
 					send_command(0x90);
 					for( unsigned int i = 0; i < 65535; i++);
 					send_command(Display_mode_text);
@@ -4657,7 +4697,20 @@ void AjustaCorrelacao( void ){
 				// Escrtia do eletrodo pH e dos valores salvos na flash
 				escrita_texto(344, ConverteNumParaLcd(3, 2, 100), ContaCaracteres()+1);	// Slope
 				escrita_texto(354, ConverteNumParaLcd(3, 2, 0), ContaCaracteres()+1);	// Intercept
-
+				for( unsigned char i = 0; i < 10; i++ )
+				{
+					if( i < 5 )
+					{
+						numeroInit[i] = 1;
+						slopeEletrodos[i] = 1;
+					}
+					else
+					{
+						numeroInit[i] = 0;
+						interceptEletrodos[i-5] = 0;
+					}
+				}
+				estadoCorrelacao = 0;
 			}
 			break;
 
@@ -4680,13 +4733,25 @@ void AjustaCorrelacao( void ){
 		case 11:
 
 			numero = EscreveTela( 13, 3, 6, 0 );
+			for( unsigned char i = 0; i < 10; i++ )
+			{
+				numeroInit[i] = *(numero++);
+				if( i < 5 )
+				{
+					slopeEletrodos[i] = numeroInit[i];
+				}
+				else
+				{
+					interceptEletrodos[i-5] = numeroInit[i];
+				}
+			}
 			send_command(Display_mode_text);	// Desliga cursor e liga texto
 			clearLine( 15 );
 			escrita_texto(420, "<=RESET", sizeof("<=RESET"));
 			escrita_texto(450, "1=ENTRAR", sizeof("1=ENTRAR"));
 			escrita_texto(459, "2=CAL", sizeof("2=CAL"));
 			escrita_texto(465, "YES=Salvar", sizeof("YES=Salvar"));
-			estadoCorrelacao = 1;
+			estadoCorrelacao = 0;
 
 			break;
 		}
@@ -4719,7 +4784,6 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 		if( tecla != 16 && !apenasNumeros ){	// Se teclado diferente de 0
 			posicaoTexto = posicaoX + posicaoY * 30;
 			if( tecla == left ){			// Se teclado igual a left
-
 				escrita_texto( posicaoTexto - 1, " ", sizeof(" "));		// Escreve ' '
 				if( dadosTecla[posicaoPonto] == dot ){
 					posicaoPonto = 0;
@@ -4738,6 +4802,14 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 					}
 					if( posicaoY < posicaoInicialY )	// Se posicaoY menor que posicaoInicialY
 						posicaoY = posicaoInicialY;	// posicaoY recebe posicaoInicialY
+					if( addrMemoria > 0 )	// Se o contador de endereço de memória é maior que 0
+					{
+						addrMemoria--;	// Decrementa o contador de endereço
+					}
+					else	// Senão
+					{
+						addrMemoria = 0;	// Contador de endereço recebe 0
+					}
 				}
 				posicaoX--;	//Retorna a posição em 1
 				if( posicaoX < posicaoInicialX + 5 ){
@@ -4804,6 +4876,7 @@ float *EscreveTela( unsigned char posicaoX, unsigned char posicaoY, unsigned cha
 						return numero;
 
 					}
+					addrMemoria++;
 				}
 				else{
 
