@@ -99,10 +99,10 @@ void app_finalize(void)
 //codigo da flash
 
 /// pina
-extern unsigned char acesso;
-extern unsigned char exame_feito;
-extern unsigned int tempo;
-extern unsigned int exames;
+unsigned char acesso=0; //acesso não permitido
+unsigned int tempo;
+unsigned int exames;
+unsigned char exame_feito;
 float volume;
 unsigned int locked = 0;
 
@@ -463,17 +463,16 @@ void Sollus_Grava_UIDM (NxpNci_RfIntf_t RfIntf)
 	Auth[2]=(RfIntf.Info.NFC_APP.NfcId[1]^'I')^'O';
 	Auth[3]=(RfIntf.Info.NFC_APP.NfcId[2]^'N')^'L';
 	Auth[4]=(RfIntf.Info.NFC_APP.NfcId[3]^'A')^'L';
-
 	/* Authenticate */
 	status = NxpNci_ReaderTagCmd(Auth, sizeof(Auth), Resp, &RespSize);
 	if((status == NFC_ERROR) || (Resp[RespSize-1] != 0) || (RespSize < 3) )
 	{
 		printf(" Authenticate failed with error 0x%02x\n", Resp[RespSize-1]);
-		//acesso=2;
+		acesso=2;
 		return;
 	}
 	printf(" Authenticate succeed: "); for(i=0;i<=RespSize-2;i++) printf("0x%02X ", Resp[i]); printf("\n");
-	//acesso=1;
+	acesso=1;
 
 
 	/* Read_UID_MICRO */
@@ -885,12 +884,12 @@ void PCD_ISO14443_3A_scenario (NxpNci_RfIntf_t RfIntf)
 		if( cont_erro2 >= 5 ){
 			cont_erro2 = 5;
 			printf(" Authenticate failed with error 0x%02x\n", Resp[0]);
-			//acesso=2;
+			acesso=2;
 		}
 		return;
 	}
 	printf(" Authenticate succeed: "); for(i=0;i<=RespSize-2;i++) printf("0x%02X ", Resp[i]); printf("\n");
-	//acesso=1;
+	acesso=1;
 	cont_erro2 = 0;
 
 	/* Read_UID_MICRO */
@@ -945,7 +944,7 @@ void PCD_ISO14443_3A_scenario (NxpNci_RfIntf_t RfIntf)
 		cont_erro3++;
 		if( cont_erro3 >= 5){
 			cont_erro3 = 5;
-			//acesso=2;
+			acesso=2;
 		}
 		return;
 	}
@@ -1167,7 +1166,7 @@ void PCD_ISO14443_3A_scenario (NxpNci_RfIntf_t RfIntf)
 	volume=100-1.531*((float)tempo/17280)-0.057*(float)exames;
 
 	//testa volume
-	if (volume <= 0) //acesso=3;
+	if (volume <= 0) acesso=3;
 
 
 	printf ("\nVolume = %d\n",(int)volume);

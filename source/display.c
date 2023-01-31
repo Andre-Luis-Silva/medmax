@@ -16,6 +16,7 @@ extern flash_config_t s_flashDriver;
 extern unsigned int timerRTC;
 extern volatile unsigned char flag_timer;
 extern volatile unsigned char flagBuz;
+extern unsigned char acesso, exame_feito;
 
 /* Variáveis globais */
 char data[6];
@@ -204,7 +205,7 @@ void display_run( void ){
 			escrita_texto( posicaoDesenho + 15, ConverteNumParaLcd( 2, 0, bcdtodec( minuto & 0x7F ) ), ContaCaracteres() + 1 );	// Escreve o minuto salvo com 2 dígitos
 
 			/* Verificação de erro */
-			if( timerErro >= 3 && ( respCalibA != OK || respCalibB != OK ) )	// Se temporizador de erro chegar a 5 segundos
+			if( timerErro >= 3 && ( respCalibA != OK || respCalibB != OK || acesso != 1 ) )	// Se temporizador de erro chegar a 5 segundos
 			{
 				timerErro = 0;
 				switch( contErro ){	// Escolha contErro
@@ -282,9 +283,29 @@ void display_run( void ){
 					}
 
 					break;
+				case 5:	// Caso 5 - Erro no NFC
+						// Bloqueia o sensor
+					if( acesso == 2 )	// Se acesso igual a 2
+					{
+						escrita_texto(420, "Tag sem autoriza", sizeof("Tag sem autoriza" ));	// Escreve "Tag sem autorização"
+						EscreveCedilhaAOTil();
+					}
+					else if( acesso == 3 )	// Senão se acesso igual a 3
+					{
+						escrita_texto(420, "Tag vencida", sizeof("Tag vencida"));	// Escreve "Tag vencida"
+					}
+					else if( acesso == 4 )	// Senão se acesso igual a 4
+					{
+						escrita_texto(420, "CI sem comunicar. Trocar antena", sizeof("CI sem comunicar"));	// Escreve "CI sem comunicar. Trocar antena"
+					}
+					else	// Senão
+					{
+						escrita_texto(420, "Sem tag", sizeof("Sem tag"));	// Escreve "Sem tag"
+					}
+					break;
 				}
 				contErro++;	// Contador de erro
-				if( contErro == 4 )	// Se erro igual a 4
+				if( contErro == 6 )	// Se erro igual a 5
 				{
 					contErro = 0;	// Erro recebe 0
 				}
@@ -292,7 +313,7 @@ void display_run( void ){
 			else
 			{	// Senão
 				timerErro++;	// Contador de tempo
-				if( respCalibA == OK && respCalibB == OK )	// Se está sem erro
+				if( respCalibA == OK && respCalibB == OK && acesso == 1 )	// Se está sem erro
 				{
 					// Apaga as linhas dos erros
 					clearLine(14);
@@ -2671,7 +2692,7 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 				}
 				else
 				{
-					codigoDeBarras = auxiliarCodêigoDebarras;	// Recebe o valor atual de código de barras
+					codigoDeBarras = auxiliarCodigoDebarras;	// Recebe o valor atual de código de barras
 				}
 			}
 			else if( agulhaFechada ){	// Se sonda fechada
@@ -2927,6 +2948,7 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 						examesFeitos++;	// Incrementa a quantidade de exames
 						codigoDeBarras++; // Incrementa o código de ba
 						contAddrMemoria++;	// Incrementa o contador de variável
+						exame_feito = 1;	// Flag indicador de exame feito
 						if(codigoDeBarras == pow(10,14))	// Se código de barras igual a 10^14, passou dos 13 dígitos
 						{
 							codigoDeBarras = 1;	// Código de barras recebe 1

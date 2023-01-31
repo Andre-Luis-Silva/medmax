@@ -75,9 +75,6 @@ TaskHandle_t xHandle;
 #define DISPLAY_NFC_STACK_SIZE	1024
 #define DISPLAY_NFC_STACK_PRIO	(configMAX_PRIORITIES - 3)
 
-unsigned int tempo;
-unsigned int exames;
-unsigned char exame_feito;
 
 /* Variáveis de 8 bits */
 extern unsigned char cont_mux;
