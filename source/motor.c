@@ -6,7 +6,7 @@
 volatile unsigned char flag_timer = 0, timerExam = 0, flagBuz = 0;
 
 /* Variáveis de 16 bits */
-volatile unsigned int timerRTC = 0, timerBuz = 0;
+volatile unsigned int timerRTC = 0, timerBuz = 0, timerI2c = 0;
 
 void move_mux( unsigned char posicao, unsigned char velocidade ){
 
@@ -310,6 +310,11 @@ void FTM0_IRQHandler(void)
 	//Clear interrupt flag.
 	FTM_ClearStatusFlags(FTM0, kFTM_TimeOverflowFlag);
 	flag_timer = 1;
+
+	if( timerI2c < 65535 )	// Conta timerI2c
+	{
+		timerI2c++;
+	}
 
 	if( timerRTC < 65535 )
 		timerRTC++;

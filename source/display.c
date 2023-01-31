@@ -30,7 +30,7 @@ void display_run( void ){
 
 	unsigned char estado_display = 0, flagCalibOk = 1, menuConfig = 0, menuConfigAnterior = 0;
 	unsigned char menu = 0, menu_anterior = 0, respCalibA = OK, respCalibB = OK, readQueueKeyboard;
-	unsigned char readRxI2c = 0, timerErro = 0, contErro = 0;
+	unsigned char readRxI2c = 0, timerErro = 0, contErro = 5;
 	unsigned char verificaMaior;
 	rst_off;
 	for(int i = 0; i < 1000; i++ );
@@ -296,7 +296,7 @@ void display_run( void ){
 					}
 					else if( acesso == 4 )	// Senão se acesso igual a 4
 					{
-						escrita_texto(420, "CI sem comunicar. Trocar antena", sizeof("CI sem comunicar"));	// Escreve "CI sem comunicar. Trocar antena"
+						escrita_texto(420, "CI sem comunicar. Trocar antena", sizeof("CI sem comunicar. Trocar antena"));	// Escreve "CI sem comunicar. Trocar antena"
 					}
 					else	// Senão
 					{

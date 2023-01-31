@@ -943,7 +943,7 @@ wait:
 #endif
     do
     {
-        if(NxpNci_WaitForReception(Answer, sizeof(Answer), &AnswerSize, TIMEOUT_INFINITE) == NXPNCI_ERROR) return NXPNCI_ERROR;
+        if(NxpNci_WaitForReception(Answer, sizeof(Answer), &AnswerSize, TIMEOUT_100MS) == NXPNCI_ERROR) return NXPNCI_ERROR;
     }while ((Answer[0] != 0x61) || ((Answer[1] != 0x05) && (Answer[1] != 0x03)));
 
     gNextTag_Protocol = PROT_UNDETERMINED;

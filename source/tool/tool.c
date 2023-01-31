@@ -22,7 +22,7 @@ void Sleep(unsigned int ms)
 {
 //	SemaphoreHandle_t xSemaphore = NULL;
 
-	vTaskDelay(10);
+	vTaskDelay(ms);
 /*
 	xSemaphore = xSemaphoreCreateBinary();
 	xSemaphoreTake( xSemaphore, portTICK_PERIOD_MS * ms);

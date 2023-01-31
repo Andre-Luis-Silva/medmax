@@ -1671,7 +1671,7 @@ void task_nfc(void)
 
 	if (erro_loop!=0) {
 		printf("Error: problema de comunicacao com a placa nfc\n");
-		////acesso=4;						//sem comunicação com o nfc
+		acesso=4;						//sem comunicação com o nfc
 		while(1) vTaskDelay(1000);
 		//seta led para indicação de erro
 	}
@@ -1725,6 +1725,7 @@ if (erro_loop!=0) {
 			cont_erro++;
 			if( cont_erro > 5 ){
 				cont_erro = 5;
+				acesso=0;
 //				if(locked==0)
 //					//acesso=0; //só altera //acesso para zero se der time out
 //				if(locked==1)
