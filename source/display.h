@@ -58,7 +58,7 @@
 #define db6_read	GPIO_PinRead(GPIOD, 5)
 #define db7_read	GPIO_PinRead(GPIOC, 15)
 
-#define sensorRead GPIO_PinRead(GPIOE, 2)
+#define sensorRead 	GPIO_PinRead(GPIOE, 2)
 
 #define agulhaAberta	GPIO_PinRead(GPIOA, 17) == 1
 #define agulhaFechada	GPIO_PinRead(GPIOA, 17) == 0

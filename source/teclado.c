@@ -57,92 +57,95 @@ void teclado_run( void ){
         }
         col4 = ADC16_GetChannelConversionValue(ADC1, 1);
 
-		switch( cont_matriz ){
 
-		case 0:
+        if( !sensorRead ){	// Se o sensor não estiver ativo, faz a leitura do teclado
+			switch( cont_matriz ){
 
-			linha1_0;
-			linha2_1;
-			linha3_1;
-			linha4_1;
-			if( col1 < 3500 ){
-				comando = zero;
-			}
-			else if( col2 < 3500 ){
-				comando = dot;
-			}
-			else if( col3 < 3500 ){
-				comando = hifen;
-			}
-			else if( col4 < 3500 ){
-				comando = yes;
-			}
+			case 0:
+
+				linha1_0;
+				linha2_1;
+				linha3_1;
+				linha4_1;
+				if( col1 < 3500 ){
+					comando = zero;
+				}
+				else if( col2 < 3500 ){
+					comando = dot;
+				}
+				else if( col3 < 3500 ){
+					comando = hifen;
+				}
+				else if( col4 < 3500 ){
+					comando = yes;
+				}
 
 
-			break;
+				break;
 
-		case 1:
+			case 1:
 
-			linha1_1;
-			linha2_0;
-			linha3_1;
-			linha4_1;
-			if( col1 < 3500 ){
-				comando = um;
-			}
-			else if( col2 < 3500 ){
-				comando = dois;
-			}
-			else if( col3 < 3500 ){
-				comando = tres;
-			}
-			else if( col4 < 3500 ){
-				comando = quatro;
-			}
-			break;
+				linha1_1;
+				linha2_0;
+				linha3_1;
+				linha4_1;
+				if( col1 < 3500 ){
+					comando = um;
+				}
+				else if( col2 < 3500 ){
+					comando = dois;
+				}
+				else if( col3 < 3500 ){
+					comando = tres;
+				}
+				else if( col4 < 3500 ){
+					comando = quatro;
+				}
+				break;
 
-		case 2:
+			case 2:
 
-			linha1_1;
-			linha2_1;
-			linha3_0;
-			linha4_1;
-			if( col1 < 3500 ){
-				comando = cinco;
-				teste_motor[0] = numero;
-			}
-			else if( col2 < 3500 ){
-				comando = left;
-			}
-			else if( col3 < 3500 ){
-				comando = right;
-			}
-			else if( col4 < 3500 ){
-				comando = no;
-			}
-			break;
+				linha1_1;
+				linha2_1;
+				linha3_0;
+				linha4_1;
+				if( col1 < 3500 ){
+					comando = cinco;
+					teste_motor[0] = numero;
+				}
+				else if( col2 < 3500 ){
+					comando = left;
+				}
+				else if( col3 < 3500 ){
+					comando = right;
+				}
+				else if( col4 < 3500 ){
+					comando = no;
+				}
+				break;
 
-		case 3:
+			case 3:
 
-			linha1_1;
-			linha2_1;
-			linha3_1;
-			linha4_0;
-			if( col1 < 3500 ){
-				comando = seis;
-			}
-			else if( col2 < 3500 ){
-				comando = sete;
-			}
-			else if( col3 < 3500 ){
-				comando = oito;
-			}
-			else if( col4 < 3500 ){
-				comando = nove;
-			}
-			break;
+				linha1_1;
+				linha2_1;
+				linha3_1;
+				linha4_0;
+				if( col1 < 3500 ){
+					comando = seis;
+				}
+				else if( col2 < 3500 ){
+					comando = sete;
+				}
+				else if( col3 < 3500 ){
+					comando = oito;
+				}
+				else if( col4 < 3500 ){
+					comando = nove;
+				}
+				break;
 
-		}
+			}
+        }
 
 		if( cont_matriz >= 3)
 			cont_matriz = 0;

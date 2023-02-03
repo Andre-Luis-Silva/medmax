@@ -3,7 +3,7 @@
 #define TIMERBUZ	100
 
 /* Variáveis de 8 bits */
-volatile unsigned char flag_timer = 0, timerExam = 0, flagBuz = 0;
+volatile unsigned char flag_timer = 0, timerExam = 0, flagBuz = 0, flagSensorAtivo = 0;
 
 /* Variáveis de 16 bits */
 volatile unsigned int timerRTC = 0, timerBuz = 0, timerI2c = 0;
@@ -322,11 +322,24 @@ void FTM0_IRQHandler(void)
 	if( timerExam < 255 )
 		timerExam++;
 
-	if( sensorRead || flagBuz ){	// Se sensor aberto ou flag para apitar
-		if( timerBuz < TIMERBUZ)		// Se tempo de acionamento do buzzer for menor que TEMPOBUZ
-			GPIO_PinWrite(GPIOA, 16, 0);	// Liga buzzer
+	if( sensorRead || flagBuz )	// Se sensor aberto ou flag para apitar
+	{
+
+		if( sensorRead )	//Se sensorRead ativo
+		{
+			if( flagSensorAtivo != 1 )
+			{
+				clearLine(14);
+				clearLine(15);// Apaga as duas linhas 14 e 15 do display
+			}
+			flagSensorAtivo = 1;
+			escrita_texto(420, "Feche a camara", sizeof("Feche a camara"));	// Escreve "Feche a câmara"
+		}
+
+		if( timerBuz < TIMERBUZ )		// Se tempo de acionamento do buzzer for menor que TEMPOBUZ
+			GPIO_PinWrite( GPIOA, 16, 0 );	// Liga buzzer
 		else if( timerBuz < TIMERBUZ * 2 )	// Senão se tempo de acionamento do buzzer for menor que TEMPOBUZ * 2
-			GPIO_PinWrite(GPIOA, 16, 0);	// Desliga Buzzer
+			GPIO_PinWrite( GPIOA, 16, 0 );	// Desliga Buzzer
 		else{	// Senão
 			timerBuz = 0;	// Zera tempo de acionamento do buzzer
 			flagBuz = 0;	// Zera flag para apitar
@@ -335,7 +348,15 @@ void FTM0_IRQHandler(void)
 			timerBuz++;	// Incrementa tempo de acionamento do buzzer
 	}
 	else
+	{
 		GPIO_PinWrite(GPIOA, 16, 0);	// Desliga Buzzer
+		if( flagSensorAtivo == 1 )
+		{
+			flagSensorAtivo = 0;
+			clearLine(14);// Apaga as duas linhas 14 e 15 do display
+		}
+	}
+
 	__DSB();
 
 }

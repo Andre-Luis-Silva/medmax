@@ -205,115 +205,121 @@ void display_run( void ){
 			escrita_texto( posicaoDesenho + 15, ConverteNumParaLcd( 2, 0, bcdtodec( minuto & 0x7F ) ), ContaCaracteres() + 1 );	// Escreve o minuto salvo com 2 dígitos
 
 			/* Verificação de erro */
-			if( timerErro >= 3 && ( respCalibA != OK || respCalibB != OK || acesso != 1 ) )	// Se temporizador de erro chegar a 5 segundos
+			if( timerErro >= 3 && ( respCalibA != OK || respCalibB != OK || acesso != 1 ))	// Se temporizador de erro chegar a 5 segundos
 			{
 				timerErro = 0;
-				switch( contErro ){	// Escolha contErro
-				case 0:	// Caso 0 - Falta de calibrador A
-
-					if( respCalibA == ERRO_FALTA_CALIBA )	// Se flagCaliA for igual a ERRO_FALTA_CALIBA
-					{
-						clearLine(14);
-						clearLine(15);
-						escrita_texto(420, "Falta CAL A. Verifique a tubula", sizeof("Falta CAL A. Verifique a tubula"));	// Escreve "Falta calibrador A"
-						EscreveCedilhaAOTil();
-						escrita_texto(455, "e o pacote de reagentes", sizeof("e o pacote de reagentes"));
-
-					}
-
-					break;
-				case 1:	// Caso 1 - Falta de calibrador B
-
-					if( respCalibB == ERRO_FALTA_CALIBB )	// Se flagCaliB for igual a ERRO_FALTA_CALIBB
-					{
-						clearLine(14);
-						clearLine(15);
-						escrita_texto(420, "Falta CAL B. Verifique a tubula", sizeof("Falta CAL B. Verifique a tubula"));	// Escreve "Falta calibrador A"
-						EscreveCedilhaAOTil();
-						escrita_texto(455, "e o pacote de reagentes", sizeof("e o pacote de reagentes"));// Escreve "Falta calibrador B"
-					}
-
-					break;
-				case 2:	// Caso 2 - mV fora da faixa
-
-					if( ( verifyError(TYPEA, NOABNORMAL) & 0xFF ) > ( verifyError(TYPEB, NOABNORMAL) & 0xFF ) )
-					{
-						verificaMaior = TYPEA;
-					}
-					else
-					{
-						verificaMaior = TYPEB;
-					}
-
-					if( ( verifyError(verificaMaior, NOABNORMAL) & 0xFF ) != OK
-						&& ( respCalibA == ERRO || respCalibB == ERRO ) )	// Se verifyError e 0xFF for difente de 0
-					{
-						clearLine(14);
-						stateMachineError(420, verifyError(verificaMaior, NOABNORMAL) & 0xFF, 1);	// Chama máquina de estado de erro
-					}
-
-					break;
-				case 3:	// Caso 3 - Anormal
-
-					if( ( verifyError(TYPEB, ABNORMAL) >> 8 ) != OK
-						&& ( respCalibA == ERRO || respCalibB == ERRO ) )	// Se verifyError move 8 bits para direita for difente de 0
-					{
-						clearLine(14);
-						stateMachineError(420, verifyError(TYPEB, ABNORMAL) >> 8, 2);	// Chama máquina de estado de erro com o verifyError movido 8 bits para a direita
-					}
-
-
-					break;
-				case 4:	// Caso 4 - Variando
-
-					if( ( verifyError(TYPEA, NOABNORMAL) >> 16 ) > ( verifyError(TYPEB, NOABNORMAL) >> 16 ) )
-					{
-						verificaMaior = TYPEA;
-					}
-					else
-					{
-						verificaMaior = TYPEB;
-					}
-
-					if( ( verifyError(TYPEA, ABNORMAL) >> 16 ) != OK
-						&& ( respCalibA == ERRO || respCalibB == ERRO ) )// Se verifyError move168 bits para direita for difente de 0
-					{
-						clearLine(14);
-						stateMachineError(420, verifyError(TYPEB, NOABNORMAL) >> 16, 3);	// Chama máquina de estado de erro com o verifyError movido 16 bits para a direita
-					}
-
-					break;
-				case 5:	// Caso 5 - Erro no NFC
-						// Bloqueia o sensor
-					if( acesso == 2 )	// Se acesso igual a 2
-					{
-						escrita_texto(420, "Tag sem autoriza", sizeof("Tag sem autoriza" ));	// Escreve "Tag sem autorização"
-						EscreveCedilhaAOTil();
-					}
-					else if( acesso == 3 )	// Senão se acesso igual a 3
-					{
-						escrita_texto(420, "Tag vencida", sizeof("Tag vencida"));	// Escreve "Tag vencida"
-					}
-					else if( acesso == 4 )	// Senão se acesso igual a 4
-					{
-						escrita_texto(420, "CI sem comunicar. Trocar antena", sizeof("CI sem comunicar. Trocar antena"));	// Escreve "CI sem comunicar. Trocar antena"
-					}
-					else	// Senão
-					{
-						escrita_texto(420, "Sem tag", sizeof("Sem tag"));	// Escreve "Sem tag"
-					}
-					break;
-				}
-				contErro++;	// Contador de erro
-				if( contErro == 6 )	// Se erro igual a 5
+				if( !sensorRead )	// Se o sensor não está ativado, então mostra os outros erros
 				{
-					contErro = 0;	// Erro recebe 0
+					switch( contErro ){	// Escolha contErro
+					case 0:	// Caso 0 - Falta de calibrador A
+
+						if( respCalibA == ERRO_FALTA_CALIBA )	// Se flagCaliA for igual a ERRO_FALTA_CALIBA
+						{
+							clearLine(14);
+							clearLine(15);
+							escrita_texto(420, "Falta CAL A. Verifique a tubula", sizeof("Falta CAL A. Verifique a tubula"));	// Escreve "Falta calibrador A"
+							EscreveCedilhaAOTil();
+							escrita_texto(455, "e o pacote de reagentes", sizeof("e o pacote de reagentes"));
+
+						}
+
+						break;
+					case 1:	// Caso 1 - Falta de calibrador B
+
+						if( respCalibB == ERRO_FALTA_CALIBB )	// Se flagCaliB for igual a ERRO_FALTA_CALIBB
+						{
+							clearLine(14);
+							clearLine(15);
+							escrita_texto(420, "Falta CAL B. Verifique a tubula", sizeof("Falta CAL B. Verifique a tubula"));	// Escreve "Falta calibrador A"
+							EscreveCedilhaAOTil();
+							escrita_texto(455, "e o pacote de reagentes", sizeof("e o pacote de reagentes"));// Escreve "Falta calibrador B"
+						}
+
+						break;
+					case 2:	// Caso 2 - mV fora da faixa
+
+						if( ( verifyError(TYPEA, NOABNORMAL) & 0xFF ) > ( verifyError(TYPEB, NOABNORMAL) & 0xFF ) )
+						{
+							verificaMaior = TYPEA;
+						}
+						else
+						{
+							verificaMaior = TYPEB;
+						}
+
+						if( ( verifyError(verificaMaior, NOABNORMAL) & 0xFF ) != OK
+								&& ( respCalibA == ERRO || respCalibB == ERRO ) )	// Se verifyError e 0xFF for difente de 0
+						{
+							clearLine(14);
+							stateMachineError(420, verifyError(verificaMaior, NOABNORMAL) & 0xFF, 1);	// Chama máquina de estado de erro
+						}
+
+						break;
+					case 3:	// Caso 3 - Anormal
+
+						if( ( verifyError(TYPEB, ABNORMAL) >> 8 ) != OK
+								&& ( respCalibA == ERRO || respCalibB == ERRO ) )	// Se verifyError move 8 bits para direita for difente de 0
+						{
+							clearLine(14);
+							stateMachineError(420, verifyError(TYPEB, ABNORMAL) >> 8, 2);	// Chama máquina de estado de erro com o verifyError movido 8 bits para a direita
+						}
+
+
+						break;
+					case 4:	// Caso 4 - Variando
+
+						if( ( verifyError(TYPEA, NOABNORMAL) >> 16 ) > ( verifyError(TYPEB, NOABNORMAL) >> 16 ) )
+						{
+							verificaMaior = TYPEA;
+						}
+						else
+						{
+							verificaMaior = TYPEB;
+						}
+
+						if( ( verifyError(TYPEA, ABNORMAL) >> 16 ) != OK
+								&& ( respCalibA == ERRO || respCalibB == ERRO ) )// Se verifyError move168 bits para direita for difente de 0
+						{
+							clearLine(14);
+							stateMachineError(420, verifyError(TYPEB, NOABNORMAL) >> 16, 3);	// Chama máquina de estado de erro com o verifyError movido 16 bits para a direita
+						}
+
+						break;
+					case 5:	// Caso 5 - Erro no NFC
+						// Bloqueia o sensor
+						clearLine(14);
+						if( acesso == 2 )	// Se acesso igual a 2
+						{
+							escrita_texto(420, "Tag sem autoriza", sizeof("Tag sem autoriza" ));	// Escreve "Tag sem autorização"
+							EscreveCedilhaAOTil();
+						}
+						else if( acesso == 3 )	// Senão se acesso igual a 3
+						{
+							escrita_texto(420, "Tag vencida", sizeof("Tag vencida"));	// Escreve "Tag vencida"
+						}
+						else if( acesso == 4 )	// Senão se acesso igual a 4
+						{
+							clearLine(15);
+							escrita_texto(420, "CI sem comunicar. Trocar antena", sizeof("CI sem comunicar. Trocar antena"));	// Escreve "CI sem comunicar. Trocar antena"
+						}
+						else	// Senão
+						{
+							escrita_texto(420, "Sem tag", sizeof("Sem tag"));	// Escreve "Sem tag"
+						}
+						break;
+					}
+					contErro++;	// Contador de erro
+					if( contErro == 6 )	// Se erro igual a 5
+					{
+						contErro = 0;	// Erro recebe 0
+					}
 				}
+
 			}
 			else
 			{	// Senão
 				timerErro++;	// Contador de tempo
-				if( respCalibA == OK && respCalibB == OK && acesso == 1 )	// Se está sem erro
+				if( respCalibA == OK && respCalibB == OK && acesso == 1 && !sensorRead )	// Se está sem erro
 				{
 					// Apaga as linhas dos erros
 					clearLine(14);
