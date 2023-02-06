@@ -388,7 +388,6 @@ void display_run( void ){
 			break;
 
 		case 1:
-
 			respCalibA = calibA(0);
 			clear_display_text();
 			desenho_menu1();

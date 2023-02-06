@@ -3,11 +3,13 @@
 #define TIMERBUZ	100
 
 /* Variáveis de 8 bits */
-volatile unsigned char flag_timer = 0, timerExam = 0, flagBuz = 0, flagSensorAtivo = 0;
+volatile unsigned char flag_timer = 0, timerExam = 0, flagBuz = 0, flagSensorAtivo = 0, acessoAnterior;
 
 /* Variáveis de 16 bits */
 volatile unsigned int timerRTC = 0, timerBuz = 0, timerI2c = 0;
 
+/* Variáveis externas */
+extern unsigned char acesso;
 void move_mux( unsigned char posicao, unsigned char velocidade ){
 
 	static unsigned char posicao_anterior, temporizador = 3;
@@ -325,15 +327,38 @@ void FTM0_IRQHandler(void)
 	if( sensorRead || flagBuz )	// Se sensor aberto ou flag para apitar
 	{
 
-		if( sensorRead )	//Se sensorRead ativo
+		if( sensorRead || acesso != 1 )	//Se sensorRead ativo
 		{
-			if( flagSensorAtivo != 1 )
+			if( flagSensorAtivo != 1 || acesso != acessoAnterior )
 			{
 				clearLine(14);
 				clearLine(15);// Apaga as duas linhas 14 e 15 do display
+				escrita_texto(420, "Feche a camara.", sizeof("Feche a camara."));	// Escreve "Feche a câmara"
+				if( acesso == 1 )
+				{
+					escrita_texto(435, "                               ", sizeof("                               "));
+				}
+				else if( acesso == 2 )	// Se acesso igual a 2
+				{
+					escrita_texto(435, "Tag sem autoriza", sizeof("Tag sem autoriza" ));	// Escreve "Tag sem autorização"
+					EscreveCedilhaAOTil();
+				}
+				else if( acesso == 3 )	// Senão se acesso igual a 3
+				{
+					escrita_texto(435, "Tag vencida", sizeof("Tag vencida"));	// Escreve "Tag vencida"
+				}
+				else if( acesso == 4 )	// Senão se acesso igual a 4
+				{
+					clearLine(15);
+					escrita_texto(435, "CI sem comunicar. Trocar antena", sizeof("CI sem comunicar. Trocar antena"));	// Escreve "CI sem comunicar. Trocar antena"
+				}
+				else	// Senão
+				{
+					escrita_texto(435, "Sem tag", sizeof("Sem tag"));	// Escreve "Sem tag"
+				}
+				acessoAnterior = acesso;
 			}
 			flagSensorAtivo = 1;
-			escrita_texto(420, "Feche a camara", sizeof("Feche a camara"));	// Escreve "Feche a câmara"
 		}
 
 		if( timerBuz < TIMERBUZ )		// Se tempo de acionamento do buzzer for menor que TEMPOBUZ
@@ -353,7 +378,7 @@ void FTM0_IRQHandler(void)
 		if( flagSensorAtivo == 1 )
 		{
 			flagSensorAtivo = 0;
-			clearLine(14);// Apaga as duas linhas 14 e 15 do display
+			clearLine(14);// Apaga a linha 14
 		}
 	}
 

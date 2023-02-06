@@ -10,6 +10,8 @@
 /* Structs para filas */
 extern QueueHandle_t fila_teclado;
 
+extern unsigned char acesso;
+
 void teclado_run( void ){
 
 	vTaskDelay(100);
@@ -58,7 +60,7 @@ void teclado_run( void ){
         col4 = ADC16_GetChannelConversionValue(ADC1, 1);
 
 
-        if( !sensorRead ){	// Se o sensor não estiver ativo, faz a leitura do teclado
+        if( !sensorRead && acesso == 1 ){	// Se o sensor não estiver ativo ou a tag estiver OK, faz a leitura do teclado
 			switch( cont_matriz ){
 
 			case 0:
