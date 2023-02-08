@@ -172,6 +172,8 @@ void display_run( void ){
 		configRTC();
 	}
 
+	PrinterCodigoDeBarras(000000000001);
+
 	while(1){
 
 		readQueueKeyboard = verifyKeyBoard(); // Leitura do teclado
@@ -2671,9 +2673,9 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 
 			escrita_texto( 30, ConverteNumParaLcd(4, 0, examesFeitos), 5);	// Escreve a quantidade de exames na posição 30
 			escrita_texto( 34, ":", sizeof(":"));	// Escreve : na posição 34
-			escrita_texto( 35, ConverteNumParaLcd( 3, 0, ( codigoDeBarras / 10000000000 )), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
-			escrita_texto( 38, ConverteNumParaLcd( 5, 0, ( codigoDeBarras % 10000000000 / 100000 ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
-			escrita_texto( 43, ConverteNumParaLcd( 5, 0, codigoDeBarras % 100000 ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+			escrita_texto( 35, ConverteNumParaLcd( 2, 0, ( codigoDeBarras / 10000000000 )), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+			escrita_texto( 37, ConverteNumParaLcd( 5, 0, ( codigoDeBarras % 10000000000 / 100000 ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+			escrita_texto( 42, ConverteNumParaLcd( 5, 0, codigoDeBarras % 100000 ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
 			escrita_texto( 271, "Levante a Sonda para Aspirar", sizeof("Levante a Sonda para Aspirar"));
 			escrita_texto( 450, "YES=Asp", sizeof("YES=Asp"));
 			escrita_texto( 459, "NO=Sair", sizeof("NO=Sair"));
@@ -2691,9 +2693,9 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 				if( auxiliarCodigoDebarras == 0 )	// Se a resposta for igual a 0, indica erro
 				{
 					// Escreve o valor anterior
-					escrita_texto( 35, ConverteNumParaLcd( 3, 0, ( codigoDeBarras / 10000000000 )), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
-					escrita_texto( 38, ConverteNumParaLcd( 5, 0, ( codigoDeBarras % 10000000000 / 100000 ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
-					escrita_texto( 43, ConverteNumParaLcd( 5, 0, codigoDeBarras % 100000 ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					escrita_texto( 35, ConverteNumParaLcd( 2, 0, ( codigoDeBarras / 10000000000 )), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					escrita_texto( 37, ConverteNumParaLcd( 5, 0, ( codigoDeBarras % 10000000000 / 100000 ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					escrita_texto( 42, ConverteNumParaLcd( 5, 0, codigoDeBarras % 100000 ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
 				}
 				else
 				{
@@ -2782,9 +2784,9 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 				if( auxiliarCodigoDebarras == 0 )	// Se a resposta for igual a 0, indica erro
 				{
 					// Escreve o valor anterior
-					escrita_texto( 35, ConverteNumParaLcd( 3, 0, ( codigoDeBarras / 10000000000 )), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
-					escrita_texto( 38, ConverteNumParaLcd( 5, 0, ( codigoDeBarras % 10000000000 / 100000 ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
-					escrita_texto( 43, ConverteNumParaLcd( 5, 0, codigoDeBarras % 100000 ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					escrita_texto( 35, ConverteNumParaLcd( 2, 0, ( codigoDeBarras / 10000000000 )), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					escrita_texto( 37, ConverteNumParaLcd( 5, 0, ( codigoDeBarras % 10000000000 / 100000 ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					escrita_texto( 42, ConverteNumParaLcd( 5, 0, codigoDeBarras % 100000 ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
 				}
 				else
 				{
@@ -5143,7 +5145,7 @@ unsigned char ContaDigitos( unsigned int num )
 
 unsigned long long EscreveCodigoDeBarras( void )
 {
-	unsigned char tecla = verifyKeyBoard(), contaCaracter = 0, posicaoX = 5, dadosTecla[13], posicao = 35;
+	unsigned char tecla = verifyKeyBoard(), contaCaracter = 0, posicaoX = 5, dadosTecla[12], posicao = 35;
 	unsigned long long codigoDeBarras = 0;
 	unsigned int timeout = 0;
 	Cursor(posicaoX, 1, 1, 1);
@@ -5162,18 +5164,18 @@ unsigned long long EscreveCodigoDeBarras( void )
 			{
 				escrita_texto( posicao + contaCaracter, "             ", sizeof("             "));
 				EscreveDigito( posicao + contaCaracter, tecla );	//	Escreve tecla
-				dadosTecla[12 - contaCaracter] = tecla;	// 	dadosTecla na posicao 12 - contaCaracter recebe tecla
+				dadosTecla[11 - contaCaracter] = tecla;	// 	dadosTecla na posicao 12 - contaCaracter recebe tecla
 				contaCaracter++;	//	contaCaracter incrementa 1
-				if( contaCaracter == 13 )	// 	Se contaCaracter igual a 12
+				if( contaCaracter == 12 )	// 	Se contaCaracter igual a 12
 				{
 					for( unsigned char i = 0; i	< contaCaracter; i++ )// loop para codigoDeBarras soma dadosTecla[12 - contaCaracter] * 10 ^ (contaCaracter - 1 - i)
 					{
-						codigoDeBarras +=  dadosTecla[13 + i - contaCaracter] * pow(10,i);
+						codigoDeBarras +=  dadosTecla[12 + i - contaCaracter] * pow(10,i);
 					}
 					send_command(Display_mode_text);	// Desliga cursor e liga texto
-					escrita_texto( 35, ConverteNumParaLcd( 3, 0, ( codigoDeBarras / 10000000000 )), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
-					escrita_texto( 38, ConverteNumParaLcd( 5, 0, ( codigoDeBarras % 10000000000 / 100000 ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
-					escrita_texto( 43, ConverteNumParaLcd( 5, 0, codigoDeBarras % 100000 ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					escrita_texto( 35, ConverteNumParaLcd( 2, 0, ( codigoDeBarras / 10000000000 )), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					escrita_texto( 37, ConverteNumParaLcd( 5, 0, ( codigoDeBarras % 10000000000 / 100000 ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+					escrita_texto( 42, ConverteNumParaLcd( 5, 0, codigoDeBarras % 100000 ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
 					return codigoDeBarras;
 				}
 
@@ -5191,16 +5193,16 @@ unsigned long long EscreveCodigoDeBarras( void )
 					contaCaracter = 0;	// contaCaracter recebe 0
 				}
 			}
-			else if( tecla == yes || contaCaracter == 13 )	//	Senão se tecla igual a yes
+			else if( tecla == yes || contaCaracter == 12 )	//	Senão se tecla igual a yes
 			{
 				for( unsigned char i = 0; i	< contaCaracter; i++ )// loop para codigoDeBarras soma dadosTecla[12 - contaCaracter] * 10 ^ (contaCaracter - 1 - i)
 				{
-					codigoDeBarras +=  dadosTecla[13 + i - contaCaracter] * pow(10,i);
+					codigoDeBarras +=  dadosTecla[12 + i - contaCaracter] * pow(10,i);
 				}
 				send_command(Display_mode_text);	// Desliga cursor e liga texto
-				escrita_texto( 35, ConverteNumParaLcd( 3, 0, ( codigoDeBarras / 10000000000 )), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
-				escrita_texto( 38, ConverteNumParaLcd( 5, 0, ( codigoDeBarras % 10000000000 / 100000 ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
-				escrita_texto( 43, ConverteNumParaLcd( 5, 0, codigoDeBarras % 100000 ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+				escrita_texto( 35, ConverteNumParaLcd( 2, 0, ( codigoDeBarras / 10000000000 )), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+				escrita_texto( 37, ConverteNumParaLcd( 5, 0, ( codigoDeBarras % 10000000000 / 100000 ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+				escrita_texto( 42, ConverteNumParaLcd( 5, 0, codigoDeBarras % 100000 ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
 				return codigoDeBarras;
 			}
 

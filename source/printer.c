@@ -76,3 +76,21 @@ void EnviaComando( unsigned char data ){
 	for( int i = 0; i < 65535 * 2; i++ );	// Faz um delay com for
 
 }
+
+void PrinterCodigoDeBarras( unsigned long long codigoDeBarras )
+{
+
+	EnviaComando( COMANDO_INICIO_PRINTER >> 8 );	// Envia o comando para iniciar a printer MSB
+	EnviaComando( COMANDO_INICIO_PRINTER & 0xFF );	// Envia o comando para iniciar a printer LSB
+
+	EnviaComando( COMANDO_CODIGO_DE_BARRAS >> 8 );	// Envia o comando para iniciar a escrita do Código de Barras MSB
+	EnviaComando( COMANDO_CODIGO_DE_BARRAS & 0xFF );	// Envia o comando para iniciar a escrita do Código de Barras LSB
+
+	EnviaComando( TIPO_CODIGO_DE_BARRAS & 0xFF );	// Envia o comando para definir o tipo de código de barras - 0x02 (EAN13)
+	for( char i = 0; i < 12 ; i++ )	// Para i começando 0 13, i menor que 0, i incrementa de 1
+	{
+		EnviaComando( (unsigned char)(codigoDeBarras % (unsigned long long)pow(10,12 - i) / (unsigned long long)pow(10,11-i)) + 0x30 );// texto recebe codigoDeBarras % 10 ^(i + 1) / ( 10^i ) + 0x30 (conversão para ASCIIpow
+	}
+	EnviaComando( 0x00 );	// Envia o comando PRINT_TEXTO
+
+}
