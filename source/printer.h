@@ -24,7 +24,9 @@
 #define LETRA_GRANDE				0x03
 #define	LETRA_PEQUENA				0x02
 #define PRINT_TEXTO					0x0A
-void EscrevePrinter( char *texto, unsigned char tamanhoTexto, unsigned char tamanhoLetra );
+#define NAO_PRINTA					0x00
+void PrinterInicializa( unsigned char tamanhoLetra );
+void PrinterTexto(char *texto, unsigned char tamanhoTexto, unsigned char pulaLinha );
 void EnviaComando( unsigned char data );
 void PrinterCodigoDeBarras( unsigned long long codigoDeBarras );
 #endif /* PRINTER_H_ */

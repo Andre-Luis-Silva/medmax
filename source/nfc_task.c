@@ -1517,12 +1517,12 @@ void task_nfc_reader(NxpNci_RfIntf_t RfIntf)
 	GPIO_PortSet(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 	Sleep( 20 );
 	cont_erro = 0;
-	NxpNci_KeepConfiguration();
-	if (NxpNci_StartDiscovery(DiscoveryTechnologies,sizeof(DiscoveryTechnologies)) != NFC_SUCCESS)
+	Keep_Configuration();
+	/*if (NxpNci_StartDiscovery(DiscoveryTechnologies,sizeof(DiscoveryTechnologies)) != NFC_SUCCESS)
 	{
 		printf("Error: cannot start discovery\n");
 		return;
-	}
+	}*/
 	/* Wait for card removal */
 //	NxpNci_ProcessReaderMode(RfIntf, PRESENCE_CHECK);
 

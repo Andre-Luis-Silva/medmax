@@ -28,7 +28,7 @@ float Ck_standard = 0, Cca_standard = 0, Ccl_standard = 0, CpH_standard = 0, Cna
 
 void display_run( void ){
 
-	unsigned char estado_display = 0, flagCalibOk = 1, menuConfig = 0, menuConfigAnterior = 0;
+	unsigned char estado_display = 0, flagCalibOk = 0, menuConfig = 0, menuConfigAnterior = 0;
 	unsigned char menu = 0, menu_anterior = 0, respCalibA = OK, respCalibB = OK, readQueueKeyboard;
 	unsigned char readRxI2c = 0, timerErro = 0, contErro = 5;
 	unsigned char verificaMaior;
@@ -172,8 +172,6 @@ void display_run( void ){
 		configRTC();
 	}
 
-	PrinterCodigoDeBarras(000000000001);
-
 	while(1){
 
 		readQueueKeyboard = verifyKeyBoard(); // Leitura do teclado
@@ -304,7 +302,7 @@ void display_run( void ){
 							clearLine(15);
 							escrita_texto(420, "CI sem comunicar. Trocar antena", sizeof("CI sem comunicar. Trocar antena"));	// Escreve "CI sem comunicar. Trocar antena"
 						}
-						else	// Senão
+						else if( acesso == 0 )	// Senão
 						{
 							escrita_texto(420, "Sem tag", sizeof("Sem tag"));	// Escreve "Sem tag"
 						}
@@ -1690,7 +1688,7 @@ unsigned char calibA( unsigned char wash ){
 
 		case 0:	// Estado 0, movimento dos motores
 
-			Keep_Configuration();
+			//Keep_Configuration();
 
 			// Move motor MUX para posição 2
 			move_mux(POSITION2, SPEEDMUX1);
@@ -1843,7 +1841,7 @@ unsigned char calibA( unsigned char wash ){
 					segundos = 30;
 					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve os segundos4
 
-					GPIO_PortClear(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
+					//GPIO_PortClear(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 				}
 			}
 			break;
@@ -2087,7 +2085,7 @@ unsigned char calibA( unsigned char wash ){
 			}
 			if( estado == 3 ){
 
-				Keep_Configuration();
+				//Keep_Configuration();
 
 				if( (contError = verifyError(TYPEA, NOABNORMAL)) != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
 					clearLine(3);
@@ -2181,7 +2179,7 @@ unsigned char calibB( void ){
 
 		case 0:	// Estado 0, movimento dos motores
 
-			Keep_Configuration();
+			//Keep_Configuration();
 
 			// Move motor MUX para posição 3
 			move_mux(POSITION3, SPEEDMUX1);
@@ -2240,7 +2238,7 @@ unsigned char calibB( void ){
 				vTaskDelay(10000);	// Delay de 10 segundos
 				segundos = 30;
 				escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve os segundos
-				GPIO_PortClear(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
+				//GPIO_PortClear(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 
 			}
 			break;
@@ -2480,7 +2478,7 @@ unsigned char calibB( void ){
 			}
 			if( estado == 3 ){
 
-				Keep_Configuration();
+				//Keep_Configuration();
 
 				if( (contError = verifyError(TYPEB, ABNORMAL)) != 0 ){	// Verifica se deu erro de valor fora da faixa ou anormal
 					clearLine(3);
@@ -2631,7 +2629,7 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 		{
 		case 0:	//Início movimento dos motores
 
-			Keep_Configuration();
+			//Keep_Configuration();
 
 			writeLine(0);
 			writeLine(13);
@@ -2761,7 +2759,7 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 					vTaskDelay(10000);	// Delay de 10 segundos
 					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve segundo
 					flagExame = 1;
-					GPIO_PortClear(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
+					//GPIO_PortClear(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 				}
 				else{
 
@@ -2935,7 +2933,7 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 					na = 0;
 					contReadAD = 1;
 					if( erroDiferencaTensoes == 0 && segundos < 27 ){
-						Keep_Configuration();
+						//Keep_Configuration();
 						estado = 4;
 						dadosMemoria[0] = Ck * 100;	// dadosMemoria[0] recebe Ck
 						dadosMemoria[1] = Cna * 100;	// dadosMemoria[1] recebe Cna
@@ -2952,8 +2950,31 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 						dadosMemoria[6] = codigoDeBarras >> 32 | (ano << 24);	// dadosMemoria[6] recebe codigoDeBarras movido 32 bits para a direita (4 bytes)
 						dadosMemoria[7] = codigoDeBarras & 0xFFFFFFFF;	// dadosMemoria[7] recebe codigoDeBarras e 0xFFFFFFFF
 						FLASH_Program(&s_flashDriver, ADDR_EXAME + contAddrMemoria * DADOS_EXAMES, dadosMemoria, DADOS_EXAMES);	// Salva dados de calibração
+
+						PrinterInicializa(LETRA_GRANDE);
+						PrinterTexto("RESULTADO", sizeof("RESULTADO"), PRINT_TEXTO);
+						PrinterInicializa(LETRA_PEQUENA);
+						PrinterTexto("K =", sizeof("K ="), NAO_PRINTA);
+						PrinterTexto(ConverteNumParaLcd(ContaDigitos(Ck), 2, Ck), ContaCaracteres(), NAO_PRINTA);
+						PrinterTexto("mmol/L", sizeof("mmol/L"), PRINT_TEXTO);
+						PrinterInicializa(LETRA_PEQUENA);
+						PrinterTexto("Na=", sizeof("Na="), NAO_PRINTA);
+						PrinterTexto(ConverteNumParaLcd(ContaDigitos(Cna), 2, Cna), ContaCaracteres(), NAO_PRINTA);
+						PrinterTexto("mmol/L", sizeof("mmol/L"), PRINT_TEXTO);
+						PrinterInicializa(LETRA_PEQUENA);
+						PrinterTexto("Ca=", sizeof("Ca="), NAO_PRINTA);
+						PrinterTexto(ConverteNumParaLcd(ContaDigitos(Cca), 2, Cca), ContaCaracteres(), NAO_PRINTA);
+						PrinterTexto("mmol/L", sizeof("mmol/L"), PRINT_TEXTO);
+						PrinterInicializa(LETRA_PEQUENA);
+						PrinterTexto("Cl=", sizeof("Cl="), NAO_PRINTA);
+						PrinterTexto(ConverteNumParaLcd(ContaDigitos(Ccl), 2, Ccl), ContaCaracteres(), NAO_PRINTA);
+						PrinterTexto("mmol/L", sizeof("mmol/L"), PRINT_TEXTO);
+						PrinterInicializa(LETRA_PEQUENA);
+						PrinterTexto("pH=", sizeof("pH="), NAO_PRINTA);
+						PrinterTexto(ConverteNumParaLcd(ContaDigitos(CpH), 2, CpH), ContaCaracteres(), PRINT_TEXTO);
+
 						examesFeitos++;	// Incrementa a quantidade de exames
-						codigoDeBarras++; // Incrementa o código de ba
+						codigoDeBarras++; // Incrementa o código de barras
 						contAddrMemoria++;	// Incrementa o contador de variável
 						exame_feito = 1;	// Flag indicador de exame feito
 						if(codigoDeBarras == pow(10,14))	// Se código de barras igual a 10^14, passou dos 13 dígitos
@@ -2963,7 +2984,6 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 						if( examesFeitos == 2570 )	// Se exames feitos igual a 2570, passou da quantidade de exames salvos
 						{
 							examesFeitos = 1;	// Exames feitos recebe 1
-
 						}
 
 					}

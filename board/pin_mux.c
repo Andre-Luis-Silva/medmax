@@ -124,6 +124,7 @@ pin_labels:
 #include "fsl_port.h"
 #include "fsl_gpio.h"
 #include "pin_mux.h"
+#include "FreeRTOSConfig.h"
 
 /* FUNCTION ************************************************************************************************************
  *
@@ -286,7 +287,7 @@ void BOARD_InitPins(void)
 	PORT_SetPinMux(NXPNCI_IRQ_PORT, NXPNCI_IRQ_PIN, kPORT_MuxAsGpio);
 	PORT_SetPinMux(NXPNCI_VEN_PORT, NXPNCI_VEN_PIN, kPORT_MuxAsGpio);
 	/* IRQ interrupt Configuration */
-	NVIC_SetPriority(NXPNCI_IRQ_PORTIRQn, 5);
+	NVIC_SetPriority(NXPNCI_IRQ_PORTIRQn, configMAX_SYSCALL_INTERRUPT_PRIORITY - 2);
 	EnableIRQ(NXPNCI_IRQ_PORTIRQn);
 	PORT_SetPinInterruptConfig(NXPNCI_IRQ_PORT, NXPNCI_IRQ_PIN, kPORT_InterruptRisingEdge);
 

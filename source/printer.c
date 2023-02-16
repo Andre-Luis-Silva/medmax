@@ -1,6 +1,6 @@
 #include "comum.h"
 
-void EscrevePrinter( char *texto, unsigned char tamanhoTexto, unsigned char tamanhoLetra ){
+void PrinterInicializa( unsigned char tamanhoLetra ){
 
 	EnviaComando( COMANDO_INICIO_PRINTER >> 8 );	// Inicia printer MSB
 	EnviaComando( COMANDO_INICIO_PRINTER & 0xFF );	// Inicia printer LSB
@@ -15,13 +15,22 @@ void EscrevePrinter( char *texto, unsigned char tamanhoTexto, unsigned char tama
 		EnviaComando( LETRA_PEQUENA );	// Envia o comando para letra grande
 	}
 
+}
+
+void PrinterTexto(char *texto, unsigned char tamanhoTexto, unsigned char pulaLinha )
+{
+
 	while( tamanhoTexto > 0 ){	// Enquanto tamanhoTexto é maior que zero
 		EnviaComando( *(texto++) );	// Envia o texto a ser escrito
 
 		tamanhoTexto--; // Decrementa o tamanho do texto.
 	}
 
-	EnviaComando( PRINT_TEXTO );	// Envia o comando PRINT_TEXTO
+	if( pulaLinha )	// Comando para pular para a próxima linha
+	{
+		EnviaComando( PRINT_TEXTO );	// Envia o comando PRINT_TEXTO
+	}
+
 }
 
 void EnviaComando( unsigned char data ){
