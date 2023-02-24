@@ -14,7 +14,7 @@ extern flash_config_t s_flashDriver;
 
 /* Variáveis externas */
 extern unsigned int timerRTC;
-extern volatile unsigned char flag_timer;
+extern volatile unsigned char flag_timer, flagNfcRead;
 extern volatile unsigned char flagBuz;
 extern unsigned char acesso, exame_feito;
 
@@ -172,6 +172,22 @@ void display_run( void ){
 		configRTC();
 	}
 
+	unsigned char dia, mes, ano, hora, minuto, posicaoDesenho = 65;
+	I2C_READ_PCF8653( &dia, Days );	// Faz a leitura do dia
+	I2C_READ_PCF8653( &mes, Century_months );	// Faz a leitura do mês
+	I2C_READ_PCF8653( &ano, Years );	// Faz a leitura do ano
+	I2C_READ_PCF8653( &hora, Hours );	// Faz a leitura da hora
+	I2C_READ_PCF8653( &minuto, Minutes );	// Faz a leitura do minuto
+	escrita_texto( posicaoDesenho, ConverteNumParaLcd( 2, 0, bcdtodec( dia & 0x3F ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+	escrita_texto( posicaoDesenho + 2, "/" , sizeof("/") );	// Escreve "/"
+	escrita_texto( posicaoDesenho + 3, ConverteNumParaLcd( 2, 0, bcdtodec( mes & 0x1F ) ), ContaCaracteres() + 1 );	// Escreve o mês salvo com 2 dígitos
+	escrita_texto( posicaoDesenho + 5, "/20", sizeof("/20") );		// Escreve "/20"
+	escrita_texto( posicaoDesenho + 8, ConverteNumParaLcd( 2, 0, bcdtodec( ano ) ), ContaCaracteres() + 1 );	// Escreve o ano salvo com 2 dígitos
+	escrita_texto( posicaoDesenho + 12, ConverteNumParaLcd( 2, 0, bcdtodec( hora & 0x3F ) ), ContaCaracteres() + 1 );	// Escreve a hora salvo com 2 dígitos
+	escrita_texto( posicaoDesenho + 14, ":" , sizeof(":") );	// Escreve ":"
+	escrita_texto( posicaoDesenho + 15, ConverteNumParaLcd( 2, 0, bcdtodec( minuto & 0x7F ) ), ContaCaracteres() + 1 );	// Escreve o minuto salvo com 2 dígitos
+
+	unsigned char timerRtcData = 0;
 	while(1){
 
 		readQueueKeyboard = verifyKeyBoard(); // Leitura do teclado
@@ -189,21 +205,24 @@ void display_run( void ){
 			 * 		Escreve as horas na tela
 			 */
 			timerRTC = 0;
-			unsigned char dia, mes, ano, hora, minuto, posicaoDesenho = 65;
-			I2C_READ_PCF8653( &dia, Days );	// Faz a leitura do dia
-			I2C_READ_PCF8653( &mes, Century_months );	// Faz a leitura do mês
-			I2C_READ_PCF8653( &ano, Years );	// Faz a leitura do ano
-			I2C_READ_PCF8653( &hora, Hours );	// Faz a leitura da hora
-			I2C_READ_PCF8653( &minuto, Minutes );	// Faz a leitura do minuto
-			escrita_texto( posicaoDesenho, ConverteNumParaLcd( 2, 0, bcdtodec( dia & 0x3F ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
-			escrita_texto( posicaoDesenho + 2, "/" , sizeof("/") );	// Escreve "/"
-			escrita_texto( posicaoDesenho + 3, ConverteNumParaLcd( 2, 0, bcdtodec( mes & 0x1F ) ), ContaCaracteres() + 1 );	// Escreve o mês salvo com 2 dígitos
-			escrita_texto( posicaoDesenho + 5, "/20", sizeof("/20") );		// Escreve "/20"
-			escrita_texto( posicaoDesenho + 8, ConverteNumParaLcd( 2, 0, bcdtodec( ano ) ), ContaCaracteres() + 1 );	// Escreve o ano salvo com 2 dígitos
-			escrita_texto( posicaoDesenho + 12, ConverteNumParaLcd( 2, 0, bcdtodec( hora & 0x3F ) ), ContaCaracteres() + 1 );	// Escreve a hora salvo com 2 dígitos
-			escrita_texto( posicaoDesenho + 14, ":" , sizeof(":") );	// Escreve ":"
-			escrita_texto( posicaoDesenho + 15, ConverteNumParaLcd( 2, 0, bcdtodec( minuto & 0x7F ) ), ContaCaracteres() + 1 );	// Escreve o minuto salvo com 2 dígitos
-
+			timerRtcData++;
+			if( timerRtcData > 60 && flagNfcRead == 0 )	// Contador de tempo para leitura de data e hora. A leitura será feita a cada minuto
+			{
+				timerRtcData = 0; // Zera contador de tempo
+				I2C_READ_PCF8653( &dia, Days );	// Faz a leitura do dia
+				I2C_READ_PCF8653( &mes, Century_months );	// Faz a leitura do mês
+				I2C_READ_PCF8653( &ano, Years );	// Faz a leitura do ano
+				I2C_READ_PCF8653( &hora, Hours );	// Faz a leitura da hora
+				I2C_READ_PCF8653( &minuto, Minutes );	// Faz a leitura do minuto
+				escrita_texto( posicaoDesenho, ConverteNumParaLcd( 2, 0, bcdtodec( dia & 0x3F ) ), ContaCaracteres() + 1 );	// Escreve o dia salvo com 2 dígitos
+				escrita_texto( posicaoDesenho + 2, "/" , sizeof("/") );	// Escreve "/"
+				escrita_texto( posicaoDesenho + 3, ConverteNumParaLcd( 2, 0, bcdtodec( mes & 0x1F ) ), ContaCaracteres() + 1 );	// Escreve o mês salvo com 2 dígitos
+				escrita_texto( posicaoDesenho + 5, "/20", sizeof("/20") );		// Escreve "/20"
+				escrita_texto( posicaoDesenho + 8, ConverteNumParaLcd( 2, 0, bcdtodec( ano ) ), ContaCaracteres() + 1 );	// Escreve o ano salvo com 2 dígitos
+				escrita_texto( posicaoDesenho + 12, ConverteNumParaLcd( 2, 0, bcdtodec( hora & 0x3F ) ), ContaCaracteres() + 1 );	// Escreve a hora salvo com 2 dígitos
+				escrita_texto( posicaoDesenho + 14, ":" , sizeof(":") );	// Escreve ":"
+				escrita_texto( posicaoDesenho + 15, ConverteNumParaLcd( 2, 0, bcdtodec( minuto & 0x7F ) ), ContaCaracteres() + 1 );	// Escreve o minuto salvo com 2 dígitos
+			}
 			/* Verificação de erro */
 			if( timerErro >= 3 && ( respCalibA != OK || respCalibB != OK || acesso != 1 ))	// Se temporizador de erro chegar a 5 segundos
 			{
@@ -2019,6 +2038,7 @@ unsigned char calibA( unsigned char wash ){
 
 					if( erroDiferencaTensoes == 0 && segundos < 27 ){	// Se diferença for menor que 500 e segundo menor que 27
 
+						while( flagNfcRead );
 						I2C_READ_PCF8653( &hora, Hours ) ;	// Medida de hora do RTC
 						I2C_READ_PCF8653( &minuto, Minutes );	// Medida de minuto do RTC
 						medidasCalibSalva[0] = voltageCalA_K;	// Salva calibrador K
@@ -2412,6 +2432,7 @@ unsigned char calibB( void ){
 
 					if( erroDiferencaTensoes == 0 && segundos < 27 ){	// Se diferença for menor que 500 e segundo menor que 27
 
+						while( flagNfcRead );
 						I2C_READ_PCF8653( &hora, Hours ) ;	// Medida de hora do RTC
 						I2C_READ_PCF8653( &minuto, Minutes );	// Medida de minuto do RTC
 						medidasCalibSalva[0] = voltageCalB_K;	// Salva calibrador K
@@ -2941,6 +2962,7 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 						dadosMemoria[3] = Cca * 100;	// dadosMemoria[3] recebe Cca
 						dadosMemoria[4] = CpH * 100;	// dadosMemoria[4] recebe CpH
 						unsigned char mes, dia, hora, minuto, ano;	// Declaração das variáveis de tempo
+						while( flagNfcRead );
 						I2C_READ_PCF8653(&ano, Years);	// Lê o ano do RTC
 						I2C_READ_PCF8653(&mes, Century_months);	// Lê a mês do RTC
 						I2C_READ_PCF8653(&dia, Days);	// Lê a dia do RTC
@@ -2954,6 +2976,10 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 						PrinterInicializa(LETRA_GRANDE);
 						PrinterTexto("RESULTADO", sizeof("RESULTADO"), PRINT_TEXTO);
 						PrinterInicializa(LETRA_PEQUENA);
+						PrinterTexto("ID:", sizeof("ID:"), NAO_PRINTA);
+						PrinterCodigoDeBarras(codigoDeBarras);
+						PrinterInicializa(LETRA_PEQUENA);
+						PrinterTexto(ConverteNumParaLcd(4, 0, examesFeitos), ContaCaracteres(), PRINT_TEXTO);
 						PrinterTexto("K =", sizeof("K ="), NAO_PRINTA);
 						PrinterTexto(ConverteNumParaLcd(ContaDigitos(Ck), 2, Ck), ContaCaracteres(), NAO_PRINTA);
 						PrinterTexto("mmol/L", sizeof("mmol/L"), PRINT_TEXTO);

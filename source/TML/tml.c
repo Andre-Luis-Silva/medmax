@@ -34,11 +34,11 @@ void PORTC_IRQHandler(void)
 	{
 	    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 		GPIO_PortClearInterruptFlags(NXPNCI_IRQ_GPIO, 1U << NXPNCI_IRQ_PIN);
-		if( IrqSem != NULL )
-		{
+//		if( IrqSem != NULL )
+//		{
 			xSemaphoreGiveFromISR(IrqSem, &xHigherPriorityTaskWoken);
-		}
-		portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+//		}
+		//portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 	}
 }
 
@@ -107,7 +107,7 @@ static Status tml_Tx(uint8_t *pBuff, uint16_t buffLen) {
     	Sleep(10);
     	if(I2C_WRITE(pBuff, buffLen) != kStatus_Success)
     	{
-    		Keep_Configuration();
+    		//Keep_Configuration();
     		return ERROR;
     	}
     }
@@ -140,17 +140,17 @@ static Status tml_Rx(uint8_t *pBuff, uint16_t buffLen, uint16_t *pBytesRead) {
 }
 
 static Status tml_WaitForRx(uint32_t timeout) {
-	if( IrqSem != NULL )
-	{
+//	if( IrqSem != NULL )
+//	{
 		if (xSemaphoreTake(IrqSem, (timeout==0)?(portMAX_DELAY):(portTICK_PERIOD_MS*timeout)) != pdTRUE)
 		{
 			return ERROR;
 		}
-	}
-	else
+//	}
+/*	else
 	{
 		Keep_Configuration();
-	}
+	}*/
 	return SUCCESS;
 }
 

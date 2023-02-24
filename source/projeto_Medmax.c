@@ -67,7 +67,7 @@ TaskHandle_t xHandle;
 #define TASK_NFC_STACK_PRIO		(configMAX_PRIORITIES - 3)
 
 #define MUX_NFC_STACK_SIZE		1024
-#define MUX_NFC_STACK_PRIO		(configMAX_PRIORITIES - 1)
+#define MUX_NFC_STACK_PRIO		(configMAX_PRIORITIES - 2)
 
 #define TECLADO_NFC_STACK_SIZE	1024
 #define TECLADO_NFC_STACK_PRIO	(configMAX_PRIORITIES - 3)
@@ -86,7 +86,7 @@ int main(void) {
 	/* Init board hardware. */
 	BOARD_InitBootPins();
 
-	SIM->SCGC6 |= SIM_SCGC6_PIT(1) | SIM_SCGC6_PDB(1);;
+	SIM->SCGC6 |= SIM_SCGC6_PIT(1) | SIM_SCGC6_PDB(1);
 	PIT->MCR = 0x00;
 	PIT->CHANNEL[0].TCTRL |= PIT_TCTRL_TEN(1);
 	PIT->CHANNEL[0].LDVAL = 0xF00;

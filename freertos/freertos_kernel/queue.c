@@ -2001,7 +2001,7 @@ UBaseType_t uxQueueSpacesAvailable( const QueueHandle_t xQueue )
     UBaseType_t uxReturn;
     Queue_t * const pxQueue = xQueue;
 
-    //configASSERT( pxQueue );
+    configASSERT( pxQueue );
 
     taskENTER_CRITICAL();
     {

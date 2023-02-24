@@ -27,6 +27,7 @@
 #include "board.h"
 #include "pin_mux.h"
 #include "queue.h"
+#include <tool.h>
 
 #define print_buf(x,y,z)  {int loop; printf(x); for(loop=0;loop<z;loop++) printf("0x%.2x ", y[loop]); printf("\n");}
 #define app_run	1
@@ -99,7 +100,7 @@ void app_finalize(void)
 //codigo da flash
 
 /// pina
-unsigned char acesso=0; //acesso não permitido
+unsigned char acesso=0, flagNfcRead = 0; //acesso não permitido
 unsigned int tempo;
 unsigned int exames;
 unsigned char exame_feito;
@@ -242,7 +243,10 @@ void NdefPush_Cb(unsigned char *pNdefRecord, unsigned short NdefRecordSize) {
 #if defined RW_SUPPORT
 #ifdef RW_RAW_EXCHANGE
 void Keep_Configuration( void ){
-	tml_Connect ();
+	GPIO_PortClear(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
+	Sleep(1);
+	GPIO_PortSet(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
+	Sleep(10);
 	NxpNci_KeepConfiguration();
 	if (NxpNci_StartDiscovery(DiscoveryTechnologies,sizeof(DiscoveryTechnologies)) != NFC_SUCCESS)
 	{
@@ -1511,7 +1515,7 @@ void task_nfc_reader(NxpNci_RfIntf_t RfIntf)
 	}
 
 	NxpNci_StopDiscovery();
-
+	flagNfcRead = 0;
 	GPIO_PortClear(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 	Sleep( 4892 );
 	GPIO_PortSet(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
@@ -1726,6 +1730,7 @@ if (erro_loop!=0) {
 			if( cont_erro > 5 ){
 				cont_erro = 5;
 				acesso=0;
+				Keep_Configuration();
 //				if(locked==0)
 //					//acesso=0; //só altera //acesso para zero se der time out
 //				if(locked==1)
@@ -1767,6 +1772,7 @@ if (erro_loop!=0) {
 #ifdef RW_SUPPORT
 		if ((RfInterface.ModeTech & MODE_MASK) == MODE_POLL)
 		{
+			flagNfcRead = 1;
 			task_nfc_reader(RfInterface);
 		}
 		else

@@ -42,7 +42,7 @@ void move_mux( unsigned char posicao, unsigned char velocidade ){
 			    adc16ChannelConfigStruct.enableInterruptOnConversionCompleted = false;
 			    adc16ChannelConfigStruct.enableDifferentialConversion = false;
 			    adc16ChannelConfigStruct.channelNumber                        = 15;
-				if( medida_ad < 4090 ){
+				while( medida_ad < 4090 ){
 
 					ADC16_SetChannelConfig(DEMO_ADC16_BASE, DEMO_ADC16_CHANNEL_GROUP, &adc16ChannelConfigStruct);
 					while (0U == (kADC16_ChannelConversionDoneFlag &
@@ -50,16 +50,10 @@ void move_mux( unsigned char posicao, unsigned char velocidade ){
 					{
 					}
 					medida_ad = ADC16_GetChannelConversionValue(DEMO_ADC16_BASE, DEMO_ADC16_CHANNEL_GROUP);
+					move_mux(0, 1);
+				}
+				return;
 
-				}
-				else
-				{
-					ma1_off;
-					ma2_off;
-					ma3_off;
-					ma4_off;
-					return;
-				}
 			}
 			if( flag_timer ){
 
