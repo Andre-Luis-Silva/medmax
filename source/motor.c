@@ -3,10 +3,10 @@
 #define TIMERBUZ	100
 
 /* Variáveis de 8 bits */
-volatile unsigned char flag_timer = 0, timerExam = 0, flagBuz = 0, flagSensorAtivo = 0, acessoAnterior;
+volatile unsigned char flag_timer = 0, flagBuz = 0, flagSensorAtivo = 0, acessoAnterior;
 
 /* Variáveis de 16 bits */
-volatile unsigned int timerRTC = 0, timerBuz = 0, timerI2c = 0;
+volatile unsigned int timerRTC = 0, timerBuz = 0, timerI2c = 0, timerExam = 0;
 
 /* Variáveis externas */
 extern unsigned char acesso;
@@ -315,7 +315,7 @@ void FTM0_IRQHandler(void)
 	if( timerRTC < 65535 )
 		timerRTC++;
 
-	if( timerExam < 255 )
+	if( timerExam < 65535 )
 		timerExam++;
 
 	if( sensorRead || flagBuz )	// Se sensor aberto ou flag para apitar

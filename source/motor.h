@@ -68,7 +68,7 @@
 #define PULSE_TM	52
 #define END_TM		6640
 #define END_TM2		15000
-#define TIME_MEAS	250
+#define TIME_MEAS	300
 
 void motores_run( void );
 void move_mux( unsigned char posicao, unsigned char velocidade );

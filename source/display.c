@@ -407,6 +407,7 @@ void display_run( void ){
 			break;
 
 		case 1:
+
 			respCalibA = calibA(0);
 			clear_display_text();
 			desenho_menu1();
@@ -422,7 +423,7 @@ void display_run( void ){
 			respCalibA = calibA(0);	// Chama o calibrador A
 			clear_display_text();	// Apaga a tela
 			respCalibB = calibB();	// Chama o calibrador B
-			if( respCalibB == 0 )	// Se as respostas forem OK
+			if( respCalibA == OK && respCalibB == OK )	// Se as respostas forem OK
 			{
 				calibValues();	// Faz o cálculo da calibração dos valores padrão
 				flagCalibOk = 1;	// Seta o flag de calibração OK
@@ -1858,7 +1859,7 @@ unsigned char calibA( unsigned char wash ){
 					escrita_texto( 401, "Testando", sizeof("Testando") );
 					vTaskDelay(10000);	// Delay de 10 segundos
 					segundos = 30;
-					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve os segundos4
+					escrita_texto(28, numtolcd(segundos,NUM), 3);	// Escreve os segundos
 
 					//GPIO_PortClear(NXPNCI_VEN_GPIO, 1U << NXPNCI_VEN_PIN);
 				}
@@ -2913,7 +2914,8 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 					Cca = Cca_standard * pow( 10, (ca * 8.0325 / contReadAD) / ( ( voltageCalB_Ca - voltageCalA_Ca ) * 3.31 ) ) * 100 * slopeEletrodos[3] + interceptEletrodos[3] * 100;
 					Ccl = Ccl_standard * pow( 10, (cl * 8.0325 / contReadAD) / ( (int)( voltageCalA_Cl - voltageCalB_Cl ) * 5.105) ) * 100 * slopeEletrodos[2] + interceptEletrodos[2] * 100;
 					Cna = Cna_standard * pow( 10, (na * 8.0325 / contReadAD) / ( ( voltageCalA_Na - voltageCalB_Na ) * 9.633) ) * 100 * slopeEletrodos[1] + interceptEletrodos[1] * 100;
-
+					float tCa = Cca * ( 200 + ( CpH - 740 ) ) / 100;	// Cálculo para cálcio total
+					float nCa = Cca * ( 100 +  0.5 * ( CpH - 740 ) ) / 100;	// Cálculo para o cálcio normalizado
 					// Faz a verificação da diferença e armazena o erro em uma flag
 					if( medidaAnterior_K != 0 && medidaAnterior_Ca != 0 && medidaAnterior_Na != 0 && medidaAnterior_Cl != 0 && medidaAnterior_pH != 0 ){
 
@@ -2980,24 +2982,34 @@ unsigned char TesteAmostras( unsigned char tipoTeste ){
 						PrinterCodigoDeBarras(codigoDeBarras);
 						PrinterInicializa(LETRA_PEQUENA);
 						PrinterTexto(ConverteNumParaLcd(4, 0, examesFeitos), ContaCaracteres(), PRINT_TEXTO);
-						PrinterTexto("K =", sizeof("K ="), NAO_PRINTA);
+						PrinterTexto(" K =", sizeof("K ="), NAO_PRINTA);
 						PrinterTexto(ConverteNumParaLcd(ContaDigitos(Ck), 2, Ck), ContaCaracteres(), NAO_PRINTA);
 						PrinterTexto("mmol/L", sizeof("mmol/L"), PRINT_TEXTO);
 						PrinterInicializa(LETRA_PEQUENA);
-						PrinterTexto("Na=", sizeof("Na="), NAO_PRINTA);
+						PrinterTexto(" Na=", sizeof("Na="), NAO_PRINTA);
 						PrinterTexto(ConverteNumParaLcd(ContaDigitos(Cna), 2, Cna), ContaCaracteres(), NAO_PRINTA);
 						PrinterTexto("mmol/L", sizeof("mmol/L"), PRINT_TEXTO);
 						PrinterInicializa(LETRA_PEQUENA);
-						PrinterTexto("Ca=", sizeof("Ca="), NAO_PRINTA);
+						PrinterTexto("iCa=", sizeof("iCa="), NAO_PRINTA);
 						PrinterTexto(ConverteNumParaLcd(ContaDigitos(Cca), 2, Cca), ContaCaracteres(), NAO_PRINTA);
 						PrinterTexto("mmol/L", sizeof("mmol/L"), PRINT_TEXTO);
+						PrinterTexto("tCa=", sizeof("tCa="), NAO_PRINTA);
+						PrinterTexto(ConverteNumParaLcd(ContaDigitos(tCa), 2, tCa), ContaCaracteres(), NAO_PRINTA);
+						PrinterTexto("mmol/L", sizeof("mmol/L"), PRINT_TEXTO);
+						PrinterTexto("nCa=", sizeof("nCa="), NAO_PRINTA);
+						PrinterTexto(ConverteNumParaLcd(ContaDigitos(nCa), 2, nCa), ContaCaracteres(), NAO_PRINTA);
+						PrinterTexto("mmol/L", sizeof("mmol/L"), PRINT_TEXTO);
 						PrinterInicializa(LETRA_PEQUENA);
-						PrinterTexto("Cl=", sizeof("Cl="), NAO_PRINTA);
+						PrinterTexto(" Cl=", sizeof(" Cl="), NAO_PRINTA);
 						PrinterTexto(ConverteNumParaLcd(ContaDigitos(Ccl), 2, Ccl), ContaCaracteres(), NAO_PRINTA);
 						PrinterTexto("mmol/L", sizeof("mmol/L"), PRINT_TEXTO);
 						PrinterInicializa(LETRA_PEQUENA);
-						PrinterTexto("pH=", sizeof("pH="), NAO_PRINTA);
+						PrinterTexto(" pH=", sizeof(" pH="), NAO_PRINTA);
 						PrinterTexto(ConverteNumParaLcd(ContaDigitos(CpH), 2, CpH), ContaCaracteres(), PRINT_TEXTO);
+						EnviaComando(0x0A);
+						EnviaComando(0x0A);
+						EnviaComando(0x0A);
+						EnviaComando(0x0A);
 
 						examesFeitos++;	// Incrementa a quantidade de exames
 						codigoDeBarras++; // Incrementa o código de barras
@@ -3452,7 +3464,7 @@ unsigned int verifyError( unsigned char typeAorB, unsigned char abnormal ){
 		else
 			contError &= ~(1 << ErrorCa);
 
-		if( voltageCalA_pH < 4500 || voltageCalA_pH > 14000 )
+		if( voltageCalA_pH < 7000 || voltageCalA_pH > 17000 )
 			contError |= 1 << ErrorpH;
 		else
 			contError &= ~(1 << ErrorpH);
@@ -3519,7 +3531,7 @@ unsigned int verifyError( unsigned char typeAorB, unsigned char abnormal ){
 		else
 			contError &= ~(1 << ErrorCa);
 
-		if( voltageCalB_pH < 4500 || voltageCalB_pH > 14000 )
+		if( voltageCalB_pH < 7000 || voltageCalB_pH > 17000 )
 			contError |= 1 << ErrorpH;
 		else
 			contError &= ~(1 << ErrorpH);

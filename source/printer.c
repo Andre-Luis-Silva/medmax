@@ -79,10 +79,10 @@ void EnviaComando( unsigned char data ){
 		db7_off;
 
 	STB_ON;	// Liga o pino STB
-	for( int i = 0; i < 65535 * 2; i++ );	// Faz um delay com for
+	for( int i = 0; i < 1000; i++ );	// Faz um delay com for
 
 	STB_OFF;	// Desliga o pino STB
-	for( int i = 0; i < 65535 * 2; i++ );	// Faz um delay com for
+	for( int i = 0; i < 1000; i++ );	// Faz um delay com for
 
 }
 
@@ -105,6 +105,6 @@ void PrinterCodigoDeBarras( unsigned long long codigoDeBarras )
 	{
 		EnviaComando( (unsigned char)(codigoDeBarras % (unsigned long long)pow(10,12 - i) / (unsigned long long)pow(10,11-i)) + 0x30 );// texto recebe codigoDeBarras % 10 ^(i + 1) / ( 10^i ) + 0x30 (conversão para ASCIIpow
 	}
-	EnviaComando( 0x00 );	// Envia o comando PRINT_TEXTO
+	EnviaComando( 0x0A );	// Envia o comando PRINT_TEXTO
 
 }
